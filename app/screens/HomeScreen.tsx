@@ -18,7 +18,13 @@ const {width} = Dimensions.get('window');
 const MENU_ITEM_WIDTH = 100; // Lebar setiap menu item
 const PEEK_WIDTH = 35; // Lebar ikon yang terlihat sebagian (peek)
 
-const HomeScreen = ({onLogout}: {onLogout: () => void}) => {
+const HomeScreen = ({
+  navigateTo,
+  onLogout,
+}: {
+  navigateTo: (screen: string) => void;
+  onLogout: () => void;
+}) => {
   const [activeMenuIndex, setActiveMenuIndex] = useState(0);
   const menuItems = [
     {icon: '☰', text: 'All Menu', isBlue: true},
@@ -81,7 +87,7 @@ const HomeScreen = ({onLogout}: {onLogout: () => void}) => {
 
   return (
     <SafeAreaView style={styles.root}>
-      <StatusBar backgroundColor="#0033a0" barStyle="light-content" />
+      <StatusBar backgroundColor="#2e7ce4" barStyle="light-content" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -99,6 +105,9 @@ const HomeScreen = ({onLogout}: {onLogout: () => void}) => {
           </View>
           <TouchableOpacity style={styles.notifIcon}>
             <Text style={styles.notifText}>🔔</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.notifIcon} onPress={onLogout}>
+            <Text style={styles.notifText}>🚪</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -151,7 +160,7 @@ const HomeScreen = ({onLogout}: {onLogout: () => void}) => {
                   style={
                     item.isBlue ? styles.menuIconBlue : styles.menuIconWhite
                   }>
-                  <Text style={{color: item.isBlue ? 'white' : '#0033a0'}}>
+                  <Text style={{color: item.isBlue ? 'white' : '#fd7e14'}}>
                     {item.icon}
                   </Text>
                 </View>
@@ -200,7 +209,7 @@ const HomeScreen = ({onLogout}: {onLogout: () => void}) => {
                 key={index}
                 style={{
                   width: width - 120, // Buat lebar sedikit lebih kecil
-                  backgroundColor: '#0033a0',
+                  backgroundColor: '#2e7ce4',
                   borderRadius: 10,
                   padding: 15,
                   flexDirection: 'row',
@@ -278,11 +287,11 @@ const HomeScreen = ({onLogout}: {onLogout: () => void}) => {
             <View
               style={{
                 width: '48%',
-                backgroundColor: '#00c2ff',
+                backgroundColor: '#2e7ce4',
                 borderRadius: 10,
                 overflow: 'hidden',
                 borderWidth: 2,
-                borderColor: '#ff50a2',
+                borderColor: '#0033a0',
                 borderStyle: 'dotted',
                 marginRight: 10,
                 marginLeft: 16,
@@ -299,11 +308,11 @@ const HomeScreen = ({onLogout}: {onLogout: () => void}) => {
             <View
               style={{
                 width: '30%',
-                backgroundColor: '#00c2ff',
+                backgroundColor: '#2e7ce4',
                 borderRadius: 10,
                 overflow: 'hidden',
                 borderWidth: 2,
-                borderColor: '#ff50a2',
+                borderColor: '#0033a0',
                 borderStyle: 'dotted',
                 marginRight: 50,
               }}>
@@ -325,19 +334,21 @@ const HomeScreen = ({onLogout}: {onLogout: () => void}) => {
           <Text style={[styles.navIcon, styles.activeNav]}>🏠</Text>
           <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigateTo('PaymentSuccess')}>
           <Text style={styles.navIcon}>🛒</Text>
           <Text style={styles.navText}>Buy</Text>
-        </TouchableOpacity> */}
-        <TouchableOpacity style={styles.navItem}>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigateTo('Pay')}>
           <Text style={styles.navIcon}>💳</Text>
           <Text style={styles.navText}>Pay</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>🎫</Text>
-          <Text style={styles.navText}>My Voucher</Text>
-        </TouchableOpacity> */}
-        <TouchableOpacity style={styles.navItem} onPress={onLogout}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigateTo('Account')}>
           <Text style={styles.navIcon}>👤</Text>
           <Text style={styles.navText}>Account</Text>
         </TouchableOpacity>
@@ -352,7 +363,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#2e7ce4',
     flexDirection: 'row',
     paddingVertical: 15,
     paddingHorizontal: 15,
@@ -436,7 +447,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileSection: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#2e7ce4',
     paddingHorizontal: 16,
     paddingBottom: 20,
     flexDirection: 'row',
@@ -565,13 +576,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   promoTitle: {
-    color: 'white',
+    color: '#ddd',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
   },
   promoSubtitle: {
-    color: '#4cd964',
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
@@ -585,7 +596,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   voucherText: {
-    color: '#0033a0',
+    color: '#fd7e14',
     fontWeight: 'bold',
   },
   offersSection: {

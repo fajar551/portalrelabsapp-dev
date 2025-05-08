@@ -11,7 +11,7 @@ const LoginScreen = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
   const [error, setError] = useState('');
 
   const handleLogin = () => {
-    if (username === 'fajar' && password === '12345678') {
+    if (username === 'fajar' && password === '123') {
       setError('');
       onLoginSuccess();
     } else {
