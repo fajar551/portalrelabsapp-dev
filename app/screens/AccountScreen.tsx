@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   SafeAreaView,
   ScrollView,
@@ -9,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {getClientProfile} from '../../src/services/api';
 
 // Mendapatkan lebar layar untuk kalkulasi
 const {width} = Dimensions.get('window');
@@ -20,6 +22,62 @@ const AccountScreen = ({
   navigateTo: (screen: string) => void;
   onLogout: () => void;
 }) => {
+  const [clientData, setClientData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profileData = await getClientProfile();
+        setClientData(profileData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Gagal memuat profil');
+        console.error('Error loading profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={[styles.root, styles.centeredContainer]}>
+        <ActivityIndicator size="large" color="#0033a0" />
+        <Text style={styles.loadingText}>Memuat profil...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.root, styles.errorContainer]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            setLoading(true);
+            setError('');
+            getClientProfile()
+              .then(profile => {
+                setClientData(profile);
+                setLoading(false);
+              })
+              .catch(err => {
+                setError(
+                  err instanceof Error ? err.message : 'Gagal memuat profil',
+                );
+                setLoading(false);
+              });
+          }}>
+          <Text style={styles.retryButtonText}>Coba Lagi</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar backgroundColor="#2e7ce4" barStyle="light-content" />
@@ -41,17 +99,15 @@ const AccountScreen = ({
         {/* Main Profile */}
         <View style={styles.mainProfile}>
           <View style={styles.profileInfo}>
-            <Text style={styles.userName}>Fajar Habib Zaelani</Text>
-            <Text style={styles.userEmail}>fajarhabibzaelani@gmail.com</Text>
+            <Text style={styles.userName}>
+              {clientData?.firstname} {clientData?.lastname}
+            </Text>
+            <Text style={styles.userEmail}>{clientData?.email}</Text>
           </View>
           <View style={styles.qrContainer}>
             <View style={styles.qrCode}>
-              {/* <Text style={{fontSize: 10, textAlign: 'center'}}>
-                QR{'\n'}CODE
-              </Text> */}
-              {/* <Image
-                    source={require('../assets/qr-placeholder.png')}
-                  /> */}
+              {/* <Text style={styles.qrText}>QR{'\n'}CODE</Text> */}
+              {/* <Image source={require('../assets/qr-placeholder.png')} /> */}
             </View>
           </View>
         </View>
@@ -62,15 +118,17 @@ const AccountScreen = ({
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>ID</Text>
-              <Text style={styles.infoValue}>fajarhabibzaelani@gmail.com</Text>
+              <Text style={styles.infoValue}>{clientData?.email}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Name</Text>
-              <Text style={styles.infoValue}>FAJAR HABIB ZAELANI</Text>
+              <Text style={styles.infoValue}>
+                {clientData?.firstname} {clientData?.lastname}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Mobile No.</Text>
-              <Text style={styles.infoValue}>082130697168</Text>
+              <Text style={styles.infoValue}>{clientData?.phonenumber}</Text>
             </View>
           </View>
         </View>
@@ -79,7 +137,10 @@ const AccountScreen = ({
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Firstmedia Account</Text>
           <View style={styles.activeAccountBadge}>
-            <Text style={styles.activeAccountText}>11946253 in use</Text>
+            <Text style={styles.activeAccountText}>
+              {clientData?.id}
+            </Text>
+            <Text style={styles.activeAccountText2}>in use</Text>
             <View style={styles.checkIcon}>
               <Text>✓</Text>
             </View>
@@ -87,23 +148,32 @@ const AccountScreen = ({
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Account No.</Text>
-              <Text style={styles.infoValue}>11946253</Text>
+              <Text style={styles.infoValue}>{clientData?.id}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Name</Text>
-              <Text style={styles.infoValue}>FAJAR HABIB ZAELANI</Text>
+              <Text style={styles.infoValue}>
+                {clientData?.firstname} {clientData?.lastname}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Address</Text>
               <Text style={styles.infoValue}>
-                MAJALAYA BLOK A NO. 2 MAJALAYA KAB. BANDUNG 40383
+                {clientData?.address1} {clientData?.city} {clientData?.postcode}
               </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>ID</Text>
-              <Text style={styles.infoValue}>fajarhabibzaelani@gmail.com</Text>
+              <Text style={styles.infoValue}>{clientData?.email}</Text>
             </View>
           </View>
+        </View>
+
+        {/* Tambahkan Tombol Logout di bawah sebagai elemen terakhir ScrollView */}
+        <View style={styles.logoutContainer}>
+          <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -127,10 +197,6 @@ const AccountScreen = ({
           <Text style={styles.navIcon}>💳</Text>
           <Text style={styles.navText}>Pay</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>🎫</Text>
-          <Text style={styles.navText}>My Voucher</Text>
-        </TouchableOpacity> */}
         <TouchableOpacity style={styles.navItem} onPress={onLogout}>
           <Text style={[styles.navIcon, styles.activeNav]}>👤</Text>
           <Text style={[styles.navText, styles.activeNavText]}>Account</Text>
@@ -144,6 +210,28 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  centeredContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  qrText: {
+    fontSize: 10,
+    textAlign: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
   },
   header: {
     backgroundColor: '#0033a0',
@@ -268,6 +356,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
+  activeAccountText2: {
+    // color: '#000',
+    marginLeft: -245,
+    // fontWeight: 'bold',
+    fontSize: 14,
+  },
   checkIcon: {
     backgroundColor: '#f0a838',
     width: 20,
@@ -303,6 +397,34 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: '#0033a0',
     fontWeight: 'bold',
+  },
+  retryButton: {
+    backgroundColor: '#0033a0',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  logoutContainer: {
+    padding: 20,
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  logoutButton: {
+    backgroundColor: '#0033a0',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

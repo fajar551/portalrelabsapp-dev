@@ -39,7 +39,7 @@ const PaymentSuccessScreen = ({
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={{marginTop: 60}}>
+      <ScrollView style={styles.mt60}>
         <View style={styles.topSection}>
           <View style={styles.robotContainer}>
             <Image
@@ -182,6 +182,9 @@ const styles = StyleSheet.create({
   closeIcon: {
     fontSize: 24,
     color: '#333',
+  },
+  mt60: {
+    marginTop: 60,
   },
   topSection: {
     alignItems: 'center',

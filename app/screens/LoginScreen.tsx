@@ -1,82 +1,137 @@
-import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Platform
-} from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
+import React, {useState} from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {loginUser} from '../../src/services/api';
+import ClientDropdown from '../components/ClientDropdown';
 
-const LoginScreen = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
-  const [username, setUsername] = useState('');
+interface LoginScreenProps {
+  onLoginSuccess: () => void;
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
-    if (username === 'fajar' && password === '123') {
-      setError('');
-      onLoginSuccess();
-    } else {
-      setError('Username atau password salah!');
+  const handleLogin = async () => {
+    // Validasi form dasar
+    if (!identifier.trim() || !password.trim()) {
+      setError('Email/ID Pelanggan dan password harus diisi');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Login ke API
+      const response = await loginUser(identifier, password);
+      setIsLoading(false);
+
+      if (response && response.status === 'success') {
+        console.log('Login berhasil:', response.data.client.name);
+        onLoginSuccess();
+      } else {
+        setError(response.message || 'Terjadi kesalahan saat login');
+      }
+    } catch (err) {
+      // Mengubah nama variabel dari 'error' menjadi 'err'
+      setIsLoading(false);
+      console.error('Login error:', err);
+      setError(
+        err instanceof Error ? err.message : 'Terjadi kesalahan saat login',
+      );
     }
   };
 
   return (
-    <View style={styles.root}>
-      <View style={styles.card}>
-        <Image
-          source={require('../assets/logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={styles.title}>Login Member Area</Text>
-        <Text style={styles.subtitle}>
-          Please insert your Email and Password to Login
-        </Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.flex1}>
+      <ScrollView
+        contentContainerStyle={styles.containerFlex1}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.root}>
+          <View style={styles.card}>
+            <Image
+              source={require('../assets/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.title}>Login Member Area</Text>
+            <Text style={styles.subtitle}>
+              Please insert your Email or Customer ID and Password to Login
+            </Text>
 
-        <Text style={styles.label}>Email Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email Address"
-          placeholderTextColor="#b0c4de"
-          value={username}
-          onChangeText={setUsername}
-        />
+            <Text style={styles.label}>Email / ID Pelanggan</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Email or Customer ID"
+              placeholderTextColor="#b0c4de"
+              value={identifier}
+              onChangeText={setIdentifier}
+              autoCapitalize="none"
+              keyboardType="default"
+            />
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#b0c4de"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#b0c4de"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
 
-        <TouchableOpacity>
-          <Text style={styles.forgot}>Forgot Password?</Text>
-        </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={styles.forgot}>Forgot Password?</Text>
+            </TouchableOpacity>
 
-        <View style={styles.rememberRow}>
-          <CheckBox
-            value={remember}
-            onValueChange={setRemember}
-            style={styles.checkbox}
-          />
-          <Text style={styles.rememberText}>Remember Me</Text>
+            <View style={styles.rememberRow}>
+              <CheckBox
+                value={remember}
+                onValueChange={setRemember}
+                style={styles.checkbox}
+              />
+              <Text style={styles.rememberText}>Remember Me</Text>
+            </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={handleLogin}
+              disabled={isLoading}>
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.loginButtonText}>Login</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Client Dropdown untuk Testing */}
+            <View style={styles.testingSection}>
+              <Text style={styles.testingSectionTitle}>Test API Connection</Text>
+              <ClientDropdown />
+            </View>
+          </View>
         </View>
-
-        {error ? (
-          <Text style={{ color: 'red', marginBottom: 10 }}>{error}</Text>
-        ) : null}
-
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Login</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity>
-          <Text style={styles.signupText}>Create a New Account</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -87,6 +142,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  containerFlex1: {
+    flexGrow: 1,
+  },
+  flex1: {
+    flex: 1,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
   card: {
     width: '90%',
     maxWidth: 400,
@@ -96,7 +161,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: {width: 0, height: 8},
     elevation: 8,
     alignItems: 'center',
   },
@@ -175,6 +240,20 @@ const styles = StyleSheet.create({
     color: '#3b82f6',
     fontSize: 15,
     marginTop: 2,
+    textAlign: 'center',
+  },
+  testingSection: {
+    marginTop: 20,
+    width: '100%',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    paddingTop: 20,
+  },
+  testingSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#22325a',
+    marginBottom: 10,
     textAlign: 'center',
   },
 });

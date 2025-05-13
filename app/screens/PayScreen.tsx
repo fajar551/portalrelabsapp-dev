@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {
-  Dimensions,
+  ActivityIndicator,
+  // Dimensions,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -12,13 +13,14 @@ import {
 } from 'react-native';
 
 // Mendapatkan lebar layar untuk kalkulasi
-const {width} = Dimensions.get('window');
+// const {width} = Dimensions.get('window');
 
 const PayScreen = ({
   navigateTo,
+  // onLogout,
 }: {
   navigateTo: (screen: string) => void;
-  onLogout?: () => void;
+  // onLogout: () => void;
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<{
@@ -27,6 +29,7 @@ const PayScreen = ({
     amount: number;
     status: string;
   } | null>(null);
+  const [isLoading] = useState(false);
 
   // Data pembayaran
   const paymentHistory = [
@@ -44,6 +47,11 @@ const PayScreen = ({
   }) => {
     setSelectedPayment(payment);
     setModalVisible(true);
+  };
+
+  // Fungsi untuk menangani klik tombol detail invoice
+  const handleViewInvoiceDetails = () => {
+    navigateTo('InvoiceDetail');
   };
 
   return (
@@ -82,7 +90,7 @@ const PayScreen = ({
         </View>
 
         {/* Last Payment Section */}
-        <View style={[styles.lastPaymentContainer, {width: width}]}>
+        <View style={[styles.lastPaymentContainer]}>
           <Text style={styles.lastPaymentTitle}>Last Payment</Text>
 
           {/* Payment History List */}
@@ -109,6 +117,22 @@ const PayScreen = ({
               </View>
             </TouchableOpacity>
           ))}
+        </View>
+
+        {/* Tambahkan tombol Detail Invoice */}
+        <View style={styles.detailInvoiceContainer}>
+          <TouchableOpacity
+            style={styles.detailInvoiceButton}
+            onPress={handleViewInvoiceDetails}
+            disabled={isLoading}>
+            {isLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.detailInvoiceButtonText}>
+                Lihat Detail Invoice
+              </Text>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -303,6 +327,9 @@ const styles = StyleSheet.create({
   headerIconText: {
     fontSize: 24,
   },
+  fullWidthContainer: {
+    width: '100%',
+  },
   headerTitle: {
     color: '#f0f0f0',
     fontSize: 20,
@@ -374,6 +401,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: 20,
     flex: 1,
+    width: '100%',
   },
   lastPaymentTitle: {
     fontSize: 18,
@@ -581,6 +609,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+  },
+  detailInvoiceContainer: {
+    marginVertical: 20,
+    alignItems: 'center',
+  },
+  detailInvoiceButton: {
+    backgroundColor: '#0033a0',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: '86%',
+  },
+  detailInvoiceButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

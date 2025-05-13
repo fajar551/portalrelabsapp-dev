@@ -1,5 +1,7 @@
-import React, {useState} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {useEffect, useState} from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   NativeScrollEvent,
@@ -12,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+// import {getUserData} from '../../src/services/api';
 
 // Mendapatkan lebar layar untuk kalkulasi
 const {width} = Dimensions.get('window');
@@ -26,6 +29,8 @@ const HomeScreen = ({
   onLogout: () => void;
 }) => {
   const [activeMenuIndex, setActiveMenuIndex] = useState(0);
+  const [userData, setUserData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const menuItems = [
     {icon: '☰', text: 'All Menu', isBlue: true},
     {icon: '🔧', text: 'Trouble shooting'},
@@ -34,6 +39,27 @@ const HomeScreen = ({
     {icon: '📱', text: 'Device'},
     {icon: '💰', text: 'Payments'},
   ];
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Coba ambil data dari AsyncStorage terlebih dahulu
+        const storedUserData = await AsyncStorage.getItem('userData');
+
+        if (storedUserData) {
+          setUserData(JSON.parse(storedUserData));
+        } else {
+          console.log('No user data found in AsyncStorage');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Menangani scroll pada menu horizontal
   const handleMenuScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -115,29 +141,43 @@ const HomeScreen = ({
       <ScrollView style={styles.scrollView}>
         {/* Profile Section */}
         <View style={styles.profileSection}>
-          <View style={styles.profileInfo}>
-            <Text style={styles.helloText}>Hello,</Text>
-            <Text style={styles.userName}>FAJAR HABIB</Text>
-            <Text style={styles.userEmail}>✉️ fajarhabib@gmail.com</Text>
-          </View>
-          <View style={styles.cardPreview}>
-            {/* Card Preview */}
-            <View style={styles.cardImage}>
-              <Text style={{color: 'white', fontSize: 12}}>💳</Text>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#2e7ce4" />
+              <Text style={styles.loadingText}>Memuat data pengguna...</Text>
             </View>
-          </View>
+          ) : (
+            <>
+              <View style={styles.profileInfo}>
+                <Text style={styles.helloText}>Hello,</Text>
+                <Text style={styles.userName}>{userData?.name || 'User'}</Text>
+                <Text style={styles.userEmail}>
+                  ✉️ {userData?.email || 'Loading...'}
+                </Text>
+              </View>
+              <View style={styles.cardPreview}>
+                {/* Card Preview */}
+                <View style={styles.cardImage}>
+                  <Text style={styles.cardText}>💳</Text>
+                </View>
+              </View>
+            </>
+          )}
         </View>
 
         {/* Account Info Card */}
         <View style={styles.accountCard}>
           <View style={styles.accountInfoItem}>
             <Text style={styles.accountLabel}>Account No.</Text>
-            <Text style={styles.accountValue}>11946253</Text>
+            <Text style={styles.accountValue}>{userData?.id || '-'}</Text>
           </View>
           <View style={styles.accountInfoDivider} />
           <View style={styles.accountInfoItem}>
-            <Text style={styles.accountLabel}>Billing Status</Text>
-            <Text style={styles.accountValue}>-</Text>
+            {/* <Text style={styles.accountLabel}>Billing Status</Text> */}
+            <Text style={styles.accountLabel}>Client Status</Text>
+            <Text style={styles.blueText}>
+            {userData?.status || '-'}
+            </Text>
           </View>
         </View>
 
@@ -160,7 +200,10 @@ const HomeScreen = ({
                   style={
                     item.isBlue ? styles.menuIconBlue : styles.menuIconWhite
                   }>
-                  <Text style={{color: item.isBlue ? 'white' : '#fd7e14'}}>
+                  <Text
+                    style={
+                      item.isBlue ? styles.iconTextWhite : styles.iconTextOrange
+                    }>
                     {item.icon}
                   </Text>
                 </View>
@@ -200,23 +243,11 @@ const HomeScreen = ({
             scrollEventThrottle={16}
             decelerationRate="fast"
             snapToInterval={width - 40} // Sesuaikan snapToInterval
-            contentContainerStyle={{
-              paddingLeft: 16, // Tambahkan padding kiri untuk menggeser ke kanan
-              paddingRight: 16, // Tetap pertahankan padding kanan
-            }}>
+            contentContainerStyle={styles.promoScrollContent}>
             {promoItems.map((promo, index) => (
               <View
                 key={index}
-                style={{
-                  width: width - 120, // Buat lebar sedikit lebih kecil
-                  backgroundColor: '#2e7ce4',
-                  borderRadius: 10,
-                  padding: 15,
-                  flexDirection: 'row',
-                  marginLeft: index === 0 ? 0 : 10, // Hapus margin negatif
-                  marginRight: 10,
-                  alignItems: 'center',
-                }}>
+                style={[styles.promoCard, index > 0 && styles.promoCardMargin]}>
                 <View style={styles.promoLogoContainer}>
                   <Image
                     source={require('../assets/guarantee.webp')}
@@ -249,19 +280,8 @@ const HomeScreen = ({
           </View>
 
           {/* Offers Section */}
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 15,
-              // marginLeft: -16,
-              marginRight: -16,
-              paddingHorizontal: 16,
-              backgroundColor: 'white',
-              paddingVertical: 15,
-            }}>
-            <View style={{flex: 1}}>
+          <View style={styles.offersSection}>
+            <View style={styles.offerHeader}>
               <Text style={styles.offersTitle}>
                 There are attractive offers!
               </Text>
@@ -269,33 +289,12 @@ const HomeScreen = ({
                 Especially for you, don't miss it...
               </Text>
             </View>
-            <Text style={{textAlign: 'right', marginRight: 0}}>▶</Text>
+            <Text style={styles.offerArrow}>▶</Text>
           </View>
 
           {/* Voucher Cards */}
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              marginBottom: 20,
-              // marginLeft: -16,
-              marginRight: -10,
-              // paddingRight: 0,
-              // paddingLeft: 0,
-              width: width,
-            }}>
-            <View
-              style={{
-                width: '48%',
-                backgroundColor: '#2e7ce4',
-                borderRadius: 10,
-                overflow: 'hidden',
-                borderWidth: 2,
-                borderColor: '#0033a0',
-                borderStyle: 'dotted',
-                marginRight: 10,
-                marginLeft: 16,
-              }}>
+          <View style={styles.voucherCardsContainer}>
+            <View style={styles.voucherCardLarge}>
               <View style={styles.voucherContent}>
                 <Text style={styles.voucherHeader}>Voucher Deals</Text>
                 <Text style={styles.voucherName}>Best Entertainment</Text>
@@ -305,17 +304,7 @@ const HomeScreen = ({
               </View>
             </View>
 
-            <View
-              style={{
-                width: '30%',
-                backgroundColor: '#2e7ce4',
-                borderRadius: 10,
-                overflow: 'hidden',
-                borderWidth: 2,
-                borderColor: '#0033a0',
-                borderStyle: 'dotted',
-                marginRight: 50,
-              }}>
+            <View style={styles.voucherCardSmall}>
               <View style={styles.voucherContent}>
                 <Text style={styles.voucherHeader}>Voucher Deals</Text>
                 <Text style={styles.voucherName}>Best Sport</Text>
@@ -362,6 +351,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  blueText: {
+    zIndex: 1000,
+    color: '#fd7e14',
+    fontWeight: 'bold',
+  },
   header: {
     backgroundColor: '#2e7ce4',
     flexDirection: 'row',
@@ -400,7 +394,6 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     backgroundColor: '#0033a0',
-    // Hapus width: 18 agar semua dot ukurannya sama
   },
   logoContainer: {
     height: 30,
@@ -482,6 +475,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  cardText: {
+    color: 'white',
+    fontSize: 12,
+  },
   accountCard: {
     backgroundColor: 'white',
     marginHorizontal: 16,
@@ -536,6 +533,12 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+  iconTextWhite: {
+    color: 'white',
+  },
+  iconTextOrange: {
+    color: '#fd7e14',
+  },
   menuText: {
     fontSize: 11,
     textAlign: 'center',
@@ -551,14 +554,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  promoCardCarousel: {
-    width: width - 32 - 20, // Kurangi lebar card untuk memberikan ruang
-    backgroundColor: '#0033a0',
+  promoScrollContent: {
+    paddingLeft: 16,
+    paddingRight: 16,
+  },
+  promoCard: {
+    width: width - 120,
+    backgroundColor: '#2e7ce4',
     borderRadius: 10,
     padding: 15,
     flexDirection: 'row',
-    marginHorizontal: 10, // Tambahkan margin kiri-kanan
-    alignItems: 'center', // Vertikal center
+    alignItems: 'center',
+  },
+  promoCardMargin: {
+    marginLeft: 10,
   },
   promoLogoContainer: {
     width: 90,
@@ -604,14 +613,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
-    marginLeft: 0,
-    paddingRight: 16,
-    paddingLeft: 0,
-    width: '100%',
+    marginLeft: -16,
+    marginRight: -16,
+    paddingHorizontal: 16,
+    backgroundColor: 'white',
+    paddingVertical: 15,
   },
   offerHeader: {
     flex: 1,
-    paddingLeft: 0,
+  },
+  offerArrow: {
+    textAlign: 'right',
+    marginRight: 0,
   },
   offersTitle: {
     fontSize: 16,
@@ -622,19 +635,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  voucherCards: {
+  voucherCardsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: 20,
+    marginLeft: -16,
+    marginRight: -10,
+    width: width,
   },
-  voucherCard: {
+  voucherCardLarge: {
     width: '48%',
-    backgroundColor: '#00c2ff',
+    backgroundColor: '#2e7ce4',
     borderRadius: 10,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#ff50a2',
+    borderColor: '#0033a0',
     borderStyle: 'dotted',
+    marginRight: 10,
+    marginLeft: 45,
+  },
+  voucherCardSmall: {
+    width: '30%',
+    backgroundColor: '#2e7ce4',
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#0033a0',
+    borderStyle: 'dotted',
+    marginRight: 50,
   },
   voucherContent: {
     padding: 12,
@@ -710,6 +738,18 @@ const styles = StyleSheet.create({
   },
   carouselContainer: {
     paddingHorizontal: 10, // Padding untuk seluruh container
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    minHeight: 120,
+  },
+  loadingText: {
+    color: '#666',
+    fontSize: 14,
+    marginTop: 10,
   },
 });
 
