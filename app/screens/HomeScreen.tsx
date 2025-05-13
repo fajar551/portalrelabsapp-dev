@@ -19,7 +19,7 @@ import {
 // Mendapatkan lebar layar untuk kalkulasi
 const {width} = Dimensions.get('window');
 const MENU_ITEM_WIDTH = 100; // Lebar setiap menu item
-const PEEK_WIDTH = 35; // Lebar ikon yang terlihat sebagian (peek)
+// const PEEK_WIDTH = 35; // Lebar ikon yang terlihat sebagian (peek)
 
 const HomeScreen = ({
   navigateTo,
@@ -65,8 +65,7 @@ const HomeScreen = ({
   const handleMenuScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const scrollX = event.nativeEvent.contentOffset.x;
 
-    // Hitung berdasarkan posisi scroll dibagi dengan lebar satu item
-    // Dengan penambahan offset untuk posisi tengah ikon
+    // Gunakan perhitungan yang lebih stabil untuk release build
     const index = Math.round(scrollX / MENU_ITEM_WIDTH);
 
     // Pastikan index tidak keluar batas
@@ -106,9 +105,11 @@ const HomeScreen = ({
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     const scrollX = event.nativeEvent.contentOffset.x;
-    const cardWidth = width - 120 + 10; // Width disesuaikan dengan lebar card baru + margin
+    // Simpan kalkulasi yang sama tapi dalam bentuk yang lebih stabil
+    const cardWidth = width - 110; // Sesuaikan dengan width - 120 + 10
     const index = Math.round(scrollX / cardWidth);
-    setActivePromoIndex(Math.min(Math.max(0, index), promoItems.length - 1));
+    const safeIndex = Math.min(Math.max(0, index), promoItems.length - 1);
+    setActivePromoIndex(safeIndex);
   };
 
   return (
@@ -175,9 +176,7 @@ const HomeScreen = ({
           <View style={styles.accountInfoItem}>
             {/* <Text style={styles.accountLabel}>Billing Status</Text> */}
             <Text style={styles.accountLabel}>Client Status</Text>
-            <Text style={styles.blueText}>
-            {userData?.status || '-'}
-            </Text>
+            <Text style={styles.blueText}>{userData?.status || '-'}</Text>
           </View>
         </View>
 
@@ -187,13 +186,12 @@ const HomeScreen = ({
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.menuIconsContent}
-            snapToInterval={MENU_ITEM_WIDTH * 3} // Snap ke 3 item sekaligus
-            decelerationRate="fast"
+            snapToInterval={MENU_ITEM_WIDTH}
+            decelerationRate={0.9}
             onScroll={handleMenuScroll}
             scrollEventThrottle={16}
             snapToAlignment="start"
-            contentInset={{right: PEEK_WIDTH}} // Memberi ruang di kanan untuk peek
-          >
+            contentOffset={{x: 0, y: 0}}>
             {menuItems.map((item, index) => (
               <View key={index} style={styles.menuItem}>
                 <View
@@ -217,13 +215,13 @@ const HomeScreen = ({
             <View
               style={[
                 styles.indicatorDot,
-                activeMenuIndex < 3 && styles.activeDot,
+                activeMenuIndex < 3 ? styles.activeDot : undefined,
               ]}
             />
             <View
               style={[
                 styles.indicatorDot,
-                activeMenuIndex >= 3 && styles.activeDot,
+                activeMenuIndex >= 3 ? styles.activeDot : undefined,
               ]}
             />
           </View>
@@ -241,13 +239,18 @@ const HomeScreen = ({
             showsHorizontalScrollIndicator={false}
             onScroll={handlePromoScroll}
             scrollEventThrottle={16}
-            decelerationRate="fast"
-            snapToInterval={width - 40} // Sesuaikan snapToInterval
+            decelerationRate={0.9}
+            snapToInterval={width - 40}
+            snapToAlignment="start"
+            contentOffset={{x: 0, y: 0}}
             contentContainerStyle={styles.promoScrollContent}>
             {promoItems.map((promo, index) => (
               <View
                 key={index}
-                style={[styles.promoCard, index > 0 && styles.promoCardMargin]}>
+                style={[
+                  styles.promoCard,
+                  index > 0 ? styles.promoCardMargin : undefined,
+                ]}>
                 <View style={styles.promoLogoContainer}>
                   <Image
                     source={require('../assets/guarantee.webp')}
@@ -371,12 +374,12 @@ const styles = StyleSheet.create({
   },
   menuIconsContent: {
     paddingVertical: 10,
-    paddingRight: PEEK_WIDTH, // Tambahkan padding kanan agar ada ruang untuk peek
+    paddingRight: 35,
   },
   menuItem: {
     alignItems: 'center',
-    width: MENU_ITEM_WIDTH, // Gunakan konstanta yang sudah didefinisikan
-    marginRight: 0, // Hapus margin kanan
+    width: MENU_ITEM_WIDTH,
+    marginRight: 0,
   },
   // Style untuk indikator dot
   scrollIndicator: {

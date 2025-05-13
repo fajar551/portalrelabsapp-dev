@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -25,6 +26,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
   const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // State untuk popup
 
   const handleLogin = async () => {
     // Validasi form dasar
@@ -97,7 +99,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
               onChangeText={setPassword}
             />
 
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowForgotPasswordModal(true)}>
               <Text style={styles.forgot}>Forgot Password?</Text>
             </TouchableOpacity>
 
@@ -131,6 +133,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Modal Popup untuk Forgot Password */}
+      <Modal
+        visible={showForgotPasswordModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowForgotPasswordModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Informasi</Text>
+            <Text style={styles.modalMessage}>
+              Aplikasi masih dalam tahap pengembangan. Fitur reset password belum tersedia.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setShowForgotPasswordModal(false)}>
+              <Text style={styles.modalButtonText}>Tutup</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -255,6 +278,46 @@ const styles = StyleSheet.create({
     color: '#22325a',
     marginBottom: 10,
     textAlign: 'center',
+  },
+  // Styles untuk Modal Popup
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 350,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#22325a',
+    marginBottom: 15,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  modalButton: {
+    backgroundColor: '#ffb84d',
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

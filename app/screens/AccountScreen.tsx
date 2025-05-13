@@ -114,7 +114,7 @@ const AccountScreen = ({
 
         {/* First ID */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>First ID</Text>
+          <Text style={styles.sectionTitle}>Relabs ID</Text>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>ID</Text>
@@ -133,9 +133,9 @@ const AccountScreen = ({
           </View>
         </View>
 
-        {/* Firstmedia Account */}
+        {/* Portal Relabs Account */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Firstmedia Account</Text>
+          <Text style={styles.sectionTitle}>Portal Relabs Account</Text>
           <View style={styles.activeAccountBadge}>
             <Text style={styles.activeAccountText}>
               {clientData?.id}
