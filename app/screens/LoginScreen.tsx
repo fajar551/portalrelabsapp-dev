@@ -1,7 +1,10 @@
 import CheckBox from '@react-native-community/checkbox';
-import React, {useState} from 'react';
+// import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  // Alert,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -15,18 +18,88 @@ import {
 } from 'react-native';
 import {loginUser} from '../../src/services/api';
 import ClientDropdown from '../components/ClientDropdown';
+// import { useNavigation } from '@react-navigation/native';
+
+// Konstanta untuk kunci storage
+const STORAGE_KEYS = {
+  REMEMBER_ME: 'remember_me',
+  USER_IDENTIFIER: 'user_identifier',
+  USER_PASSWORD: 'user_password',
+};
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
+  navigateToScreen: (screen: string) => void;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({
+  onLoginSuccess,
+  navigateToScreen,
+}) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // State untuk popup
+
+  // Memeriksa dan mengambil data yang tersimpan saat komponen dimuat
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      try {
+        const rememberedStatus = await AsyncStorage.getItem(
+          STORAGE_KEYS.REMEMBER_ME,
+        );
+
+        if (rememberedStatus === 'true') {
+          const savedIdentifier = await AsyncStorage.getItem(
+            STORAGE_KEYS.USER_IDENTIFIER,
+          );
+          const savedPassword = await AsyncStorage.getItem(
+            STORAGE_KEYS.USER_PASSWORD,
+          );
+
+          if (savedIdentifier && savedPassword) {
+            setIdentifier(savedIdentifier);
+            setPassword(savedPassword);
+            setRemember(true);
+
+            // Opsional: Login otomatis
+            // await handleLogin(savedIdentifier, savedPassword);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading saved credentials:', err);
+      }
+    };
+
+    loadSavedCredentials();
+  }, []);
+
+  // Menyimpan atau menghapus kredensial berdasarkan status "Remember Me"
+  const saveCredentials = async (
+    userIdentifier: string,
+    userPassword: string,
+    shouldRemember: boolean,
+  ) => {
+    try {
+      if (shouldRemember) {
+        await AsyncStorage.setItem(STORAGE_KEYS.REMEMBER_ME, 'true');
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.USER_IDENTIFIER,
+          userIdentifier,
+        );
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_PASSWORD, userPassword);
+      } else {
+        // Hapus kredensial yang tersimpan jika "Remember Me" tidak dicentang
+        await AsyncStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER_IDENTIFIER);
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER_PASSWORD);
+      }
+    } catch (err) {
+      console.error('Error saving credentials:', err);
+    }
+  };
 
   const handleLogin = async () => {
     // Validasi form dasar
@@ -45,6 +118,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
 
       if (response && response.status === 'success') {
         console.log('Login berhasil:', response.data.client.name);
+
+        // Simpan kredensial jika "Remember Me" dicentang
+        await saveCredentials(identifier, password, remember);
+
         onLoginSuccess();
       } else {
         setError(response.message || 'Terjadi kesalahan saat login');
@@ -58,6 +135,48 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
       );
     }
   };
+
+  // const _handleResetPassword = async () => {
+  //   if (!identifier || !identifier.trim()) {
+  //     Alert.alert('Error', 'Masukkan email yang valid');
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+  //   setError('');
+
+  //   try {
+  //     // Ganti dengan URL API Anda
+  //     const response = await axios.post(
+  //       'https://portal.relabs.id/mobile/forgot-password',
+  //       {
+  //         email: identifier,
+  //       },
+  //     );
+
+  //     if (response.data.status === 'success') {
+  //       setError(response.data.message);
+  //       setTimeout(() => {
+  //         navigateToScreen('Login');
+  //       }, 3000);
+  //     }
+  //   } catch (err: any) {
+  //     let errorMessage =
+  //       'Terjadi kesalahan saat mengirim permintaan reset password.';
+
+  //     if (err.response) {
+  //       if (err.response.status === 404) {
+  //         errorMessage = 'Email tidak ditemukan dalam database.';
+  //       } else if (err.response.data && err.response.data.message) {
+  //         errorMessage = err.response.data.message;
+  //       }
+  //     }
+
+  //     Alert.alert('Error', errorMessage);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <KeyboardAvoidingView
@@ -99,7 +218,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
               onChangeText={setPassword}
             />
 
-            <TouchableOpacity onPress={() => setShowForgotPasswordModal(true)}>
+            {/* <TouchableOpacity onPress={() => setShowForgotPasswordModal(true)}>
+              <Text style={styles.forgot}>Forgot Password?</Text>
+            </TouchableOpacity> */}
+
+            <TouchableOpacity
+              onPress={() => navigateToScreen('ForgotPassword')}>
               <Text style={styles.forgot}>Forgot Password?</Text>
             </TouchableOpacity>
 
@@ -127,7 +251,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
 
             {/* Client Dropdown untuk Testing */}
             <View style={styles.testingSection}>
-              <Text style={styles.testingSectionTitle}>Test API Connection</Text>
+              <Text style={styles.testingSectionTitle}>
+                Test API Connection
+              </Text>
               <ClientDropdown />
             </View>
           </View>
@@ -144,7 +270,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({onLoginSuccess}) => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Informasi</Text>
             <Text style={styles.modalMessage}>
-              Aplikasi masih dalam tahap pengembangan. Fitur reset password belum tersedia.
+              Aplikasi masih dalam tahap pengembangan. Fitur reset password
+              belum tersedia.
             </Text>
             <TouchableOpacity
               style={styles.modalButton}
@@ -246,7 +373,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   loginButton: {
-    backgroundColor: '#ffb84d',
+    backgroundColor: '#ffb444',
     borderRadius: 8,
     paddingVertical: 13,
     alignItems: 'center',

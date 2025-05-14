@@ -1,12 +1,16 @@
+import {NavigationContainer} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, StyleSheet, View} from 'react-native';
+import {ActivityIndicator, Linking, StyleSheet, View} from 'react-native';
 import SessionExpiredModal from './app/components/SessionExpiredModal';
 import AccountScreen from './app/screens/AccountScreen';
+import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
 import HomeScreen from './app/screens/HomeScreen';
 import InvoiceDetailScreen from './app/screens/InvoiceDetailScreen';
 import LoginScreen from './app/screens/LoginScreen';
 import PayScreen from './app/screens/PayScreen';
 import PaymentSuccessScreen from './app/screens/PaymentSuccessScreen';
+import ResetPasswordScreen from './app/screens/ResetPasswordScreen';
+import VerifyCodeScreen from './app/screens/VerifyCodeScreen';
 import {checkLoginStatus, isTokenExpired, logoutUser} from './src/services/api';
 
 // Type untuk props yang diteruskan ke screens
@@ -20,6 +24,13 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('Home');
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [resetPasswordData, setResetPasswordData] = useState<{
+    token: string;
+    email: string;
+  }>({token: '', email: ''});
+
+  // Menyimpan email yang dimasukkan di ForgotPasswordScreen
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
 
   // Periksa token expired setiap interval
   useEffect(() => {
@@ -68,6 +79,27 @@ export default function App() {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    // Inisialisasi Linking untuk deep links
+    const linkingEventListener = Linking.addEventListener(
+      'url',
+      handleDeepLink,
+    );
+
+    // Handle deep link saat aplikasi dibuka melalui URL
+    Linking.getInitialURL()
+      .then(url => {
+        if (url) {
+          handleDeepLink({url});
+        }
+      })
+      .catch(err => console.error('Error getting initial URL:', err));
+
+    return () => {
+      linkingEventListener.remove();
+    };
+  }, []);
+
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
     setSessionExpired(false);
@@ -85,9 +117,66 @@ export default function App() {
   };
 
   // Fungsi navigasi dengan log untuk debugging
-  const navigateToScreen = (screen: string) => {
-    console.log('Navigating to:', screen);
+  const navigateToScreen = (screen: string, params?: any) => {
+    console.log('Navigating to:', screen, params);
     setCurrentScreen(screen);
+
+    // Jika navigasi ke ForgotPassword, reset email
+    if (screen === 'ForgotPassword') {
+      setForgotPasswordEmail('');
+    }
+
+    // Jika navigasi ke VerifyCode, simpan email
+    if (screen === 'VerifyCode' && params?.email) {
+      setForgotPasswordEmail(params.email);
+    }
+  };
+
+  // Fungsi untuk menangani deep links
+  const handleDeepLink = ({url}: {url: string}) => {
+    console.log('Deep link URL:', url);
+
+    // Handle app://reset-password deep link
+    if (url.startsWith('app://reset-password')) {
+      try {
+        const urlObj = new URL(url);
+        const token = urlObj.searchParams.get('token');
+        const email = urlObj.searchParams.get('email');
+
+        if (token && email) {
+          console.log('Reset password token:', token);
+          console.log('Reset password email:', email);
+
+          // Navigate to ResetPasswordScreen
+          setCurrentScreen('ResetPassword');
+          // Pass token dan email sebagai props
+          setResetPasswordData({token, email});
+        }
+      } catch (error) {
+        console.error('Error parsing URL:', error);
+      }
+    }
+
+    // Handle https://portal.relabs.id/reset-redirect deep link
+    if (url.includes('/reset-redirect')) {
+      try {
+        const urlObj = new URL(url);
+        const token = urlObj.searchParams.get('token');
+        const email = urlObj.searchParams.get('email');
+
+        if (token && email) {
+          console.log('Reset password token from web:', token);
+          console.log('Reset password email from web:', email);
+
+          // Navigate to ResetPasswordScreen
+          setCurrentScreen('ResetPassword');
+          // Pass token dan email sebagai props
+          setResetPasswordData({token, email});
+        }
+      } catch (error) {
+        console.error('Error parsing URL:', error);
+      }
+    }
   };
 
   if (isLoading) {
@@ -106,15 +195,6 @@ export default function App() {
     />
   );
 
-  if (!isLoggedIn) {
-    return (
-      <>
-        <LoginScreen onLoginSuccess={handleLoginSuccess} />
-        {renderSessionExpiredModal()}
-      </>
-    );
-  }
-
   // Props untuk screens
   const screenProps: ScreenProps = {
     onLogout: handleLogout,
@@ -125,29 +205,57 @@ export default function App() {
   console.log('Current screen:', currentScreen);
 
   return (
-    <>
-      {/* Render halaman aktif */}
-      {(() => {
-        switch (currentScreen) {
-          case 'Home':
-            return <HomeScreen {...screenProps} />;
-          case 'Account':
-            return <AccountScreen {...screenProps} />;
-          case 'Pay':
-            return <PayScreen {...screenProps} />;
-          case 'PaymentSuccess':
-            return <PaymentSuccessScreen navigateTo={navigateToScreen} />;
-          case 'InvoiceDetail':
-            return <InvoiceDetailScreen navigateTo={navigateToScreen} />;
-          default:
-            console.log('Default case triggered, showing Home');
-            return <HomeScreen {...screenProps} />;
-        }
-      })()}
-
-      {/* Render modal session expired */}
+    <NavigationContainer>
+      {!isLoggedIn ? (
+        <>
+          {currentScreen === 'ForgotPassword' ? (
+            <ForgotPasswordScreen
+              navigateToScreen={(screen, params) =>
+                navigateToScreen(screen, params)
+              }
+            />
+          ) : currentScreen === 'VerifyCode' ? (
+            <VerifyCodeScreen
+              navigateToScreen={navigateToScreen}
+              onLoginSuccess={handleLoginSuccess}
+              route={{params: {email: forgotPasswordEmail}}}
+            />
+          ) : currentScreen === 'ResetPassword' ? (
+            <ResetPasswordScreen
+              navigateToScreen={navigateToScreen}
+              route={{params: resetPasswordData}}
+            />
+          ) : (
+            <LoginScreen
+              onLoginSuccess={handleLoginSuccess}
+              navigateToScreen={navigateToScreen}
+            />
+          )}
+        </>
+      ) : (
+        <>
+          {/* Render halaman aktif */}
+          {(() => {
+            switch (currentScreen) {
+              case 'Home':
+                return <HomeScreen {...screenProps} />;
+              case 'Account':
+                return <AccountScreen {...screenProps} />;
+              case 'Pay':
+                return <PayScreen {...screenProps} />;
+              case 'PaymentSuccess':
+                return <PaymentSuccessScreen navigateTo={navigateToScreen} />;
+              case 'InvoiceDetail':
+                return <InvoiceDetailScreen navigateTo={navigateToScreen} />;
+              default:
+                console.log('Default case triggered, showing Home');
+                return <HomeScreen {...screenProps} />;
+            }
+          })()}
+        </>
+      )}
       {renderSessionExpiredModal()}
-    </>
+    </NavigationContainer>
   );
 }
 
