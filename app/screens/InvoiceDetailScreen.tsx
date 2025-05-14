@@ -575,6 +575,7 @@ const styles = StyleSheet.create({
   hostingName: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#999',
     marginBottom: 5,
   },
   hostingDomain: {

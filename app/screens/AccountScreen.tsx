@@ -432,11 +432,12 @@ const styles = StyleSheet.create({
   personIcon: {
     width: 24,
     height: 24,
+    marginTop: 7.5,
     borderRadius: 12,
     backgroundColor: '#fd7e14',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 3,
+    // marginBottom: 3,
   },
   iconImage: {
     width: 14,

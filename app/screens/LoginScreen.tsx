@@ -232,6 +232,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                 value={remember}
                 onValueChange={setRemember}
                 style={styles.checkbox}
+                tintColors={{true: '#fd7e14', false: '#888888'}}
+                boxType="square"
               />
               <Text style={styles.rememberText}>Remember Me</Text>
             </View>
@@ -367,6 +369,9 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     marginRight: 8,
+    width: 20,
+    height: 20,
+    borderWidth: 1,
   },
   rememberText: {
     color: '#22325a',

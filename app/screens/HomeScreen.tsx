@@ -338,7 +338,9 @@ const HomeScreen = ({
           <Text style={styles.navIcon}>💳</Text>
           <Text style={styles.navText}>Pay</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigateTo('Account')}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigateTo('Account')}>
           <View style={styles.personIcon}>
             <Image
               source={require('../assets/user.png')}
@@ -386,7 +388,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fd7e14',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 3,
+    marginTop: 7.5,
   },
   iconImage: {
     width: 14,
@@ -416,11 +418,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffb444',
   },
   logoContainer: {
-    height: 30,
+    height: 40,
   },
   logo: {
-    height: 30,
+    height: 40,
     width: 80,
+    marginLeft: -17,
   },
   headerRight: {
     flexDirection: 'row',
@@ -455,6 +458,7 @@ const styles = StyleSheet.create({
   notifText: {
     fontSize: 18,
     color: 'white',
+    marginRight: -15,
   },
   scrollView: {
     flex: 1,
@@ -531,8 +535,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
   },
   menuIconBlue: {
-    width: 45,
-    height: 45,
+    width: 55,
+    height: 55,
     borderRadius: 10,
     backgroundColor: '#fd7e14',
     alignItems: 'center',
@@ -540,8 +544,8 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   menuIconWhite: {
-    width: 45,
-    height: 45,
+    width: 55,
+    height: 55,
     borderRadius: 10,
     backgroundColor: 'white',
     alignItems: 'center',

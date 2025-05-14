@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fd7e14',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 3,
+    marginTop: 7.5,
   },
   iconImage: {
     width: 14,
@@ -577,6 +577,7 @@ const styles = StyleSheet.create({
   },
   lastPaymentTitle: {
     fontSize: 18,
+    color: '#999',
     fontWeight: 'bold',
     marginBottom: 15,
   },
@@ -690,7 +691,7 @@ const styles = StyleSheet.create({
   },
   successIcon: {
     fontSize: 40,
-    color: 'white',
+    color: '#fff',
   },
   modalTitle: {
     fontSize: 18,
@@ -712,6 +713,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: '#999',
   },
   totalBillContainer: {
     marginTop: 5,
@@ -723,6 +725,7 @@ const styles = StyleSheet.create({
   totalBillAmount: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#fd7e14',
   },
   paidStatusContainer: {
     position: 'absolute',
@@ -734,7 +737,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   paidStatusText: {
-    color: 'white',
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 12,
   },
@@ -745,6 +748,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 15,
+    color: '#999',
     marginBottom: 10,
   },
   billingDetailRow: {
@@ -760,6 +764,7 @@ const styles = StyleSheet.create({
   billingDetailValue: {
     fontSize: 14,
     fontWeight: 'bold',
+    color: '#999',
     textAlign: 'right',
   },
   billingDetailValueNegative: {

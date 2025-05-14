@@ -133,6 +133,38 @@ export const logoutUser = async () => {
   }
 };
 
+// Ambil semua data client
+export const getAllClients = async () => {
+  try {
+    console.log('Mengambil data dari API: https://portal.relabs.id/mobile/all-clients');
+
+    const response = await fetch(`${CONFIG.API_URL}/mobile/all-clients`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Response error dengan status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data?.data?.clients) {
+      console.log('Berhasil mengambil data clients dari API!');
+      return data.data.clients;
+    } else {
+      throw new Error('Format data tidak sesuai yang diharapkan');
+    }
+
+  } catch (err: any) {
+    console.error('Error pada getAllClients:', err.message);
+    throw err;
+  }
+};
+
 // Fungsi untuk mendapatkan profil client
 export const getClientProfile = async () => {
   try {
