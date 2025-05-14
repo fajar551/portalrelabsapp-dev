@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Dimensions,
+  Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -61,11 +62,11 @@ const AccountScreen = ({
             setLoading(true);
             setError('');
             getClientProfile()
-              .then(profile => {
+              .then((profile: any) => {
                 setClientData(profile);
                 setLoading(false);
               })
-              .catch(err => {
+              .catch((err: any) => {
                 setError(
                   err instanceof Error ? err.message : 'Gagal memuat profil',
                 );
@@ -84,7 +85,7 @@ const AccountScreen = ({
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>Your Profile</Text>
         <TouchableOpacity style={styles.settingsButton}>
           <Text style={styles.settingsIcon}>⚙️</Text>
         </TouchableOpacity>
@@ -137,9 +138,7 @@ const AccountScreen = ({
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Portal Relabs Account</Text>
           <View style={styles.activeAccountBadge}>
-            <Text style={styles.activeAccountText}>
-              {clientData?.id}
-            </Text>
+            <Text style={styles.activeAccountText}>{clientData?.id}</Text>
             <Text style={styles.activeAccountText2}>in use</Text>
             <View style={styles.checkIcon}>
               <Text>✓</Text>
@@ -198,7 +197,12 @@ const AccountScreen = ({
           <Text style={styles.navText}>Pay</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={onLogout}>
-          <Text style={[styles.navIcon, styles.activeNav]}>👤</Text>
+          <View style={styles.personIcon}>
+            <Image
+              source={require('../assets/user.png')}
+              style={styles.iconImage}
+            />
+          </View>
           <Text style={[styles.navText, styles.activeNavText]}>Account</Text>
         </TouchableOpacity>
       </View>
@@ -234,7 +238,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   header: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     flexDirection: 'row',
     paddingVertical: 15,
     paddingHorizontal: 15,
@@ -259,7 +263,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileSection: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     padding: 15,
   },
   profileTitle: {
@@ -267,7 +271,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   mainProfile: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     paddingHorizontal: 15,
     paddingBottom: 20,
     flexDirection: 'row',
@@ -311,6 +315,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
+    color: '#999',
     fontWeight: 'bold',
     marginBottom: 10,
   },
@@ -357,7 +362,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   activeAccountText2: {
-    // color: '#000',
+    color: '#999',
     marginLeft: -245,
     // fontWeight: 'bold',
     fontSize: 14,
@@ -381,6 +386,7 @@ const styles = StyleSheet.create({
   navItem: {
     flex: 1,
     alignItems: 'center',
+    color: '#fd7e14',
   },
   navIcon: {
     fontSize: 20,
@@ -391,15 +397,12 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#666',
   },
-  activeNav: {
-    color: '#0033a0',
-  },
   activeNavText: {
-    color: '#0033a0',
+    color: '#fd7e14',
     fontWeight: 'bold',
   },
   retryButton: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
@@ -414,7 +417,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   logoutButton: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 8,
@@ -425,6 +428,20 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  personIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fd7e14',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 3,
+  },
+  iconImage: {
+    width: 14,
+    height: 14,
+    tintColor: 'white',
   },
 });
 

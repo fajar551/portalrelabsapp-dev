@@ -1,7 +1,8 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
-  // Dimensions,
+  Animated,
+  Image,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -11,14 +12,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {getClientInvoices} from '../../src/services/api';
 
 // Mendapatkan lebar layar untuk kalkulasi
 // const {width} = Dimensions.get('window');
 
 const PayScreen = ({
   navigateTo,
-  // onLogout,
-}: {
+}: // onLogout,
+{
   navigateTo: (screen: string) => void;
   // onLogout: () => void;
 }) => {
@@ -30,6 +32,14 @@ const PayScreen = ({
     status: string;
   } | null>(null);
   const [isLoading] = useState(false);
+  const [daysLeft, setDaysLeft] = useState(0);
+  const [_progress, setProgress] = useState(0);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const [billingPeriod, setBillingPeriod] = useState({
+    startDate: new Date(),
+    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Default to 14 days from now
+    amount: 234765,
+  });
 
   // Data pembayaran
   const paymentHistory = [
@@ -37,6 +47,79 @@ const PayScreen = ({
     {month: 'March', year: 2025, amount: 234765, status: 'Paid'},
     {month: 'February', year: 2025, amount: 234765, status: 'Paid'},
   ];
+
+  // Fetch invoice data from API
+  useEffect(() => {
+    const fetchInvoiceData = async () => {
+      try {
+        const invoices = await getClientInvoices();
+
+        // Get most recent invoice (assuming they are ordered by date)
+        if (invoices && invoices.length > 0) {
+          const latestInvoice = invoices[0];
+
+          // Extract date and duedate from the invoice
+          if (latestInvoice.date && latestInvoice.duedate) {
+            setBillingPeriod({
+              startDate: new Date(latestInvoice.date),
+              dueDate: new Date(latestInvoice.duedate),
+              amount: latestInvoice.total || 234765,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+        // Keep using default dates if fetch fails
+      }
+    };
+
+    fetchInvoiceData();
+  }, []);
+
+  // Menghitung hari tersisa dan progress
+  useEffect(() => {
+    const calculateProgress = () => {
+      const today = new Date();
+
+      // Total hari dalam periode (menambahkan +1 untuk menghitung hari terakhir)
+      const totalDays =
+        Math.floor(
+          (billingPeriod.dueDate.getTime() -
+            billingPeriod.startDate.getTime()) /
+            (1000 * 3600 * 24),
+        ) + 1; // Ditambahkan +1 untuk menghitung hari terakhir
+
+      // Hari yang sudah berlalu
+      const daysElapsed = Math.floor(
+        (today.getTime() - billingPeriod.startDate.getTime()) /
+          (1000 * 3600 * 24),
+      );
+
+      // Pastikan daysElapsed minimal 0
+      const elapsed = Math.max(0, daysElapsed);
+
+      // Hari tersisa
+      const left = Math.max(0, totalDays - elapsed);
+      setDaysLeft(left);
+
+      // Kalkulasi progres (0-1)
+      const calculatedProgress = Math.min(1, Math.max(0, elapsed / totalDays));
+      setProgress(calculatedProgress);
+
+      // Animasikan progress bar
+      Animated.timing(progressAnim, {
+        toValue: calculatedProgress,
+        duration: 1000,
+        useNativeDriver: false,
+      }).start();
+    };
+
+    calculateProgress();
+
+    // Update progress setiap 6 jam
+    const interval = setInterval(calculateProgress, 21600000);
+    return () => clearInterval(interval);
+  }, [progressAnim, billingPeriod]);
 
   // Fungsi untuk menampilkan modal detail pembayaran
   const showPaymentDetail = (payment: {
@@ -54,6 +137,13 @@ const PayScreen = ({
     navigateTo('InvoiceDetail');
   };
 
+  // Format tanggal untuk tampilan
+  const formatDate = (date: Date) => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.toLocaleString('id-ID', {month: 'short'});
+    return {day, month};
+  };
+
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar backgroundColor="#00008B" barStyle="light-content" />
@@ -68,14 +158,78 @@ const PayScreen = ({
 
       <ScrollView style={styles.scrollView}>
         {/* Due Date Period */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Due Date Period</Text>
-          <View style={styles.periodContainer}>
-            <Text style={styles.periodDate}>07 Apr</Text>
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar} />
+        <View style={styles.dueCardContainer}>
+          <View style={styles.dueCard}>
+            <View style={styles.dueCardHeader}>
+              <Text style={styles.dueCardTitle}>Periode Jatuh Tempo</Text>
+              <View style={styles.amountContainer}>
+                <Text style={styles.amountLabel}>Total Tagihan</Text>
+                <Text style={styles.amountValue}>
+                  Rp {billingPeriod.amount.toLocaleString('id-ID')}
+                </Text>
+              </View>
             </View>
-            <Text style={styles.periodDate}>23 Apr</Text>
+
+            <View style={styles.periodProgressContainer}>
+              <View style={styles.dateColumn}>
+                <Text style={styles.dateValue}>
+                  {formatDate(billingPeriod.startDate).day}
+                </Text>
+                <Text style={styles.dateMonth}>
+                  {formatDate(billingPeriod.startDate).month}
+                </Text>
+              </View>
+
+              <View style={styles.progressBarWrapper}>
+                <View style={styles.progressBarContainer}>
+                  <Animated.View
+                    style={[
+                      styles.progressBar,
+                      {
+                        width: progressAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0%', '100%'],
+                        }),
+                      },
+                    ]}
+                  />
+                </View>
+
+                <View style={styles.progressLineContainer}>
+                  <View style={styles.progressLineBg}>
+                    <Animated.View
+                      style={[
+                        styles.progressLine,
+                        {
+                          width: progressAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['0%', '100%'],
+                          }),
+                        },
+                      ]}
+                    />
+                  </View>
+                  <View style={styles.progressDot} />
+                </View>
+
+                <Text style={styles.progressText}>{daysLeft} Hari Tersisa</Text>
+              </View>
+
+              <View style={styles.dateColumn}>
+                <Text style={styles.dateValue}>
+                  {formatDate(billingPeriod.dueDate).day}
+                </Text>
+                <Text style={styles.dateMonth}>
+                  {formatDate(billingPeriod.dueDate).month}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.dueCardFooter}>
+              <TouchableOpacity style={styles.duePayButton}>
+                <Text style={styles.duePayButtonText}>Bayar Sekarang</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -154,14 +308,16 @@ const PayScreen = ({
           <Text style={[styles.navIcon, styles.activeNav]}>💳</Text>
           <Text style={[styles.navText, styles.activeNavText]}>Pay</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>🎫</Text>
-          <Text style={styles.navText}>My Voucher</Text>
-        </TouchableOpacity> */}
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
-          <Text style={styles.navIcon}>👤</Text>
+          <View style={styles.personIcon}>
+            <Image
+              source={require('../assets/user.png')}
+              style={styles.iconImage}
+              resizeMode="contain"
+            />
+          </View>
           <Text style={styles.navText}>Account</Text>
         </TouchableOpacity>
       </View>
@@ -315,7 +471,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#00008B',
+    backgroundColor: '#fd7e14',
     flexDirection: 'row',
     paddingVertical: 20,
     paddingHorizontal: 15,
@@ -326,6 +482,20 @@ const styles = StyleSheet.create({
   },
   headerIconText: {
     fontSize: 24,
+  },
+  personIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fd7e14',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 3,
+  },
+  iconImage: {
+    width: 14,
+    height: 14,
+    tintColor: 'white',
   },
   fullWidthContainer: {
     width: '100%',
@@ -339,12 +509,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionContainer: {
-    backgroundColor: '#00008B',
+    backgroundColor: '#fd7e14',
     paddingHorizontal: 20,
     paddingVertical: 15,
   },
   sectionTitle: {
     color: '#f0f0f0',
+    fontWeight: 'bold',
     fontSize: 16,
     marginBottom: 15,
   },
@@ -355,6 +526,7 @@ const styles = StyleSheet.create({
   },
   periodDate: {
     color: '#f0f0f0',
+    fontWeight: 'bold',
     fontSize: 14,
   },
   progressBarContainer: {
@@ -422,6 +594,7 @@ const styles = StyleSheet.create({
   },
   paymentPeriod: {
     fontSize: 16,
+    color: '#999',
     fontWeight: 'bold',
     marginBottom: 8,
   },
@@ -443,6 +616,7 @@ const styles = StyleSheet.create({
   },
   paymentAmountText: {
     fontSize: 16,
+    color: '#999',
     fontWeight: 'bold',
     marginRight: 5,
   },
@@ -472,10 +646,10 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   activeNav: {
-    color: '#00008B',
+    color: '#fd7e14',
   },
   activeNavText: {
-    color: '#00008B',
+    color: '#fd7e14',
     fontWeight: 'bold',
   },
   modalOverlay: {
@@ -509,7 +683,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#00008B',
+    backgroundColor: '#fd7e14',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -615,7 +789,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   detailInvoiceButton: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -626,6 +800,130 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  navIconImage: {
+    width: 20,
+    height: 20,
+    tintColor: '#666',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 3,
+  },
+  activeIconContainer: {
+    // Tidak perlu tambahan style karena icon sudah berwarna
+  },
+  activeIconImage: {
+    tintColor: '#fd7e14',
+  },
+  // Styles for new Due Date Card
+  dueCardContainer: {
+    padding: 15,
+    backgroundColor: '#f5f5f5',
+  },
+  dueCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  dueCardHeader: {
+    marginBottom: 20,
+  },
+  dueCardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  amountContainer: {
+    marginTop: 5,
+  },
+  amountLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  amountValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fd7e14',
+  },
+  periodProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  dateColumn: {
+    alignItems: 'center',
+  },
+  dateValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  dateMonth: {
+    fontSize: 14,
+    color: '#666',
+  },
+  progressBarWrapper: {
+    flex: 1,
+    marginHorizontal: 15,
+    alignItems: 'center',
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+  },
+  dueCardFooter: {
+    alignItems: 'center',
+  },
+  duePayButton: {
+    backgroundColor: '#fd7e14',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  duePayButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  progressLineContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    position: 'relative',
+  },
+  progressLineBg: {
+    height: 2,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    width: '100%',
+    borderRadius: 1,
+    overflow: 'hidden',
+  },
+  progressLine: {
+    height: 2,
+    backgroundColor: '#fd7e14',
+    borderRadius: 1,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fd7e14',
+    position: 'absolute',
+    left: 0, // Akan diposisikan oleh Animated, menggantikan static value
   },
 });
 

@@ -114,7 +114,7 @@ const HomeScreen = ({
 
   return (
     <SafeAreaView style={styles.root}>
-      <StatusBar backgroundColor="#2e7ce4" barStyle="light-content" />
+      <StatusBar backgroundColor="#fd7e14" barStyle="light-content" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -144,7 +144,7 @@ const HomeScreen = ({
         <View style={styles.profileSection}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#2e7ce4" />
+              <ActivityIndicator size="large" color="#fd7e14" />
               <Text style={styles.loadingText}>Memuat data pengguna...</Text>
             </View>
           ) : (
@@ -338,11 +338,14 @@ const HomeScreen = ({
           <Text style={styles.navIcon}>💳</Text>
           <Text style={styles.navText}>Pay</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => navigateTo('Account')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navText}>Account</Text>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigateTo('Account')}>
+          <View style={styles.personIcon}>
+            <Image
+              source={require('../assets/user.png')}
+              style={styles.iconImage}
+            />
+          </View>
+          <Text style={[styles.navText]}>Account</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -360,7 +363,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   header: {
-    backgroundColor: '#2e7ce4',
+    backgroundColor: '#fd7e14',
     flexDirection: 'row',
     paddingVertical: 15,
     paddingHorizontal: 15,
@@ -375,6 +378,20 @@ const styles = StyleSheet.create({
   menuIconsContent: {
     paddingVertical: 10,
     paddingRight: 35,
+  },
+  personIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fd7e14',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 3,
+  },
+  iconImage: {
+    width: 14,
+    height: 14,
+    tintColor: 'white',
   },
   menuItem: {
     alignItems: 'center',
@@ -396,7 +413,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeDot: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#ffb444',
   },
   logoContainer: {
     height: 30,
@@ -443,7 +460,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileSection: {
-    backgroundColor: '#2e7ce4',
+    backgroundColor: '#fd7e14',
     paddingHorizontal: 16,
     paddingBottom: 20,
     flexDirection: 'row',
@@ -517,7 +534,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 10,
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 5,
@@ -537,7 +554,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   iconTextWhite: {
-    color: 'white',
+    color: '#fff',
   },
   iconTextOrange: {
     color: '#fd7e14',
@@ -545,6 +562,7 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: 11,
     textAlign: 'center',
+    color: '#999',
   },
   forYouSection: {
     marginTop: 25,
@@ -556,6 +574,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#999',
   },
   promoScrollContent: {
     paddingLeft: 16,
@@ -563,7 +582,7 @@ const styles = StyleSheet.create({
   },
   promoCard: {
     width: width - 120,
-    backgroundColor: '#2e7ce4',
+    backgroundColor: '#fd7e14',
     borderRadius: 10,
     padding: 15,
     flexDirection: 'row',
@@ -633,6 +652,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 2,
+    color: '#999',
   },
   offersSubtitle: {
     fontSize: 12,
@@ -648,22 +668,22 @@ const styles = StyleSheet.create({
   },
   voucherCardLarge: {
     width: '48%',
-    backgroundColor: '#2e7ce4',
+    backgroundColor: '#fd7e14',
     borderRadius: 10,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#0033a0',
+    borderColor: '#ffb444',
     borderStyle: 'dotted',
     marginRight: 10,
     marginLeft: 45,
   },
   voucherCardSmall: {
     width: '30%',
-    backgroundColor: '#2e7ce4',
+    backgroundColor: '#fd7e14',
     borderRadius: 10,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#0033a0',
+    borderColor: '#ffb444',
     borderStyle: 'dotted',
     marginRight: 50,
   },
@@ -689,7 +709,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   discountText: {
-    color: 'red',
+    color: '#fd7e14',
     fontSize: 10,
     fontWeight: 'bold',
   },
@@ -715,10 +735,10 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   activeNav: {
-    color: '#0033a0',
+    color: '#fd7e14',
   },
   activeNavText: {
-    color: '#0033a0',
+    color: '#fd7e14',
     fontWeight: 'bold',
   },
   carouselIndicator: {
@@ -735,7 +755,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   carouselActiveDot: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#ffb444',
     width: 20, // Dot yang aktif lebih panjang
     borderRadius: 4,
   },

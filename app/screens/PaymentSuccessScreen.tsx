@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#27ae60',
+    backgroundColor: '#fd7e14',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 15,
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   paidStatus: {
     fontSize: 14,
     color: 'white',
-    backgroundColor: '#27ae60',
+    backgroundColor: '#4CD964',
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 5,
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   homeButton: {
-    backgroundColor: '#2e7ce4',
+    backgroundColor: '#fd7e14',
     padding: 15,
     alignItems: 'center',
     marginHorizontal: 20,

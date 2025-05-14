@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import React, {useRef, useState} from 'react';
 import {
@@ -16,11 +17,13 @@ import {
 
 interface VerifyCodeScreenProps {
   navigateToScreen: (screen: string) => void;
+  onLoginSuccess?: () => void;
   route: {params: {email: string}};
 }
 
 const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
   navigateToScreen,
+  onLoginSuccess: _onLoginSuccess,
   route,
 }) => {
   const {email} = route.params;
@@ -88,16 +91,78 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
       );
 
       if (response.data.success === true) {
-        // Tampilkan popup sukses
-        Alert.alert('Sukses', 'Password berhasil diperbarui', [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Langsung arahkan ke login screen setelah OK ditekan
-              navigateToScreen('Login');
+        // Reset password berhasil, sekarang lakukan login otomatis
+        try {
+          // Panggil API login dengan email dan password baru
+          const loginResponse = await axios.post(
+            'https://portal.relabs.id/mobile/login',
+            {
+              identifier: email,
+              password: newPassword,
+              device_name: 'mobile_app',
             },
-          },
-        ]);
+          );
+
+          if (loginResponse.data.status === 'success') {
+            // Simpan token ke AsyncStorage
+            await AsyncStorage.setItem(
+              'userToken',
+              loginResponse.data.data.token,
+            );
+
+            // Simpan data user
+            await AsyncStorage.setItem(
+              'userData',
+              JSON.stringify(loginResponse.data.data.client),
+            );
+
+            // Tampilkan popup sukses
+            Alert.alert('Sukses', 'Password berhasil diperbarui', [
+              {
+                text: 'OK',
+                onPress: () => {
+                  // Panggil onLoginSuccess untuk navigasi ke HomeScreen
+                  if (_onLoginSuccess) {
+                    _onLoginSuccess();
+                  } else {
+                    // Fallback ke login screen jika onLoginSuccess tidak tersedia
+                    navigateToScreen('Login');
+                  }
+                },
+              },
+            ]);
+          } else {
+            // Login gagal, arahkan ke halaman login
+            Alert.alert(
+              'Sukses',
+              'Password berhasil diperbarui. Silakan login dengan password baru Anda.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    navigateToScreen('Login');
+                  },
+                },
+              ],
+            );
+          }
+        } catch (loginError) {
+          // Jika login gagal, tetap tampilkan pesan sukses reset password
+          Alert.alert(
+            'Sukses',
+            'Password berhasil diperbarui. Silakan login dengan password baru Anda.',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  navigateToScreen('Login');
+                },
+              },
+            ],
+          );
+        } finally {
+          setIsLoading(false);
+        }
       } else {
         Alert.alert('Error', response.data.message || 'Gagal mereset password');
       }
@@ -264,14 +329,14 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#18181b',
+    backgroundColor: '#f6f9ff',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   card: {
     width: '100%',
-    backgroundColor: '#18181b',
+    backgroundColor: '#fff',
     borderRadius: 15,
     padding: 25,
     alignItems: 'center',
@@ -284,7 +349,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#22325a',
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -307,7 +372,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#a0aec0',
     textAlign: 'center',
     fontSize: 20,
-    color: '#fff',
+    color: '#000',
   },
   resendContainer: {
     flexDirection: 'row',
@@ -318,12 +383,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   resendText2: {
-    color: '#06b6d4',
+    color: '#ffb444',
     fontSize: 14,
   },
   label: {
     alignSelf: 'flex-start',
-    color: '#fff',
+    color: '#22325a',
     fontWeight: '600',
     marginBottom: 8,
     fontSize: 15,
@@ -332,8 +397,8 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    // backgroundColor: '#262626',
-    borderRadius: 8,
+    backgroundColor: '#eaf2ff',
+    borderRadius: 10,
     marginBottom: 16,
   },
   passwordInput: {
@@ -341,18 +406,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: Platform.OS === 'ios' ? 14 : 10,
     fontSize: 16,
-    color: '#fff',
+    color: '#000',
   },
   eyeButton: {
     padding: 10,
   },
   eyeText: {
-    color: '#06b6d4',
+    color: '#ffb444',
     fontSize: 14,
     fontWeight: '500',
   },
   submitButton: {
-    backgroundColor: '#06b6d4',
+    backgroundColor: '#ffb444',
     borderRadius: 8,
     paddingVertical: 13,
     alignItems: 'center',

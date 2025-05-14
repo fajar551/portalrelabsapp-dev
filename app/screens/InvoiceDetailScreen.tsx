@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     flexDirection: 'row',
     paddingVertical: 15,
     paddingHorizontal: 15,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backButton: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   activeInvoiceTab: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
   },
   invoiceTabText: {
     color: '#333',
@@ -502,12 +502,13 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
     fontWeight: '500',
+    color: '#999',
   },
   detailTotal: {
     flex: 1,
     textAlign: 'right',
     fontWeight: 'bold',
-    color: '#0033a0',
+    color: '#fd7e14',
     fontSize: 16,
   },
   invoiceItems: {
@@ -529,6 +530,7 @@ const styles = StyleSheet.create({
   },
   itemDescription: {
     fontSize: 14,
+    color: '#999',
     marginBottom: 10,
   },
   itemAmountRow: {
@@ -577,7 +579,7 @@ const styles = StyleSheet.create({
   },
   hostingDomain: {
     fontSize: 14,
-    color: '#0033a0',
+    color: '#fd7e14',
     marginBottom: 10,
   },
   hostingDetails: {
@@ -598,7 +600,7 @@ const styles = StyleSheet.create({
     color: 'red',
   },
   payButton: {
-    backgroundColor: '#0033a0',
+    backgroundColor: '#fd7e14',
     paddingVertical: 15,
     alignItems: 'center',
     borderRadius: 8,
@@ -631,10 +633,10 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   activeNav: {
-    color: '#0033a0',
+    color: '#fd7e14',
   },
   activeNavText: {
-    color: '#0033a0',
+    color: '#fd7e14',
     fontWeight: 'bold',
   },
 });
