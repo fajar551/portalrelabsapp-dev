@@ -42,6 +42,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // State untuk popup
+  const [showPassword, setShowPassword] = useState(false); // State untuk menampilkan/menyembunyikan password
 
   // Memeriksa dan mengambil data yang tersimpan saat komponen dimuat
   useEffect(() => {
@@ -209,18 +210,23 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             />
 
             <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#b0c4de"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
-
-            {/* <TouchableOpacity onPress={() => setShowForgotPasswordModal(true)}>
-              <Text style={styles.forgot}>Forgot Password?</Text>
-            </TouchableOpacity> */}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Password"
+                placeholderTextColor="#b0c4de"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeButton}>
+                <Text style={styles.eyeText}>
+                  {showPassword ? 'Tutup' : 'Lihat'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               onPress={() => navigateToScreen('ForgotPassword')}>
@@ -352,6 +358,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 6,
     color: '#22325a',
+  },
+  passwordContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eaf2ff',
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
+    fontSize: 16,
+    color: '#22325a',
+  },
+  eyeButton: {
+    padding: 10,
+  },
+  eyeText: {
+    color: '#ffb444',
+    fontSize: 14,
+    fontWeight: '500',
   },
   forgot: {
     color: '#b0c4de',

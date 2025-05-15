@@ -13,8 +13,10 @@ import {getDetailedClientInvoices} from '../../src/services/api';
 
 const InvoiceDetailScreen = ({
   navigateTo,
+  onLogout,
 }: {
   navigateTo: (screen: string) => void;
+  onLogout: () => void;
 }) => {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -82,13 +84,35 @@ const InvoiceDetailScreen = ({
 
   // Render error state
   if (error) {
+    // Cek apakah error terkait dengan token atau autentikasi
+    const isAuthError =
+      error.includes('Token tidak ditemukan') ||
+      error.includes('Gagal mengambil data') ||
+      error.includes('token expired') ||
+      error.includes('token invalid') ||
+      error.includes('unauthorized') ||
+      error.includes('Unauthorized') ||
+      error.includes('Silakan login kembali') ||
+      error.includes('Token tidak valid') ||
+      error.includes('kadaluarsa');
+
     return (
       <SafeAreaView style={[styles.root, styles.centerContainer]}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity
           style={styles.retryButton}
-          onPress={fetchInvoiceDetails}>
-          <Text style={styles.retryButtonText}>Coba Lagi</Text>
+          onPress={() => {
+            if (isAuthError) {
+              // Jika error terkait autentikasi, jalankan fungsi logout
+              onLogout();
+            } else {
+              // Jika bukan error autentikasi, coba muat ulang data
+              fetchInvoiceDetails();
+            }
+          }}>
+          <Text style={styles.retryButtonText}>
+            {isAuthError ? 'Kembali ke Login' : 'Coba Lagi'}
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     );

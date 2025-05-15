@@ -19,6 +19,9 @@ const STORAGE_KEYS = {
   USER_PASSWORD: 'user_password',
   AUTH_TOKEN: 'auth_token', // Untuk menyimpan token autentikasi
   CLIENT_ID: 'client_id',
+  USER_TOKEN: 'userToken',
+  TOKEN_EXPIRES_AT: 'tokenExpiresAt',
+  USER_DATA: 'userData',
 };
 
 // Definisi SessionManager untuk mengelola token
@@ -26,6 +29,7 @@ const SessionManager = {
   async clearToken() {
     try {
       await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      await AsyncStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
       return true;
     } catch (error) {
       console.error('Error clearing token:', error);
@@ -36,6 +40,7 @@ const SessionManager = {
   async setToken(token: string) {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_TOKEN, token);
       return true;
     } catch (error) {
       console.error('Error setting token:', error);
@@ -45,6 +50,10 @@ const SessionManager = {
 
   async getToken() {
     try {
+      // Prioritaskan USER_TOKEN untuk kompatibilitas dengan api.js
+      const userToken = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
+      if (userToken) { return userToken; }
+
       return await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     } catch (error) {
       console.error('Error getting token:', error);
@@ -64,15 +73,22 @@ export const checkLoginStatus = async (): Promise<boolean> => {
   }
 };
 
-// Fungsi untuk memeriksa apakah token sudah expired
+// Fungsi untuk memeriksa apakah token sudah kedaluwarsa
 export const isTokenExpired = async (): Promise<boolean> => {
   try {
     const token = await SessionManager.getToken();
     if (!token) { return true; } // Jika token tidak ada, anggap expired
 
-    // Di sini biasanya ada logika untuk decode token JWT dan memeriksa waktu expiry
-    // Untuk sementara, kita return false (token tidak expired)
-    return false;
+    // Periksa expiresAt seperti pada api.js
+    const expiresAtString = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
+    if (!expiresAtString) {
+      return true; // Jika tidak ada expires_at, anggap sudah expired
+    }
+
+    const expiresAt = new Date(expiresAtString);
+    const now = new Date();
+
+    return now >= expiresAt;
   } catch (error) {
     console.error('Error checking token expiration:', error);
     return true; // Jika ada error, anggap token expired
@@ -80,25 +96,44 @@ export const isTokenExpired = async (): Promise<boolean> => {
 };
 
 // Fungsi untuk login
-export const loginUser = async (identifier: string, password: string) => {
+export const loginUser = async (identifier: string, password: string, device_name: string = 'mobile_app') => {
   try {
+    console.log('Login dengan API Laravel:', `${CONFIG.API_URL}/mobile/login`);
+
     // Implementasi login sederhana
-    const response = await fetch('https://portal.relabs.id/mobile/login', {
+    const response = await fetch(`${CONFIG.API_URL}/mobile/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
         identifier,
         password,
+        device_name,
       }),
     });
 
     const data = await response.json();
 
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal melakukan login');
+    }
+
+    // Jika login berhasil, simpan token dan expires_at di AsyncStorage
     if (data.status === 'success' && data.data?.token) {
       // Simpan token ke SessionManager
       await SessionManager.setToken(data.data.token);
+
+      // Simpan waktu kedaluwarsa token seperti pada api.js
+      if (data.data?.expires_at) {
+        await AsyncStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRES_AT, data.data.expires_at);
+      }
+
+      // Simpan juga data client
+      if (data.data?.client) {
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.data.client));
+      }
     }
 
     return data;
@@ -109,7 +144,7 @@ export const loginUser = async (identifier: string, password: string) => {
 };
 
 // Tambahkan fungsi untuk logout yang juga membersihkan token yang disimpan
-export const logoutUser = async () => {
+export const logoutUser = async (): Promise<boolean> => {
   try {
     // Clear token dari SessionManager
     await SessionManager.clearToken();
@@ -122,9 +157,14 @@ export const logoutUser = async () => {
       await AsyncStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
     }
 
-    // Selalu hapus token autentikasi
-    await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-    await AsyncStorage.removeItem(STORAGE_KEYS.CLIENT_ID);
+    // Hapus token dan data user seperti pada api.js
+    await AsyncStorage.multiRemove([
+      STORAGE_KEYS.AUTH_TOKEN,
+      STORAGE_KEYS.CLIENT_ID,
+      STORAGE_KEYS.USER_TOKEN,
+      STORAGE_KEYS.USER_DATA,
+      STORAGE_KEYS.TOKEN_EXPIRES_AT,
+    ]);
 
     return true;
   } catch (error) {
@@ -170,26 +210,28 @@ export const getClientProfile = async () => {
   try {
     const token = await SessionManager.getToken();
     if (!token) {
-      throw new Error('Token tidak ditemukan');
+      throw new Error('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    const response = await fetch('https://portal.relabs.id/mobile/client/profile', {
+    // Request ke API dengan token (gunakan path mobile/client seperti di api.js jika diperlukan)
+    const response = await fetch(`${CONFIG.API_URL}/mobile/client`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     });
 
     const data = await response.json();
 
-    if (data.status === 'success' && data.data?.client) {
-      return data.data.client;
-    } else {
-      throw new Error(data.message || 'Gagal memuat data profil');
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal mengambil data profil');
     }
+
+    return data.data.client;
   } catch (error) {
-    console.error('Error fetching profile:', error);
+    console.error('Error saat mengambil profil client:', error);
     throw error;
   }
 };
@@ -197,8 +239,8 @@ export const getClientProfile = async () => {
 // Ambil semua invoice untuk client yang login
 export const getClientInvoices = async () => {
   try {
-    // Ambil token dari AsyncStorage
-    const token = await AsyncStorage.getItem('userToken');
+    // Gunakan SessionManager.getToken() untuk konsistensi
+    const token = await SessionManager.getToken();
 
     if (!token) {
       throw new Error('Token tidak ditemukan. Silakan login kembali.');
@@ -230,8 +272,8 @@ export const getClientInvoices = async () => {
 // Ambil detail invoice berdasarkan ID
 export const getInvoiceById = async (invoiceId: any) => {
   try {
-    // Ambil token dari AsyncStorage
-    const token = await AsyncStorage.getItem('userToken');
+    // Gunakan SessionManager.getToken() untuk konsistensi
+    const token = await SessionManager.getToken();
 
     if (!token) {
       throw new Error('Token tidak ditemukan. Silakan login kembali.');
@@ -263,8 +305,8 @@ export const getInvoiceById = async (invoiceId: any) => {
 // Ambil detail invoice lengkap beserta hosting dan produk terkait
 export const getDetailedClientInvoices = async () => {
   try {
-    // Ambil token dari AsyncStorage
-    const token = await AsyncStorage.getItem('userToken');
+    // Gunakan SessionManager.getToken() untuk konsistensi
+    const token = await SessionManager.getToken();
 
     if (!token) {
       throw new Error('Token tidak ditemukan. Silakan login kembali.');
@@ -302,7 +344,7 @@ export const getBillingPeriod = async () => {
       throw new Error('Token tidak ditemukan');
     }
 
-    const response = await fetch('https://portal.relabs.id/mobile/billing/period', {
+    const response = await fetch(`${CONFIG.API_URL}/mobile/billing/period`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

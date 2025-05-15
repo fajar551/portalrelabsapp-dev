@@ -19,10 +19,10 @@ import {getClientInvoices} from '../../src/services/api';
 
 const PayScreen = ({
   navigateTo,
-}: // onLogout,
-{
+  onLogout,
+}: {
   navigateTo: (screen: string) => void;
-  // onLogout: () => void;
+  onLogout: () => void;
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<{
@@ -31,7 +31,8 @@ const PayScreen = ({
     amount: number;
     status: string;
   } | null>(null);
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [daysLeft, setDaysLeft] = useState(0);
   const [_progress, setProgress] = useState(0);
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -50,31 +51,39 @@ const PayScreen = ({
 
   // Fetch invoice data from API
   useEffect(() => {
-    const fetchInvoiceData = async () => {
-      try {
-        const invoices = await getClientInvoices();
-
-        // Get most recent invoice (assuming they are ordered by date)
-        if (invoices && invoices.length > 0) {
-          const latestInvoice = invoices[0];
-
-          // Extract date and duedate from the invoice
-          if (latestInvoice.date && latestInvoice.duedate) {
-            setBillingPeriod({
-              startDate: new Date(latestInvoice.date),
-              dueDate: new Date(latestInvoice.duedate),
-              amount: latestInvoice.total || 234765,
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching invoices:', error);
-        // Keep using default dates if fetch fails
-      }
-    };
-
     fetchInvoiceData();
   }, []);
+
+  // Fungsi untuk mengambil data invoice
+  const fetchInvoiceData = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const invoices = await getClientInvoices();
+
+      // Get most recent invoice (assuming they are ordered by date)
+      if (invoices && invoices.length > 0) {
+        const latestInvoice = invoices[0];
+
+        // Extract date and duedate from the invoice
+        if (latestInvoice.date && latestInvoice.duedate) {
+          setBillingPeriod({
+            startDate: new Date(latestInvoice.date),
+            dueDate: new Date(latestInvoice.duedate),
+            amount: latestInvoice.total || 234765,
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching invoices:', err);
+      setError(
+        err instanceof Error ? err.message : 'Gagal memuat data invoice',
+      );
+      // Keep using default dates if fetch fails
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Menghitung hari tersisa dan progress
   useEffect(() => {
@@ -143,6 +152,42 @@ const PayScreen = ({
     const month = date.toLocaleString('id-ID', {month: 'short'});
     return {day, month};
   };
+
+  // Jika terjadi error, tampilkan pesan dan tombol retry
+  if (error) {
+    // Cek apakah error terkait dengan token atau autentikasi
+    const isAuthError =
+      error.includes('Token tidak ditemukan') ||
+      error.includes('Gagal mengambil data') ||
+      error.includes('token expired') ||
+      error.includes('token invalid') ||
+      error.includes('unauthorized') ||
+      error.includes('Unauthorized') ||
+      error.includes('Silakan login kembali') ||
+      error.includes('Token tidak valid') ||
+      error.includes('kadaluarsa');
+
+    return (
+      <SafeAreaView style={[styles.root, styles.centerContainer]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            if (isAuthError) {
+              // Jika error terkait autentikasi, jalankan fungsi logout
+              onLogout();
+            } else {
+              // Jika bukan error autentikasi, coba muat ulang data
+              fetchInvoiceData();
+            }
+          }}>
+          <Text style={styles.retryButtonText}>
+            {isAuthError ? 'Kembali ke Login' : 'Coba Lagi'}
+          </Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>
@@ -469,6 +514,12 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   header: {
     backgroundColor: '#fd7e14',
@@ -929,6 +980,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#fd7e14',
     position: 'absolute',
     left: 0, // Akan diposisikan oleh Animated, menggantikan static value
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#fd7e14',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 

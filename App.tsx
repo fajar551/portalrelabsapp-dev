@@ -246,7 +246,12 @@ export default function App() {
               case 'PaymentSuccess':
                 return <PaymentSuccessScreen navigateTo={navigateToScreen} />;
               case 'InvoiceDetail':
-                return <InvoiceDetailScreen navigateTo={navigateToScreen} />;
+                return (
+                  <InvoiceDetailScreen
+                    navigateTo={navigateToScreen}
+                    onLogout={handleLogout}
+                  />
+                );
               default:
                 console.log('Default case triggered, showing Home');
                 return <HomeScreen {...screenProps} />;

@@ -53,27 +53,48 @@ const AccountScreen = ({
   }
 
   if (error) {
+    // Cek apakah error terkait dengan token atau autentikasi
+    const isAuthError =
+      error.includes('Token tidak ditemukan') ||
+      error.includes('Gagal mengambil data profil') ||
+      error.includes('token expired') ||
+      error.includes('token invalid') ||
+      error.includes('unauthorized') ||
+      error.includes('Unauthorized') ||
+      error.includes('Silakan login kembali') ||
+      error.includes('Token tidak valid') ||
+      error.includes('kadaluarsa');
+
     return (
       <View style={[styles.root, styles.errorContainer]}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity
           style={styles.retryButton}
           onPress={() => {
-            setLoading(true);
-            setError('');
-            getClientProfile()
-              .then((profile: any) => {
-                setClientData(profile);
-                setLoading(false);
-              })
-              .catch((err: any) => {
-                setError(
-                  err instanceof Error ? err.message : 'Gagal memuat profil',
-                );
-                setLoading(false);
-              });
+            // Jika error terkait autentikasi, arahkan ke halaman login
+            if (isAuthError) {
+              // Panggil fungsi onLogout untuk melakukan proses logout yang lengkap
+              onLogout();
+            } else {
+              // Jika bukan error autentikasi, coba lagi seperti biasa
+              setLoading(true);
+              setError('');
+              getClientProfile()
+                .then((profile: any) => {
+                  setClientData(profile);
+                  setLoading(false);
+                })
+                .catch((err: any) => {
+                  setError(
+                    err instanceof Error ? err.message : 'Gagal memuat profil',
+                  );
+                  setLoading(false);
+                });
+            }
           }}>
-          <Text style={styles.retryButtonText}>Coba Lagi</Text>
+          <Text style={styles.retryButtonText}>
+            {isAuthError ? 'Kembali ke Login' : 'Coba Lagi'}
+          </Text>
         </TouchableOpacity>
       </View>
     );
