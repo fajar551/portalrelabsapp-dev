@@ -335,6 +335,36 @@ export const getDetailedClientInvoices = async () => {
   }
 };
 
+// Ambil history pembayaran
+export const getPaymentHistory = async () => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login kembali.');
+    }
+
+    // Request ke API dengan token
+    const response = await fetch(`${CONFIG.API_URL}/mobile/payment-history`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal mengambil riwayat pembayaran');
+    }
+
+    return data.data.payments;
+  } catch (error) {
+    console.error('Error saat mengambil riwayat pembayaran:', error);
+    throw error;
+  }
+};
 
 // Fungsi untuk mendapatkan data periode pembayaran
 export const getBillingPeriod = async () => {
@@ -376,5 +406,44 @@ export const getBillingPeriod = async () => {
       dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
       amount: 234765,
     };
+  }
+};
+
+// Fungsi untuk mendapatkan detail invoice
+export const getInvoiceDetails = async (invoiceId: any) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login kembali.');
+    }
+
+    // Request ke API dengan token
+    const response = await fetch(`${CONFIG.API_URL}/mobile/invoice-details/${invoiceId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal mengambil detail invoice');
+    }
+
+    // Return data detail invoice termasuk items, charges, taxes, dll
+    return {
+      ...data.data.invoice,
+      details: data.data.details || [],
+      charges: data.data.charges || [],
+      taxes: data.data.taxes || [],
+      monthly_charges: data.data.monthly_charges || [],
+      prorated_charges: data.data.prorated_charges || [],
+    };
+  } catch (error) {
+    console.error('Error saat mengambil detail invoice:', error);
+    throw error;
   }
 };

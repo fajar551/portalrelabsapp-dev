@@ -12,7 +12,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {getClientInvoices} from '../../src/services/api';
+import {
+  getClientInvoices,
+  getInvoiceDetails,
+  getPaymentHistory,
+} from '../../src/services/api';
 
 // Mendapatkan lebar layar untuk kalkulasi
 // const {width} = Dimensions.get('window');
@@ -26,12 +30,37 @@ const PayScreen = ({
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<{
+    id?: number;
+    invoicenum?: string;
     month: string;
     year: number;
     amount: number;
     status: string;
+    datepaid?: string;
+    paymentmethod?: string;
+    details?: Array<{
+      description: string;
+      amount: number;
+    }>;
+    charges?: Array<{
+      description: string;
+      amount: number;
+    }>;
+    taxes?: Array<{
+      description: string;
+      amount: number;
+    }>;
+    monthly_charges?: Array<{
+      description: string;
+      amount: number;
+    }>;
+    prorated_charges?: Array<{
+      description: string;
+      amount: number;
+    }>;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [error, setError] = useState('');
   const [daysLeft, setDaysLeft] = useState(0);
   const [_progress, setProgress] = useState(0);
@@ -42,12 +71,19 @@ const PayScreen = ({
     amount: 234765,
   });
 
-  // Data pembayaran
-  const paymentHistory = [
-    {month: 'April', year: 2025, amount: 234765, status: 'Paid'},
-    {month: 'March', year: 2025, amount: 234765, status: 'Paid'},
-    {month: 'February', year: 2025, amount: 234765, status: 'Paid'},
-  ];
+  // Data pembayaran dari API
+  const [paymentHistory, setPaymentHistory] = useState<
+    Array<{
+      id?: number;
+      invoicenum?: string;
+      month: string;
+      year: number;
+      amount: number;
+      status: string;
+      datepaid?: string;
+      paymentmethod?: string;
+    }>
+  >([]);
 
   // Fetch invoice data from API
   useEffect(() => {
@@ -59,26 +95,56 @@ const PayScreen = ({
     setIsLoading(true);
     setError('');
     try {
+      // Mengambil data invoice untuk billing period
       const invoices = await getClientInvoices();
 
-      // Get most recent invoice (assuming they are ordered by date)
-      if (invoices && invoices.length > 0) {
-        const latestInvoice = invoices[0];
+      // Filter untuk mendapatkan invoice yang belum dibayar (Unpaid)
+      const unpaidInvoices = invoices.filter(
+        (invoice: any) =>
+          invoice.status === 'Unpaid' || invoice.status === 'Belum Dibayar',
+      );
+
+      // Get most recent unpaid invoice
+      if (unpaidInvoices && unpaidInvoices.length > 0) {
+        const latestUnpaidInvoice = unpaidInvoices[0]; // Ambil yang paling baru
 
         // Extract date and duedate from the invoice
+        if (latestUnpaidInvoice.date && latestUnpaidInvoice.duedate) {
+          setBillingPeriod({
+            startDate: new Date(latestUnpaidInvoice.date),
+            dueDate: new Date(latestUnpaidInvoice.duedate),
+            amount: latestUnpaidInvoice.total || 234765,
+          });
+        }
+      } else if (invoices && invoices.length > 0) {
+        // Jika tidak ada unpaid invoice, gunakan invoice paling baru sebagai fallback
+        // tetapi tandai bahwa tidak ada yang perlu dibayar
+        const latestInvoice = invoices[0];
+
         if (latestInvoice.date && latestInvoice.duedate) {
           setBillingPeriod({
             startDate: new Date(latestInvoice.date),
             dueDate: new Date(latestInvoice.duedate),
-            amount: latestInvoice.total || 234765,
+            amount: 0, // Tandai tidak ada yang perlu dibayar
           });
         }
       }
+
+      // Mengambil data riwayat pembayaran
+      const payments = await getPaymentHistory();
+      if (payments && payments.length > 0) {
+        setPaymentHistory(payments);
+      } else {
+        // Fallback ke data default jika tidak ada data
+        setPaymentHistory([
+          {month: 'April', year: 2025, amount: 234765, status: 'Paid'},
+          {month: 'March', year: 2025, amount: 234765, status: 'Paid'},
+          {month: 'February', year: 2025, amount: 234765, status: 'Paid'},
+        ]);
+      }
     } catch (err) {
-      console.error('Error fetching invoices:', err);
-      setError(
-        err instanceof Error ? err.message : 'Gagal memuat data invoice',
-      );
+      console.error('Error fetching data:', err);
+      setError(err instanceof Error ? err.message : 'Gagal memuat data');
       // Keep using default dates if fetch fails
     } finally {
       setIsLoading(false);
@@ -111,7 +177,8 @@ const PayScreen = ({
       const left = Math.max(0, totalDays - elapsed);
       setDaysLeft(left);
 
-      // Kalkulasi progres (0-1)
+      // Kalkulasi progres (0-1) - DIUBAH: semakin sedikit hari tersisa, semakin tinggi progress
+      // Gunakan rasio hari yang telah berlalu dibanding total hari
       const calculatedProgress = Math.min(1, Math.max(0, elapsed / totalDays));
       setProgress(calculatedProgress);
 
@@ -130,15 +197,50 @@ const PayScreen = ({
     return () => clearInterval(interval);
   }, [progressAnim, billingPeriod]);
 
+  // Fungsi untuk menentukan warna progress bar berdasarkan progress
+  const getProgressBarColor = () => {
+    if (_progress < 0.7) {
+      return '#4CD964'; // Hijau untuk progress rendah (masih banyak waktu)
+    } else if (_progress < 0.9) {
+      return '#FFCC00'; // Kuning untuk progress sedang
+    } else {
+      return '#FF3B30'; // Merah untuk progress tinggi (waktu hampir habis)
+    }
+  };
+
   // Fungsi untuk menampilkan modal detail pembayaran
-  const showPaymentDetail = (payment: {
+  const showPaymentDetail = async (payment: {
+    id?: number;
+    invoicenum?: string;
     month: string;
     year: number;
     amount: number;
     status: string;
+    datepaid?: string;
+    paymentmethod?: string;
   }) => {
     setSelectedPayment(payment);
     setModalVisible(true);
+    setIsDetailLoading(true);
+
+    try {
+      // Memanggil API untuk mendapatkan detail invoice
+      if (payment.id || payment.invoicenum) {
+        const invoiceDetails = await getInvoiceDetails(
+          payment.id || payment.invoicenum,
+        );
+        if (invoiceDetails) {
+          setSelectedPayment(prev => ({
+            ...prev,
+            ...invoiceDetails,
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching invoice details:', err);
+    } finally {
+      setIsDetailLoading(false);
+    }
   };
 
   // Fungsi untuk menangani klik tombol detail invoice
@@ -202,81 +304,99 @@ const PayScreen = ({
       </View>
 
       <ScrollView style={styles.scrollView}>
-        {/* Due Date Period */}
-        <View style={styles.dueCardContainer}>
-          <View style={styles.dueCard}>
-            <View style={styles.dueCardHeader}>
-              <Text style={styles.dueCardTitle}>Periode Jatuh Tempo</Text>
-              <View style={styles.amountContainer}>
-                <Text style={styles.amountLabel}>Total Tagihan</Text>
-                <Text style={styles.amountValue}>
-                  Rp {billingPeriod.amount.toLocaleString('id-ID')}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.periodProgressContainer}>
-              <View style={styles.dateColumn}>
-                <Text style={styles.dateValue}>
-                  {formatDate(billingPeriod.startDate).day}
-                </Text>
-                <Text style={styles.dateMonth}>
-                  {formatDate(billingPeriod.startDate).month}
-                </Text>
+        {/* Due Date Period - hanya tampilkan jika ada tagihan yang belum dibayar */}
+        {billingPeriod.amount > 0 && (
+          <View style={styles.dueCardContainer}>
+            <View style={styles.dueCard}>
+              <View style={styles.dueCardHeader}>
+                <Text style={styles.dueCardTitle}>Periode Jatuh Tempo</Text>
+                <View style={styles.amountContainer}>
+                  <Text style={styles.amountLabel}>Total Tagihan</Text>
+                  <Text style={styles.amountValue}>
+                    Rp {billingPeriod.amount.toLocaleString('id-ID')}
+                  </Text>
+                </View>
               </View>
 
-              <View style={styles.progressBarWrapper}>
-                <View style={styles.progressBarContainer}>
-                  <Animated.View
-                    style={[
-                      styles.progressBar,
-                      {
-                        width: progressAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0%', '100%'],
-                        }),
-                      },
-                    ]}
-                  />
+              <View style={styles.periodProgressContainer}>
+                <View style={styles.dateColumn}>
+                  <Text style={styles.dateValue}>
+                    {formatDate(billingPeriod.startDate).day}
+                  </Text>
+                  <Text style={styles.dateMonth}>
+                    {formatDate(billingPeriod.startDate).month}
+                  </Text>
                 </View>
 
-                <View style={styles.progressLineContainer}>
-                  <View style={styles.progressLineBg}>
+                <View style={styles.progressBarWrapper}>
+                  <View style={styles.progressBarContainer}>
                     <Animated.View
                       style={[
-                        styles.progressLine,
+                        styles.progressBar,
                         {
                           width: progressAnim.interpolate({
                             inputRange: [0, 1],
                             outputRange: ['0%', '100%'],
                           }),
+                          backgroundColor: getProgressBarColor(),
                         },
                       ]}
                     />
                   </View>
-                  <View style={styles.progressDot} />
+
+                  <View style={styles.progressLineContainer}>
+                    <View style={styles.progressLineBg}>
+                      <Animated.View
+                        style={[
+                          styles.progressLine,
+                          {
+                            width: progressAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: ['0%', '100%'],
+                            }),
+                            backgroundColor: getProgressBarColor(),
+                          },
+                        ]}
+                      />
+                    </View>
+                    <Animated.View
+                      style={[
+                        styles.progressDot,
+                        {
+                          left: progressAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['0%', '100%'],
+                          }),
+                          transform: [{translateX: -4}], // Menggeser dot agar berada di tengah progress bar (lebar dot = 8px)
+                          backgroundColor: getProgressBarColor(),
+                        },
+                      ]}
+                    />
+                  </View>
+
+                  <Text style={styles.progressText}>
+                    {daysLeft} Hari Tersisa
+                  </Text>
                 </View>
 
-                <Text style={styles.progressText}>{daysLeft} Hari Tersisa</Text>
+                <View style={styles.dateColumn}>
+                  <Text style={styles.dateValue}>
+                    {formatDate(billingPeriod.dueDate).day}
+                  </Text>
+                  <Text style={styles.dateMonth}>
+                    {formatDate(billingPeriod.dueDate).month}
+                  </Text>
+                </View>
               </View>
 
-              <View style={styles.dateColumn}>
-                <Text style={styles.dateValue}>
-                  {formatDate(billingPeriod.dueDate).day}
-                </Text>
-                <Text style={styles.dateMonth}>
-                  {formatDate(billingPeriod.dueDate).month}
-                </Text>
+              <View style={styles.dueCardFooter}>
+                <TouchableOpacity style={styles.duePayButton}>
+                  <Text style={styles.duePayButtonText}>Bayar Sekarang</Text>
+                </TouchableOpacity>
               </View>
-            </View>
-
-            <View style={styles.dueCardFooter}>
-              <TouchableOpacity style={styles.duePayButton}>
-                <Text style={styles.duePayButtonText}>Bayar Sekarang</Text>
-              </TouchableOpacity>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Payment Status */}
         <View style={styles.paymentStatusContainer}>
@@ -284,7 +404,9 @@ const PayScreen = ({
             <Text style={styles.checkIcon}>✓</Text>
           </View>
           <Text style={styles.paymentStatusText}>
-            Payment has been received
+            {billingPeriod.amount > 0
+              ? 'Pembayaran terakhir telah diterima'
+              : 'Semua tagihan telah dibayar'}
           </Text>
         </View>
 
@@ -387,122 +509,153 @@ const PayScreen = ({
               <Text style={styles.modalTitle}>Successful Payment</Text>
             </View>
 
-            <View style={styles.paymentDetailCard}>
-              <View style={styles.paymentPeriodHeader}>
-                <Text style={styles.paymentPeriodTitle}>
-                  {selectedPayment?.month} {selectedPayment?.year}
+            {isDetailLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#fd7e14" />
+                <Text style={styles.loadingText}>
+                  Memuat detail pembayaran...
                 </Text>
-                <View style={styles.totalBillContainer}>
-                  <Text style={styles.totalBillLabel}>Total Bill</Text>
-                  <Text style={styles.totalBillAmount}>
-                    Rp {selectedPayment?.amount.toLocaleString('id-ID')}
-                  </Text>
-                </View>
-                <View style={styles.paidStatusContainer}>
-                  <Text style={styles.paidStatusText}>Paid</Text>
-                </View>
               </View>
-
-              <View style={styles.billingDetailContainer}>
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>
-                    Billing Statement Date
+            ) : (
+              <View style={styles.paymentDetailCard}>
+                <View style={styles.paymentPeriodHeader}>
+                  <Text style={styles.paymentPeriodTitle}>
+                    {selectedPayment?.invoicenum
+                      ? `Invoice #${selectedPayment?.invoicenum}`
+                      : `${selectedPayment?.month} ${selectedPayment?.year}`}
                   </Text>
-                  <Text style={styles.billingDetailValue}>07 Apr 2025</Text>
+                  <View style={styles.totalBillContainer}>
+                    <Text style={styles.totalBillLabel}>Total Bill</Text>
+                    <Text style={styles.totalBillAmount}>
+                      Rp {selectedPayment?.amount.toLocaleString('id-ID')}
+                    </Text>
+                  </View>
+                  <View style={styles.paidStatusContainer}>
+                    <Text style={styles.paidStatusText}>Paid</Text>
+                  </View>
                 </View>
 
-                <Text style={styles.billingDetailHeader}>Rincian Tagihan</Text>
+                <View style={styles.billingDetailContainer}>
+                  <View style={styles.billingDetailRow}>
+                    <Text style={styles.billingDetailLabel2}>
+                      Billing Statement Date
+                    </Text>
+                    <Text style={styles.billingDetailValue}>
+                      {selectedPayment?.datepaid
+                        ? new Date(selectedPayment.datepaid).toLocaleDateString(
+                            'id-ID',
+                            {day: '2-digit', month: 'short', year: 'numeric'},
+                          )
+                        : ''}
+                    </Text>
+                  </View>
 
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>
-                    PREVIOUS BALANCE
+                  <Text style={styles.billingDetailHeader}>
+                    Rincian Tagihan
                   </Text>
-                  <Text style={styles.billingDetailValue}>
-                    Rp {selectedPayment?.amount.toLocaleString('id-ID')}
-                  </Text>
+
+                  <View style={styles.billingDetailRow}>
+                    <Text style={styles.billingDetailLabel}>
+                      PREVIOUS BALANCE
+                    </Text>
+                    <Text style={styles.billingDetailValue}>
+                      Rp {selectedPayment?.amount.toLocaleString('id-ID')}
+                    </Text>
+                  </View>
+
+                  <View style={styles.billingDetailRow}>
+                    <Text style={styles.billingDetailLabel}>
+                      Total Paid
+                    </Text>
+                    <Text style={styles.billingDetailValueNegative}>
+                      -Rp {selectedPayment?.amount.toLocaleString('id-ID')}
+                    </Text>
+                  </View>
+
+                  <View style={styles.billingDetailRow}>
+                    <Text style={styles.billingDetailLabel}>
+                      Payment Method
+                    </Text>
+                    <Text style={styles.billingDetailValue}>
+                      {selectedPayment?.paymentmethod || ''}
+                    </Text>
+                  </View>
+
+                  {/* Biaya dan Charges dinamis dari API */}
+                  {selectedPayment?.charges?.map((charge, index) => (
+                    <View
+                      key={`charge-${index}`}
+                      style={styles.billingDetailRow}>
+                      <Text style={styles.billingDetailLabel}>
+                        {charge.description}
+                      </Text>
+                      <Text style={styles.billingDetailValue}>
+                        Rp {charge.amount.toLocaleString('id-ID')}
+                      </Text>
+                    </View>
+                  ))}
+
+                  {/* Pajak dinamis dari API */}
+                  {selectedPayment?.taxes?.map((tax, index) => (
+                    <View key={`tax-${index}`} style={styles.billingDetailRow}>
+                      <Text style={styles.billingDetailLabel}>
+                        Tax{tax.description ? ` - ${tax.description}` : ''}
+                      </Text>
+                      <Text style={styles.billingDetailValue}>
+                        Rp {tax.amount.toLocaleString('id-ID')}
+                      </Text>
+                    </View>
+                  ))}
+
+                  {/* Monthly charges dinamis dari API */}
+                  {selectedPayment?.monthly_charges?.map((item, index) => (
+                    <View
+                      key={`monthly-${index}`}
+                      style={styles.billingDetailRow}>
+                      <Text style={styles.billingDetailLabel2}>
+                        {item.description}
+                      </Text>
+                      <Text style={styles.billingDetailValue}>
+                        Rp {item.amount.toLocaleString('id-ID')}
+                      </Text>
+                    </View>
+                  ))}
+
+                  {selectedPayment?.prorated_charges &&
+                    selectedPayment.prorated_charges.length > 0 && (
+                      <View style={styles.billingDetailRow}>
+                        <Text style={styles.billingDetailSectionHeader}>
+                          *PRORATED BILLING AMOUNT*
+                        </Text>
+                        <Text style={styles.billingDetailValue}>
+                          Rp{' '}
+                          {selectedPayment.prorated_charges
+                            .reduce((total, item) => total + item.amount, 0)
+                            .toLocaleString('id-ID')}
+                        </Text>
+                      </View>
+                    )}
+
+                  {/* Prorated charges dinamis dari API */}
+                  {selectedPayment?.prorated_charges?.map((item, index) => (
+                    <View
+                      key={`prorated-${index}`}
+                      style={styles.billingDetailRow}>
+                      <Text style={styles.billingDetailLabel}>
+                        {item.description}
+                      </Text>
+                      <Text style={styles.billingDetailValue}>
+                        Rp {item.amount.toLocaleString('id-ID')}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
 
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>
-                    Payment - Thank you
-                  </Text>
-                  <Text style={styles.billingDetailValueNegative}>
-                    -Rp {selectedPayment?.amount.toLocaleString('id-ID')}
-                  </Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>Payment Charges</Text>
-                  <Text style={styles.billingDetailValue}>Rp 5.000</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>Tax</Text>
-                  <Text style={styles.billingDetailValue}>Rp 550</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailSectionHeader}>
-                    *MONTHLY CHARGES*
-                  </Text>
-                  <Text style={styles.billingDetailValue}>Rp 0</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>
-                    FN JOY_VALUE SPC 50 12M
-                  </Text>
-                  <Text style={styles.billingDetailValue}>Rp 41.800</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>
-                    HC JOY_VALUE SPC 50 12M
-                  </Text>
-                  <Text style={styles.billingDetailValue}>Rp 62.700</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>
-                    MODEM 3.0 CHARGE
-                  </Text>
-                  <Text style={styles.billingDetailValue}>Rp 30.000</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>
-                    ROUTER D 3.0 CHARGE
-                  </Text>
-                  <Text style={styles.billingDetailValue}>Rp 20.000</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>STB HD CHARGE</Text>
-                  <Text style={styles.billingDetailValue}>Rp 46.000</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>E-BILLING FEE</Text>
-                  <Text style={styles.billingDetailValue}>Rp 6.000</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailSectionHeader}>
-                    *PRORATED BILLING AMOUNT*
-                  </Text>
-                  <Text style={styles.billingDetailValue}>Rp 0</Text>
-                </View>
-
-                <View style={styles.billingDetailRow}>
-                  <Text style={styles.billingDetailLabel}>Tax</Text>
-                  <Text style={styles.billingDetailValue}>Rp 22.715</Text>
-                </View>
+                <TouchableOpacity style={styles.shareButton} onPress={() => setModalVisible(false)}>
+                  <Text style={styles.shareButtonText}>Back</Text>
+                </TouchableOpacity>
               </View>
-
-              <TouchableOpacity style={styles.shareButton}>
-                <Text style={styles.shareButtonText}>Share</Text>
-              </TouchableOpacity>
-            </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -590,7 +743,6 @@ const styles = StyleSheet.create({
   progressBar: {
     width: '80%',
     height: 12,
-    backgroundColor: '#4CD964',
     borderRadius: 6,
   },
   paymentStatusContainer: {
@@ -714,6 +866,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: '#f5f5f5',
+    marginTop: 180,
   },
   modalHeader: {
     backgroundColor: '#f5f5f5',
@@ -739,6 +892,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
+    marginTop: 35,
   },
   successIcon: {
     fontSize: 40,
@@ -764,7 +918,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#999',
+    color: '#333',
   },
   totalBillContainer: {
     marginTop: 5,
@@ -812,6 +966,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
   },
+  billingDetailLabel2: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    fontWeight: 'bold',
+  },  
   billingDetailValue: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -970,14 +1130,12 @@ const styles = StyleSheet.create({
   },
   progressLine: {
     height: 2,
-    backgroundColor: '#fd7e14',
     borderRadius: 1,
   },
   progressDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#fd7e14',
     position: 'absolute',
     left: 0, // Akan diposisikan oleh Animated, menggantikan static value
   },
@@ -995,6 +1153,17 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
 });
 
