@@ -68,7 +68,7 @@ const PayScreen = ({
   const [billingPeriod, setBillingPeriod] = useState({
     startDate: new Date(),
     dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Default to 14 days from now
-    amount: 234765,
+    amount: 0, // Default 0 yang berarti tidak ada tagihan
   });
 
   // Data pembayaran dari API
@@ -113,7 +113,7 @@ const PayScreen = ({
           setBillingPeriod({
             startDate: new Date(latestUnpaidInvoice.date),
             dueDate: new Date(latestUnpaidInvoice.duedate),
-            amount: latestUnpaidInvoice.total || 234765,
+            amount: latestUnpaidInvoice.total || 0,
           });
         }
       } else if (invoices && invoices.length > 0) {
@@ -128,6 +128,13 @@ const PayScreen = ({
             amount: 0, // Tandai tidak ada yang perlu dibayar
           });
         }
+      } else {
+        // Tidak ada invoice sama sekali
+        setBillingPeriod({
+          startDate: new Date(),
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          amount: 0,
+        });
       }
 
       // Mengambil data riwayat pembayaran
@@ -135,17 +142,14 @@ const PayScreen = ({
       if (payments && payments.length > 0) {
         setPaymentHistory(payments);
       } else {
-        // Fallback ke data default jika tidak ada data
-        setPaymentHistory([
-          {month: 'April', year: 2025, amount: 234765, status: 'Paid'},
-          {month: 'March', year: 2025, amount: 234765, status: 'Paid'},
-          {month: 'February', year: 2025, amount: 234765, status: 'Paid'},
-        ]);
+        // Jangan gunakan fallback data, biarkan array kosong
+        setPaymentHistory([]);
       }
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err instanceof Error ? err.message : 'Gagal memuat data');
-      // Keep using default dates if fetch fails
+      // Jika error, set billing amount ke 0 untuk menunjukkan tidak ada tagihan
+      setBillingPeriod(prev => ({...prev, amount: 0}));
     } finally {
       setIsLoading(false);
     }
@@ -305,7 +309,7 @@ const PayScreen = ({
 
       <ScrollView style={styles.scrollView}>
         {/* Due Date Period - hanya tampilkan jika ada tagihan yang belum dibayar */}
-        {billingPeriod.amount > 0 && (
+        {billingPeriod.amount > 0 ? (
           <View style={styles.dueCardContainer}>
             <View style={styles.dueCard}>
               <View style={styles.dueCardHeader}>
@@ -396,6 +400,12 @@ const PayScreen = ({
               </View>
             </View>
           </View>
+        ) : (
+          <View style={styles.noBillingContainer}>
+            <Text style={styles.noBillingText}>
+              Anda belum mempunyai tagihan
+            </Text>
+          </View>
         )}
 
         {/* Payment Status */}
@@ -415,29 +425,37 @@ const PayScreen = ({
           <Text style={styles.lastPaymentTitle}>Last Payment</Text>
 
           {/* Payment History List */}
-          {paymentHistory.map((payment, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.paymentItem}
-              onPress={() => showPaymentDetail(payment)}>
-              <View style={styles.paymentInfo}>
-                <Text style={styles.paymentPeriod}>
-                  {payment.month} {payment.year}
-                </Text>
-                <View style={styles.paymentStatusBadge}>
-                  <Text style={styles.paymentStatusBadgeText}>
-                    {payment.status}
+          {paymentHistory.length > 0 ? (
+            paymentHistory.map((payment, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.paymentItem}
+                onPress={() => showPaymentDetail(payment)}>
+                <View style={styles.paymentInfo}>
+                  <Text style={styles.paymentPeriod}>
+                    {payment.month} {payment.year}
                   </Text>
+                  <View style={styles.paymentStatusBadge}>
+                    <Text style={styles.paymentStatusBadgeText}>
+                      {payment.status}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.paymentAmount}>
-                <Text style={styles.paymentAmountText}>
-                  Rp {payment.amount.toLocaleString('id-ID')}
-                </Text>
-                <Text style={styles.arrowIcon}>›</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+                <View style={styles.paymentAmount}>
+                  <Text style={styles.paymentAmountText}>
+                    Rp {payment.amount.toLocaleString('id-ID')}
+                  </Text>
+                  <Text style={styles.arrowIcon}>›</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={styles.noPaymentHistoryContainer}>
+              <Text style={styles.noPaymentHistoryText}>
+                Belum ada riwayat pembayaran
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Tambahkan tombol Detail Invoice */}
@@ -564,9 +582,7 @@ const PayScreen = ({
                   </View>
 
                   <View style={styles.billingDetailRow}>
-                    <Text style={styles.billingDetailLabel}>
-                      Total Paid
-                    </Text>
+                    <Text style={styles.billingDetailLabel}>Total Paid</Text>
                     <Text style={styles.billingDetailValueNegative}>
                       -Rp {selectedPayment?.amount.toLocaleString('id-ID')}
                     </Text>
@@ -651,7 +667,9 @@ const PayScreen = ({
                   ))}
                 </View>
 
-                <TouchableOpacity style={styles.shareButton} onPress={() => setModalVisible(false)}>
+                <TouchableOpacity
+                  style={styles.shareButton}
+                  onPress={() => setModalVisible(false)}>
                   <Text style={styles.shareButtonText}>Back</Text>
                 </TouchableOpacity>
               </View>
@@ -971,7 +989,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     fontWeight: 'bold',
-  },  
+  },
   billingDetailValue: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -1164,6 +1182,38 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+  },
+  noBillingContainer: {
+    backgroundColor: '#fff',
+    margin: 15,
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  noBillingText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fd7e14',
+    textAlign: 'center',
+  },
+  noPaymentHistoryContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+  },
+  noPaymentHistoryText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
   },
 });
 
