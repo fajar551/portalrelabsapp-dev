@@ -7,6 +7,7 @@ import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
 import HomeScreen from './app/screens/HomeScreen';
 import InvoiceDetailScreen from './app/screens/InvoiceDetailScreen';
 import LoginScreen from './app/screens/LoginScreen';
+import NotificationScreen from './app/screens/NotificationScreen';
 import PayScreen from './app/screens/PayScreen';
 import PaymentInstructionsScreen from './app/screens/PaymentInstructionsScreen';
 import PaymentSuccessScreen from './app/screens/PaymentSuccessScreen';
@@ -14,6 +15,7 @@ import ResetPasswordScreen from './app/screens/ResetPasswordScreen';
 import SplashScreen from './app/screens/SplashScreen';
 import VerifyCodeScreen from './app/screens/VerifyCodeScreen';
 import {checkLoginStatus, isTokenExpired, logoutUser} from './src/services/api';
+import CashWithdrawalDetailScreen from './app/screens/CashWithdrawalDetailScreen';
 
 // Type untuk props yang diteruskan ke screens
 interface ScreenProps {
@@ -259,8 +261,12 @@ export default function App() {
                 return <AccountScreen {...screenProps} />;
               case 'Pay':
                 return <PayScreen {...screenProps} />;
+              case 'Notification':
+                return <NotificationScreen {...screenProps} />;
               case 'PaymentSuccess':
                 return <PaymentSuccessScreen navigateTo={navigateToScreen} />;
+              case 'CashWithdrawalDetail':
+                return <CashWithdrawalDetailScreen {...screenProps} />;
               case 'InvoiceDetail':
                 return (
                   <InvoiceDetailScreen

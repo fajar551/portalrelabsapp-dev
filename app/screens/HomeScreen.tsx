@@ -374,7 +374,9 @@ const HomeScreen = ({
             <View style={styles.onlineDot} />
             <Text style={styles.onlineText}>Online</Text>
           </View>
-          <TouchableOpacity style={styles.notifIcon}>
+          <TouchableOpacity
+            style={styles.notifIcon}
+            onPress={() => navigateTo('Notification')}>
             <Text style={styles.notifText}>🔔</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.notifIcon2} onPress={onLogout}>
@@ -434,7 +436,7 @@ const HomeScreen = ({
         {/* For You Section */}
         <View style={styles.forYouSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>✨ For You</Text>
+            <Text style={styles.sectionTitle}>✨ Untukmu</Text>
           </View>
 
           {/* Promo Carousel */}
@@ -631,6 +633,7 @@ const HomeScreen = ({
                 <TouchableOpacity
                   style={styles.duePayButton}
                   onPress={handlePayNow}>
+                  {/* onPress={() => navigateTo('Notification')}> */}
                   <Text style={styles.duePayButtonText}>Bayar Sekarang</Text>
                 </TouchableOpacity>
               </View>
@@ -651,12 +654,12 @@ const HomeScreen = ({
           <Text style={[styles.navIcon, styles.activeNav]}>🏠</Text>
           <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity
+        <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigateTo('PaymentSuccess')}>
+          onPress={() => navigateTo('Notification')}>
           <Text style={styles.navIcon}>🛒</Text>
-          <Text style={styles.navText}>Buy</Text>
-        </TouchableOpacity> */}
+          <Text style={styles.navText}>Notification</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
