@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -21,6 +22,7 @@ const InvoiceDetailScreen = ({
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(
     null,
   );
@@ -47,7 +49,13 @@ const InvoiceDetailScreen = ({
       console.error('Error loading invoice details:', err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchInvoiceDetails();
   };
 
   const getSelectedInvoice = () => {
@@ -154,7 +162,16 @@ const InvoiceDetailScreen = ({
         <View style={styles.emptySpace} />
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#fd7e14', '#0033a0']}
+            tintColor="#fd7e14"
+          />
+        }>
         {/* Invoice List Selector */}
         <View style={styles.invoiceSelector}>
           <Text style={styles.sectionTitle}>Pilih Invoice:</Text>
@@ -338,21 +355,15 @@ const InvoiceDetailScreen = ({
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigateTo('PaymentSuccess')}>
-          <Text style={styles.navIcon}>🛒</Text>
-          <Text style={styles.navText}>Buy</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
           <Text style={[styles.navIcon, styles.activeNav]}>💳</Text>
-          <Text style={[styles.navText, styles.activeNavText]}>Pay</Text>
+          <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
           <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navText}>Account</Text>
+          <Text style={styles.navText}>Akun</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -493,19 +504,24 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 15,
     backgroundColor: '#e0e0e0',
+    zIndex: 100,
   },
   unpaidBadge: {
     backgroundColor: '#ffe0e0',
+    zIndex: 100,
   },
   paidBadge: {
     backgroundColor: '#e0ffe0',
+    zIndex: 100,
   },
   otherStatusBadge: {
     backgroundColor: '#e0e0ff',
+    zIndex: 100,
   },
   statusText: {
     fontSize: 12,
     fontWeight: 'bold',
+    zIndex: 100,
   },
   invoiceDetails: {
     marginTop: 10,

@@ -8,8 +8,10 @@ import HomeScreen from './app/screens/HomeScreen';
 import InvoiceDetailScreen from './app/screens/InvoiceDetailScreen';
 import LoginScreen from './app/screens/LoginScreen';
 import PayScreen from './app/screens/PayScreen';
+import PaymentInstructionsScreen from './app/screens/PaymentInstructionsScreen';
 import PaymentSuccessScreen from './app/screens/PaymentSuccessScreen';
 import ResetPasswordScreen from './app/screens/ResetPasswordScreen';
+import SplashScreen from './app/screens/SplashScreen';
 import VerifyCodeScreen from './app/screens/VerifyCodeScreen';
 import {checkLoginStatus, isTokenExpired, logoutUser} from './src/services/api';
 
@@ -24,6 +26,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('Home');
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [showSplash, setShowSplash] = useState(true); // State untuk menampilkan splash screen
   const [resetPasswordData, setResetPasswordData] = useState<{
     token: string;
     email: string;
@@ -50,7 +53,7 @@ export default function App() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    // Periksa status login saat aplikasi dimulai
+    // Periksa status login saat aplikasi dimulai - tunggu splash selesai
     const checkAuth = async () => {
       try {
         const loggedIn = await checkLoginStatus();
@@ -76,8 +79,11 @@ export default function App() {
       }
     };
 
-    checkAuth();
-  }, []);
+    // Hanya lakukan checkAuth jika splash screen sudah selesai
+    if (!showSplash) {
+      checkAuth();
+    }
+  }, [showSplash]);
 
   useEffect(() => {
     // Inisialisasi Linking untuk deep links
@@ -99,6 +105,11 @@ export default function App() {
       linkingEventListener.remove();
     };
   }, []);
+
+  // Handler ketika animasi splash screen selesai
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
@@ -179,6 +190,11 @@ export default function App() {
     }
   };
 
+  // Jika splash screen masih ditampilkan
+  if (showSplash) {
+    return <SplashScreen onAnimationComplete={handleSplashComplete} />;
+  }
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -248,6 +264,13 @@ export default function App() {
               case 'InvoiceDetail':
                 return (
                   <InvoiceDetailScreen
+                    navigateTo={navigateToScreen}
+                    onLogout={handleLogout}
+                  />
+                );
+              case 'PaymentInstructions':
+                return (
+                  <PaymentInstructionsScreen
                     navigateTo={navigateToScreen}
                     onLogout={handleLogout}
                   />

@@ -295,6 +295,18 @@ export const getInvoiceById = async (invoiceId: any) => {
       throw new Error(data.message || 'Gagal mengambil detail invoice');
     }
 
+    // Jika API mengembalikan informasi pembayaran
+    if (data.data.payment_info) {
+      // Pastikan informasi VA tersedia untuk tampilan
+      data.data.payment_info = {
+        ...data.data.payment_info,
+        // Extract VA number jika tersedia di payment_info
+        va_number: data.data.payment_info.va_number ||
+          data.data.payment_info.account_number ||
+          data.data.payment_info.virtual_account_number || '',
+      };
+    }
+
     return data.data;
   } catch (error) {
     console.error('Error saat mengambil detail invoice:', error);
@@ -366,46 +378,69 @@ export const getPaymentHistory = async () => {
   }
 };
 
-// Fungsi untuk mendapatkan data periode pembayaran
-export const getBillingPeriod = async () => {
+// Ambil data payment gateways
+export const getPaymentGateways = async () => {
   try {
     const token = await SessionManager.getToken();
     if (!token) {
-      throw new Error('Token tidak ditemukan');
+      throw new Error('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    const response = await fetch(`${CONFIG.API_URL}/mobile/billing/period`, {
+    // Request ke API dengan token
+    const response = await fetch(`${CONFIG.API_URL}/mobile/payment-gateways`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     });
 
     const data = await response.json();
 
-    if (data.status === 'success' && data.data) {
-      return {
-        startDate: data.data.startDate || new Date(),
-        dueDate: data.data.dueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        amount: data.data.amount || 234765,
-      };
-    } else {
-      // Jika gagal, gunakan periode default
-      return {
-        startDate: new Date(),
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        amount: 234765,
-      };
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal mengambil daftar payment gateway');
     }
+
+    return data.data.gateways;
   } catch (error) {
-    console.error('Error fetching billing period:', error);
-    // Fallback ke nilai default jika terjadi kesalahan
-    return {
-      startDate: new Date(),
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-      amount: 234765,
-    };
+    console.error('Error saat mengambil payment gateways:', error);
+    throw error;
+  }
+};
+
+// Fungsi untuk generate virtual account number
+export const generateVirtualAccount = async (invoiceId: string, gatewayId: number) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login kembali.');
+    }
+
+    // Request ke API untuk generate VA number
+    const response = await fetch(`${CONFIG.API_URL}/mobile/generate-va`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        invoice_id: invoiceId,
+        gateway_id: gatewayId,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal menghasilkan nomor virtual account');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error saat generate virtual account:', error);
+    throw error;
   }
 };
 

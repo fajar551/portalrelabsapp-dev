@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -26,22 +27,30 @@ const AccountScreen = ({
   const [clientData, setClientData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchProfile = async () => {
+    try {
+      const profileData = await getClientProfile();
+      setClientData(profileData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal memuat profil');
+      console.error('Error loading profile:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const profileData = await getClientProfile();
-        setClientData(profileData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Gagal memuat profil');
-        console.error('Error loading profile:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setError('');
+    await fetchProfile();
+  };
 
   if (loading) {
     return (
@@ -79,17 +88,7 @@ const AccountScreen = ({
               // Jika bukan error autentikasi, coba lagi seperti biasa
               setLoading(true);
               setError('');
-              getClientProfile()
-                .then((profile: any) => {
-                  setClientData(profile);
-                  setLoading(false);
-                })
-                .catch((err: any) => {
-                  setError(
-                    err instanceof Error ? err.message : 'Gagal memuat profil',
-                  );
-                  setLoading(false);
-                });
+              fetchProfile();
             }
           }}>
           <Text style={styles.retryButtonText}>
@@ -106,17 +105,26 @@ const AccountScreen = ({
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Profile</Text>
-        <TouchableOpacity style={styles.settingsButton}>
+        <Text style={styles.headerTitle}>YProfil</Text>
+        {/* <TouchableOpacity style={styles.settingsButton}>
           <Text style={styles.settingsIcon}>⚙️</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#fd7e14', '#0033a0']}
+            tintColor="#fd7e14"
+          />
+        }>
         {/* Profile Section */}
-        <View style={styles.profileSection}>
+        {/* <View style={styles.profileSection}>
           <Text style={styles.profileTitle}>Profile</Text>
-        </View>
+        </View> */}
 
         {/* Main Profile */}
         <View style={styles.mainProfile}>
@@ -126,30 +134,33 @@ const AccountScreen = ({
             </Text>
             <Text style={styles.userEmail}>{clientData?.email}</Text>
           </View>
-          <View style={styles.qrContainer}>
-            <View style={styles.qrCode}>
-              {/* <Text style={styles.qrText}>QR{'\n'}CODE</Text> */}
-              {/* <Image source={require('../assets/qr-placeholder.png')} /> */}
+          <View style={styles.profileImageContainer}>
+            <View style={styles.profileImageWrapper}>
+              <Image
+                source={require('../assets/usericon.png')}
+                style={styles.profileImage}
+                resizeMode="contain"
+              />
             </View>
           </View>
         </View>
 
         {/* First ID */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Relabs ID</Text>
+          <Text style={styles.sectionTitle}>ID Relabs</Text>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>ID</Text>
               <Text style={styles.infoValue}>{clientData?.email}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Name</Text>
+              <Text style={styles.infoLabel}>Nama</Text>
               <Text style={styles.infoValue}>
                 {clientData?.firstname} {clientData?.lastname}
               </Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Mobile No.</Text>
+              <Text style={styles.infoLabel}>No. Telepon</Text>
               <Text style={styles.infoValue}>{clientData?.phonenumber}</Text>
             </View>
           </View>
@@ -157,33 +168,33 @@ const AccountScreen = ({
 
         {/* Portal Relabs Account */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Portal Relabs Account</Text>
+          <Text style={styles.sectionTitle}>Akun Portal Relabs</Text>
           <View style={styles.activeAccountBadge}>
             <Text style={styles.activeAccountText}>{clientData?.id}</Text>
-            <Text style={styles.activeAccountText2}>in use</Text>
+            <Text style={styles.activeAccountText2}>digunakan</Text>
             <View style={styles.checkIcon}>
               <Text>✓</Text>
             </View>
           </View>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Account No.</Text>
+              <Text style={styles.infoLabel}>No. Akun</Text>
               <Text style={styles.infoValue}>{clientData?.id}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Name</Text>
+              <Text style={styles.infoLabel}>Nama</Text>
               <Text style={styles.infoValue}>
                 {clientData?.firstname} {clientData?.lastname}
               </Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Address</Text>
+              <Text style={styles.infoLabel}>Alamat</Text>
               <Text style={styles.infoValue}>
                 {clientData?.address1} {clientData?.city} {clientData?.postcode}
               </Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>ID</Text>
+              <Text style={styles.infoLabel}>Email</Text>
               <Text style={styles.infoValue}>{clientData?.email}</Text>
             </View>
           </View>
@@ -205,17 +216,17 @@ const AccountScreen = ({
           <Text style={styles.navIcon}>🏠</Text>
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('PaymentSuccess')}>
           <Text style={styles.navIcon}>🛒</Text>
           <Text style={styles.navText}>Buy</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
           <Text style={styles.navIcon}>💳</Text>
-          <Text style={styles.navText}>Pay</Text>
+          <Text style={styles.navText}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={onLogout}>
           <View style={styles.personIcon}>
@@ -224,7 +235,7 @@ const AccountScreen = ({
               style={styles.iconImage}
             />
           </View>
-          <Text style={[styles.navText, styles.activeNavText]}>Account</Text>
+          <Text style={[styles.navText, styles.activeNavText]}>Akun</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -250,10 +261,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
-  qrText: {
-    fontSize: 10,
-    textAlign: 'center',
-  },
   loadingText: {
     marginTop: 10,
     color: '#666',
@@ -271,12 +278,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  settingsButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // settingsButton: {
+  //   width: 40,
+  //   height: 40,
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  // },
   settingsIcon: {
     fontSize: 20,
   },
@@ -300,7 +307,7 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
-    marginTop: 10,
+    marginTop: 35,
   },
   userName: {
     color: 'white',
@@ -312,23 +319,29 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
   },
-  qrContainer: {
+  profileImageContainer: {
     backgroundColor: 'white',
-    borderRadius: 5,
-    padding: 5,
+    borderRadius: 40,
+    padding: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    width: 70,
-    height: 70,
+    width: 80,
+    height: 80,
+    marginTop: 25,
   },
-  qrCode: {
-    width: 60,
-    height: 60,
+  profileImageWrapper: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: '#ddd',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    tintColor: '#fd7e14',
   },
   sectionContainer: {
     marginTop: 15,
@@ -384,7 +397,7 @@ const styles = StyleSheet.create({
   },
   activeAccountText2: {
     color: '#999',
-    marginLeft: -245,
+    marginLeft: -210,
     // fontWeight: 'bold',
     fontSize: 14,
   },

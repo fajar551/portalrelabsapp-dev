@@ -1,9 +1,13 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
+  FlatList,
   Image,
   Modal,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -15,6 +19,7 @@ import {
 import {
   getClientInvoices,
   getInvoiceDetails,
+  getPaymentGateways,
   getPaymentHistory,
 } from '../../src/services/api';
 
@@ -29,6 +34,8 @@ const PayScreen = ({
   onLogout: () => void;
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [paymentGatewayModalVisible, setPaymentGatewayModalVisible] =
+    useState(false);
   const [selectedPayment, setSelectedPayment] = useState<{
     id?: number;
     invoicenum?: string;
@@ -59,7 +66,23 @@ const PayScreen = ({
       amount: number;
     }>;
   } | null>(null);
+  const [selectedGateway] = useState<{
+    id: number;
+    name: string;
+    description: string;
+    instructions: string;
+    is_va?: boolean;
+  } | null>(null);
+  const [paymentGateways, setPaymentGateways] = useState<
+    Array<{
+      id: number;
+      name: string;
+      description: string;
+      instructions: string;
+    }>
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGatewaysLoading, setIsGatewaysLoading] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [error, setError] = useState('');
   const [daysLeft, setDaysLeft] = useState(0);
@@ -84,6 +107,18 @@ const PayScreen = ({
       paymentmethod?: string;
     }>
   >([]);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const formatRupiah = (amount: number) => {
+    // Gunakan NumberFormat dari Intl untuk format yang benar sesuai standar Indonesia
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
 
   // Fetch invoice data from API
   useEffect(() => {
@@ -152,6 +187,7 @@ const PayScreen = ({
       setBillingPeriod(prev => ({...prev, amount: 0}));
     } finally {
       setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -161,12 +197,10 @@ const PayScreen = ({
       const today = new Date();
 
       // Total hari dalam periode (menambahkan +1 untuk menghitung hari terakhir)
-      const totalDays =
-        Math.floor(
-          (billingPeriod.dueDate.getTime() -
-            billingPeriod.startDate.getTime()) /
-            (1000 * 3600 * 24),
-        ) + 1; // Ditambahkan +1 untuk menghitung hari terakhir
+      const totalDays = Math.floor(
+        (billingPeriod.dueDate.getTime() - billingPeriod.startDate.getTime()) /
+          (1000 * 3600 * 24),
+      ); // Ditambahkan +1 untuk menghitung hari terakhir
 
       // Hari yang sudah berlalu
       const daysElapsed = Math.floor(
@@ -259,6 +293,73 @@ const PayScreen = ({
     return {day, month};
   };
 
+  // Fetch payment gateways
+  const fetchPaymentGateways = async () => {
+    setIsGatewaysLoading(true);
+    try {
+      const gateways = await getPaymentGateways();
+      if (gateways && gateways.length > 0) {
+        setPaymentGateways(gateways);
+      } else {
+        setPaymentGateways([]);
+      }
+    } catch (err) {
+      console.error('Error fetching payment gateways:', err);
+    } finally {
+      setIsGatewaysLoading(false);
+    }
+  };
+
+  // Handle "Bayar Sekarang" button press
+  const handlePayNow = () => {
+    fetchPaymentGateways();
+    setPaymentGatewayModalVisible(true);
+  };
+
+  // Select a payment gateway
+  const selectPaymentGateway = async (gateway: {
+    id: number;
+    name: string;
+    description: string;
+    instructions: string;
+    is_va?: boolean;
+  }) => {
+    try {
+      // Simpan gateway yang dipilih ke AsyncStorage
+      await AsyncStorage.setItem('selectedGateway', JSON.stringify(gateway));
+
+      // Simpan invoice yang sedang aktif ke AsyncStorage
+      if (billingPeriod.amount > 0) {
+        const invoices = await getClientInvoices();
+        const unpaidInvoice = invoices.find(
+          (invoice: any) =>
+            invoice.status === 'Unpaid' || invoice.status === 'Belum Dibayar',
+        );
+
+        if (unpaidInvoice) {
+          await AsyncStorage.setItem(
+            'currentInvoice',
+            JSON.stringify(unpaidInvoice),
+          );
+        }
+      }
+
+      // Navigasi ke halaman instruksi pembayaran
+      navigateTo('PaymentInstructions');
+    } catch (err: any) {
+      console.error('Error saving gateway data:', err);
+      Alert.alert(
+        'Error',
+        'Gagal menyimpan data pembayaran. Silakan coba lagi.',
+      );
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchInvoiceData();
+  };
+
   // Jika terjadi error, tampilkan pesan dan tombol retry
   if (error) {
     // Cek apakah error terkait dengan token atau autentikasi
@@ -301,13 +402,19 @@ const PayScreen = ({
 
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerIcon}>
-          <Text style={styles.headerIconText}>📄</Text>
-        </View>
-        <Text style={styles.headerTitle}>Bill</Text>
+        <Text style={styles.headerTitle}>Pembayaran</Text>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#fd7e14', '#0033a0']}
+            tintColor="#fd7e14"
+          />
+        }>
         {/* Due Date Period - hanya tampilkan jika ada tagihan yang belum dibayar */}
         {billingPeriod.amount > 0 ? (
           <View style={styles.dueCardContainer}>
@@ -317,7 +424,7 @@ const PayScreen = ({
                 <View style={styles.amountContainer}>
                   <Text style={styles.amountLabel}>Total Tagihan</Text>
                   <Text style={styles.amountValue}>
-                    Rp {billingPeriod.amount.toLocaleString('id-ID')}
+                    {formatRupiah(billingPeriod.amount)}
                   </Text>
                 </View>
               </View>
@@ -394,7 +501,9 @@ const PayScreen = ({
               </View>
 
               <View style={styles.dueCardFooter}>
-                <TouchableOpacity style={styles.duePayButton}>
+                <TouchableOpacity
+                  style={styles.duePayButton}
+                  onPress={handlePayNow}>
                   <Text style={styles.duePayButtonText}>Bayar Sekarang</Text>
                 </TouchableOpacity>
               </View>
@@ -422,7 +531,7 @@ const PayScreen = ({
 
         {/* Last Payment Section */}
         <View style={[styles.lastPaymentContainer]}>
-          <Text style={styles.lastPaymentTitle}>Last Payment</Text>
+          <Text style={styles.lastPaymentTitle}>Pembayaran Terakhir</Text>
 
           {/* Payment History List */}
           {paymentHistory.length > 0 ? (
@@ -443,7 +552,7 @@ const PayScreen = ({
                 </View>
                 <View style={styles.paymentAmount}>
                   <Text style={styles.paymentAmountText}>
-                    Rp {payment.amount.toLocaleString('id-ID')}
+                    {formatRupiah(payment.amount)}
                   </Text>
                   <Text style={styles.arrowIcon}>›</Text>
                 </View>
@@ -483,15 +592,15 @@ const PayScreen = ({
           <Text style={styles.navIcon}>🏠</Text>
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('PaymentSuccess')}>
           <Text style={styles.navIcon}>🛒</Text>
           <Text style={styles.navText}>Buy</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity style={styles.navItem}>
           <Text style={[styles.navIcon, styles.activeNav]}>💳</Text>
-          <Text style={[styles.navText, styles.activeNavText]}>Pay</Text>
+          <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -503,11 +612,122 @@ const PayScreen = ({
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.navText}>Account</Text>
+          <Text style={styles.navText}>Akun</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Modal Detail Pembayaran */}
+      {/* Payment Gateway Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={paymentGatewayModalVisible}
+        onRequestClose={() => setPaymentGatewayModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.gatewayModalContent}>
+            <View style={styles.gatewayModalHeader}>
+              <Text style={styles.gatewayModalTitle}>
+                Pilih Metode Pembayaran
+              </Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setPaymentGatewayModalVisible(false)}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.gatewayList}>
+              {isGatewaysLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#fd7e14" />
+                  <Text style={styles.loadingText}>
+                    Memuat metode pembayaran...
+                  </Text>
+                </View>
+              ) : paymentGateways.length > 0 ? (
+                <FlatList
+                  data={paymentGateways}
+                  keyExtractor={item => item.id.toString()}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      style={styles.gatewayItem}
+                      onPress={() => selectPaymentGateway(item)}>
+                      <View style={styles.gatewayInfo}>
+                        <Text style={styles.gatewayName}>{item.name}</Text>
+                        <Text style={styles.gatewayDescription}>
+                          {item.description}
+                        </Text>
+                      </View>
+                      <Text style={styles.arrowIcon}>›</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              ) : (
+                <View style={styles.noGatewaysContainer}>
+                  <Text style={styles.noGatewaysText}>
+                    Tidak ada metode pembayaran tersedia
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Payment Instructions Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible && selectedGateway !== null}
+        onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+              <View style={styles.successIconContainer}>
+                <Text style={styles.successIcon}>📝</Text>
+              </View>
+              <Text style={styles.modalTitle}>Instruksi Pembayaran</Text>
+            </View>
+
+            <View style={styles.paymentDetailCard}>
+              <View style={styles.paymentPeriodHeader}>
+                <Text style={styles.paymentPeriodTitle}>
+                  {selectedGateway?.name}
+                </Text>
+                <View style={styles.totalBillContainer}>
+                  <Text style={styles.totalBillLabel}>Total Tagihan</Text>
+                  <Text style={styles.totalBillAmount}>
+                    Rp {billingPeriod.amount.toLocaleString('id-ID')}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.billingDetailContainer}>
+                <Text style={styles.billingDetailHeader}>Cara Pembayaran</Text>
+
+                <View style={styles.instructionsContainer}>
+                  <Text style={styles.instructionsText}>
+                    {selectedGateway?.instructions ||
+                      'Tidak ada instruksi tersedia.'}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.shareButton}
+                onPress={() => setModalVisible(false)}>
+                <Text style={styles.shareButtonText}>Kembali</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Original Detail Payment Modal (keep this) */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -901,6 +1121,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 20,
     color: '#333',
+    alignItems: 'flex-end',
   },
   successIconContainer: {
     width: 70,
@@ -1214,6 +1435,77 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
+  },
+  // Payment Gateway Modal styles
+  gatewayModalContent: {
+    width: '90%',
+    maxHeight: '70%',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    padding: 20,
+    alignSelf: 'center',
+  },
+  gatewayModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
+  },
+  gatewayModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 1,
+  },
+  gatewayList: {
+    maxHeight: '80%',
+  },
+  gatewayItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  gatewayInfo: {
+    flex: 1,
+  },
+  gatewayName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  gatewayDescription: {
+    fontSize: 14,
+    color: '#666',
+  },
+  noGatewaysContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noGatewaysText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+  },
+  instructionsContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 8,
+    marginVertical: 10,
+  },
+  instructionsText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+  },
+  modalCloseButton: {
+    padding: 5,
   },
 });
 

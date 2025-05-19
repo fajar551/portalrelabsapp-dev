@@ -17,7 +17,7 @@ import {
   View,
 } from 'react-native';
 import {loginUser} from '../../src/services/api';
-import ClientDropdown from '../components/ClientDropdown';
+// import ClientDropdown from '../components/ClientDropdown';
 // import { useNavigation } from '@react-navigation/native';
 
 // Konstanta untuk kunci storage
@@ -258,12 +258,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             </TouchableOpacity>
 
             {/* Client Dropdown untuk Testing */}
-            <View style={styles.testingSection}>
+            {/* <View style={styles.testingSection}>
               <Text style={styles.testingSectionTitle}>
                 Test API Connection
               </Text>
               <ClientDropdown />
+            </View> */}
+
+            {/* Client Dropdown untuk Testing */}
+            <View style={styles.testingSection}>
+              <Text style={styles.testingSectionTitle2}>
+              PT Relabs Net DayaCipta © {new Date().getFullYear()}, Relabs is a Member of PT Qwords Company International Group
+              </Text>
+              {/* <ClientDropdown /> */}
             </View>
+
+
           </View>
         </View>
       </ScrollView>
@@ -405,6 +415,7 @@ const styles = StyleSheet.create({
   rememberText: {
     color: '#22325a',
     fontSize: 15,
+    marginLeft: 3,
   },
   loginButton: {
     backgroundColor: '#ffb444',
@@ -437,6 +448,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#22325a',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  testingSectionTitle2: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#999',
     marginBottom: 10,
     textAlign: 'center',
   },
