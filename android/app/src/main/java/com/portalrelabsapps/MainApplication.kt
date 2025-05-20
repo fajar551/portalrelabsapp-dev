@@ -1,4 +1,4 @@
-package com.portalrelabsapps
+package com.relabs.portalrelabsapps
 
 import android.app.Application
 import com.facebook.react.PackageList

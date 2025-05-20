@@ -1,6 +1,10 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
       android:name=".MainApplication"
@@ -22,5 +26,18 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+      <service
+          android:name=".java.MyFirebaseMessagingService"
+          android:exported="false">
+          <intent-filter>
+              <action android:name="com.google.firebase.MESSAGING_EVENT" />
+          </intent-filter>
+      </service>
+
+        <meta-data
+          android:name="com.google.firebase.messaging.default_notification_channel_id"
+          android:value="email_channel"
+          tools:replace="android:value" />
     </application>
 </manifest>

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
 import {useFocusEffect} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -10,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import PushNotification from 'react-native-push-notification';
 import {getNotifications} from '../../src/services/api';
 
 // Komponen TabItem dipindahkan ke luar NotificationScreen
@@ -54,6 +56,14 @@ const saveReadBills = async (ids: number[]) => {
   await AsyncStorage.setItem(READ_BILL_KEY, JSON.stringify(ids));
 };
 
+// Tambahkan interface untuk notifikasi
+interface Notification {
+  id: number;
+  subject: string;
+  message: string;
+  date: string;
+}
+
 const NotificationScreen = ({
   navigateTo,
 }: {
@@ -66,6 +76,9 @@ const NotificationScreen = ({
   const [readBills, setReadBills] = useState<number[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 5000; // 5 detik
 
   useFocusEffect(
     React.useCallback(() => {
@@ -113,6 +126,136 @@ const NotificationScreen = ({
     );
     // Gabungkan dengan newline antar paragraf
     return all.join('\n\n');
+  };
+
+  // Fungsi untuk delay
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Fungsi untuk mengecek email baru dengan useCallback
+  const checkNewEmails = useCallback(async () => {
+    try {
+      const currentNotifications = await getNotifications();
+
+      // Bandingkan dengan notifikasi yang sudah ada
+      const newEmails = currentNotifications.filter(
+        (notification: Notification) =>
+          !notifications.some(existing => existing.id === notification.id) &&
+          notification.subject.includes('@'),
+      );
+
+      // Jika ada email baru, tampilkan notifikasi
+      if (newEmails.length > 0) {
+        newEmails.forEach((email: Notification) => {
+          // Kirim notifikasi lokal menggunakan PushNotification
+          PushNotification.localNotification({
+            channelId: 'email_channel',
+            title: 'Email Baru',
+            message: email.subject,
+            playSound: true,
+            soundName: 'default',
+            importance: 'high',
+            vibrate: true,
+            vibration: 300,
+            userInfo: {id: email.id.toString()},
+          });
+        });
+      }
+
+      // Update state notifications
+      setNotifications(currentNotifications);
+      // Reset retry count jika berhasil
+      setRetryCount(0);
+    } catch (error) {
+      console.error('Error checking new emails:', error);
+
+      // Implementasi retry mechanism
+      if (retryCount < MAX_RETRIES) {
+        console.log(
+          `Retrying in ${RETRY_DELAY / 1000} seconds... (Attempt ${
+            retryCount + 1
+          }/${MAX_RETRIES})`,
+        );
+        setRetryCount(prev => prev + 1);
+        await delay(RETRY_DELAY);
+        checkNewEmails();
+      } else {
+        console.error(
+          'Max retries reached. Please check your network connection.',
+        );
+        setRetryCount(0); // Reset retry count
+      }
+    }
+  }, [notifications, retryCount]);
+
+  // Setup interval untuk mengecek email baru setiap 5 menit
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkEmails = async () => {
+      if (isMounted) {
+        await checkNewEmails();
+      }
+    };
+
+    // Cek email pertama kali
+    checkEmails();
+
+    // Setup interval
+    const intervalId = setInterval(checkEmails, 5 * 60 * 1000); // 5 menit
+
+    // Cleanup interval saat komponen unmount
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [checkNewEmails]);
+
+  // Fungsi untuk request permission notifikasi
+  const requestPermission = async () => {
+    const authStatus = await messaging().requestPermission();
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+      console.log('Authorization status:', authStatus);
+    }
+  };
+
+  useEffect(() => {
+    // Hanya request permission saat komponen mount
+    requestPermission();
+  }, []);
+
+  // Setup FCM listener untuk notifikasi
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      if (remoteMessage.data?.type === 'email') {
+        // Refresh daftar notifikasi
+        const updatedNotifications = await getNotifications();
+        setNotifications(updatedNotifications);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // Fungsi untuk mengetes notifikasi lokal
+  const testPushNotification = () => {
+    console.log('Tombol Tes Notifikasi ditekan');
+    PushNotification.localNotification({
+      /* Android Only Properties */
+      channelId: 'email_channel',
+      title: 'Tes Notifikasi',
+      message: 'Ini adalah notifikasi tes dari aplikasi',
+      playSound: true,
+      soundName: 'default',
+      importance: 'high',
+      vibrate: true,
+      vibration: 300,
+      /* iOS and Android properties */
+      userInfo: {id: 'test'},
+    });
   };
 
   return (
@@ -168,6 +311,15 @@ const NotificationScreen = ({
           style={styles.logoutButton2}
           onPress={resetReadNotifications}>
           <Text style={styles.logoutButtonText2}>Reset Penanda</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Tombol Test Notifikasi */}
+      <View style={styles.logoutContainer2}>
+        <TouchableOpacity
+          style={[styles.logoutButton2, {backgroundColor: '#28a745'}]}
+          onPress={testPushNotification}>
+          <Text style={styles.logoutButtonText2}>Tes Notifikasi</Text>
         </TouchableOpacity>
       </View>
 

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
 
 // Konfigurasi API
 const CONFIG = {
@@ -516,5 +517,48 @@ export const getInvoiceDetails = async (invoiceId: any) => {
   } catch (error) {
     console.error('Error saat mengambil detail invoice:', error);
     throw error;
+  }
+};
+
+export const getFCMToken = async (userId: number) => {
+  try {
+    await messaging().registerDeviceForRemoteMessages();
+    const token = await messaging().getToken();
+    console.log('FCM Token:', token);
+
+    // Ambil token dari SessionManager
+    const authToken = await SessionManager.getToken();
+
+    if (!authToken) {
+      console.error('No auth token found');
+      return null;
+    }
+
+    // Kirim token ke backend
+    const response = await fetch(
+      `${CONFIG.API_URL}/mobile/save-fcm-token`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          fcm_token: token,
+        }),
+      },
+    );
+
+    const result = await response.json();
+    if (result.status !== 'success') {
+      throw new Error(result.message || 'Failed to save FCM token');
+    }
+
+    console.log('Save FCM Token result:', result);
+    return token;
+  } catch (error) {
+    console.error('Error saving FCM token:', error);
+    return null;
   }
 };

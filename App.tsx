@@ -1,8 +1,18 @@
+import messaging from '@react-native-firebase/messaging';
 import {NavigationContainer} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Linking, StyleSheet, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
+import PushNotification from 'react-native-push-notification';
 import SessionExpiredModal from './app/components/SessionExpiredModal';
 import AccountScreen from './app/screens/AccountScreen';
+import CashWithdrawalDetailScreen from './app/screens/CashWithdrawalDetailScreen';
 import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
 import HomeScreen from './app/screens/HomeScreen';
 import InvoiceDetailScreen from './app/screens/InvoiceDetailScreen';
@@ -15,13 +25,25 @@ import ResetPasswordScreen from './app/screens/ResetPasswordScreen';
 import SplashScreen from './app/screens/SplashScreen';
 import VerifyCodeScreen from './app/screens/VerifyCodeScreen';
 import {checkLoginStatus, isTokenExpired, logoutUser} from './src/services/api';
-import CashWithdrawalDetailScreen from './app/screens/CashWithdrawalDetailScreen';
 
 // Type untuk props yang diteruskan ke screens
 interface ScreenProps {
   onLogout: () => void;
   navigateTo: (screen: string) => void;
 }
+
+// Buat channel notifikasi (cukup sekali, saat app start)
+PushNotification.createChannel(
+  {
+    channelId: 'email_channel',
+    channelName: 'Email Notifications',
+    channelDescription: 'Channel untuk notifikasi email',
+    soundName: 'default',
+    importance: 4, // 4 = high
+    vibrate: true,
+  },
+  created => console.log(`createChannel returned '${created}'`),
+);
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -106,6 +128,121 @@ export default function App() {
     return () => {
       linkingEventListener.remove();
     };
+  }, []);
+
+  // Request notification permission
+  const requestUserPermission = async () => {
+    if (Platform.OS === 'ios') {
+      const authStatus = await messaging().requestPermission();
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+      if (enabled) {
+        console.log('Authorization status:', authStatus);
+      }
+    } else {
+      // For Android, permission is granted by default
+      const enabled = await messaging().hasPermission();
+      if (!enabled) {
+        await messaging().requestPermission();
+      }
+    }
+  };
+
+  // Get FCM Token dan kirim ke backend
+  const getFCMToken = async () => {
+    try {
+      const token = await messaging().getToken();
+      console.log('FCM Token:', token);
+
+      // Kirim token ke backend
+      const response = await fetch(
+        'https://portal.relabs.id/mobile/save-fcm-token',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer YOUR_AUTH_TOKEN', // Ganti dengan token auth yang valid
+          },
+          body: JSON.stringify({
+            user_id: 469, // Ganti dengan user_id yang sedang login
+            fcm_token: token,
+          }),
+        },
+      );
+
+      const result = await response.json();
+      console.log('Save FCM Token result:', result);
+    } catch (error) {
+      console.error('Error saving FCM token:', error);
+    }
+  };
+
+  // Handle foreground messages
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log('Received foreground message:', remoteMessage);
+
+      // Tampilkan notifikasi sebagai alert ketika app di foreground
+      Alert.alert(
+        remoteMessage.notification?.title || 'Notifikasi',
+        remoteMessage.notification?.body || 'Anda memiliki pesan baru',
+        [
+          {
+            text: 'Lihat',
+            onPress: () => {
+              // Navigate ke screen notifikasi jika diperlukan
+              navigateToScreen('Notification');
+            },
+          },
+          {
+            text: 'Tutup',
+            style: 'cancel',
+          },
+        ],
+      );
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // Handle background/quit state messages
+  useEffect(() => {
+    messaging().setBackgroundMessageHandler(async remoteMessage => {
+      console.log('Message handled in the background:', remoteMessage);
+    });
+
+    // Check if app was opened from a notification
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) {
+          console.log(
+            'App opened from quit state by notification:',
+            remoteMessage,
+          );
+          // Navigate ke screen yang sesuai jika diperlukan
+          navigateToScreen('Notification');
+        }
+      });
+
+    // Handle notification open when app is in background
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      console.log(
+        'App opened from background state by notification:',
+        remoteMessage,
+      );
+      // Navigate ke screen yang sesuai
+      navigateToScreen('Notification');
+    });
+  }, []);
+
+  // Request permission dan get token saat app start
+  useEffect(() => {
+    requestUserPermission().then(() => {
+      getFCMToken();
+    });
   }, []);
 
   // Handler ketika animasi splash screen selesai

@@ -1,4 +1,4 @@
-package com.portalrelabsapps
+package com.relabs.portalrelabsapps
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

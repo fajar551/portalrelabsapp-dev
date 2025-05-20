@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {loginUser} from '../../src/services/api';
+import {getFCMToken, loginUser} from '../../src/services/api';
 // import ClientDropdown from '../components/ClientDropdown';
 // import { useNavigation } from '@react-navigation/native';
 
@@ -102,6 +102,21 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
 
+  const handleLoginSuccess = async (userData: any) => {
+    try {
+      // Get dan simpan FCM token
+      const fcmToken = await getFCMToken(userData.id);
+      if (!fcmToken) {
+        console.error('Failed to setup push notification');
+      }
+
+      // Panggil callback onLoginSuccess
+      onLoginSuccess();
+    } catch (err: any) {
+      console.error('Error in handleLoginSuccess:', err);
+    }
+  };
+
   const handleLogin = async () => {
     // Validasi form dasar
     if (!identifier.trim() || !password.trim()) {
@@ -123,12 +138,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
         // Simpan kredensial jika "Remember Me" dicentang
         await saveCredentials(identifier, password, remember);
 
-        onLoginSuccess();
+        // Panggil handleLoginSuccess dengan data user
+        await handleLoginSuccess(response.data.client);
       } else {
         setError(response.message || 'Terjadi kesalahan saat login');
       }
     } catch (err) {
-      // Mengubah nama variabel dari 'error' menjadi 'err'
       setIsLoading(false);
       console.error('Login error:', err);
       setError(
@@ -268,12 +283,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             {/* Client Dropdown untuk Testing */}
             <View style={styles.testingSection}>
               <Text style={styles.testingSectionTitle2}>
-              PT Relabs Net DayaCipta © {new Date().getFullYear()}, Relabs is a Member of PT Qwords Company International Group
+                PT Relabs Net DayaCipta © {new Date().getFullYear()}, Relabs is
+                a Member of PT Qwords Company International Group
               </Text>
               {/* <ClientDropdown /> */}
             </View>
-
-
           </View>
         </View>
       </ScrollView>

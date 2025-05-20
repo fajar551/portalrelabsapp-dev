@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "638080528134",
+    "project_id": "relabs-96c17",
+    "storage_bucket": "relabs-96c17.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:638080528134:android:f16006781553b2b12d3887",
+        "android_client_info": {
+          "package_name": "com.relabs.portalrelabsapps"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBlaHT22VOWHWlesRr-XAL5ydmXaGr6u8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
