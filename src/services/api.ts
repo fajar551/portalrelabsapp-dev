@@ -205,6 +205,42 @@ export const getAllClients = async () => {
   }
 };
 
+// Ambil semua notifikasi (dengan token)
+export const getNotifications = async (userId?: number) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) { throw new Error('Token tidak ditemukan'); }
+
+    let url = `${CONFIG.API_URL}/mobile/notifications`;
+    if (userId) {
+      url += `?userid=${userId}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Response error dengan status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data?.data?.notifications) {
+      return data.data.notifications;
+    } else {
+      throw new Error('Format data tidak sesuai yang diharapkan');
+    }
+  } catch (error) {
+    console.error('Gagal mengambil notifikasi:', error);
+    throw error;
+  }
+};
+
 // Fungsi untuk mendapatkan profil client
 export const getClientProfile = async () => {
   try {

@@ -70,8 +70,8 @@ const CashWithdrawalDetailScreen = ({
 
       <TouchableOpacity
         style={styles.logoutButton}
-        onPress={() => navigateTo('Home')}>
-        <Text style={styles.logoutButtonText}>Home</Text>
+        onPress={() => navigateTo('Notification')}>
+        <Text style={styles.logoutButtonText}>Kembali</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
