@@ -3,7 +3,6 @@ import {NavigationContainer} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Linking,
   Platform,
   StyleSheet,
@@ -32,17 +31,51 @@ interface ScreenProps {
   navigateTo: (screen: string) => void;
 }
 
-// Buat channel notifikasi (cukup sekali, saat app start)
+// Konfigurasi untuk background message
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  console.log('Message handled in the background!', remoteMessage);
+
+  // Tampilkan notifikasi lokal
+  PushNotification.localNotification({
+    channelId: 'email_channel',
+    title: remoteMessage.notification?.title || 'Notifikasi',
+    message: remoteMessage.notification?.body || 'Ada email baru',
+    playSound: true,
+    soundName: 'default',
+    importance: 'high',
+    vibrate: true,
+    vibration: 300,
+  });
+});
+
+PushNotification.configure({
+  onRegister: function (token) {
+    console.log('TOKEN:', token);
+  },
+  onNotification: function (notification) {
+    console.log('NOTIFICATION:', notification);
+  },
+  permissions: {
+    alert: true,
+    badge: true,
+    sound: true,
+  },
+  popInitialNotification: true,
+  requestPermissions: true,
+});
+
+// Buat channel untuk Android
 PushNotification.createChannel(
   {
     channelId: 'email_channel',
     channelName: 'Email Notifications',
-    channelDescription: 'Channel untuk notifikasi email',
+    channelDescription: 'Channel for email notifications',
+    playSound: true,
     soundName: 'default',
-    importance: 4, // 4 = high
+    importance: 4,
     vibrate: true,
   },
-  created => console.log(`createChannel returned '${created}'`),
+  created => console.log(`Channel created: ${created}`),
 );
 
 export default function App() {
@@ -179,65 +212,6 @@ export default function App() {
     }
   };
 
-  // Handle foreground messages
-  useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
-      console.log('Received foreground message:', remoteMessage);
-
-      // Tampilkan notifikasi sebagai alert ketika app di foreground
-      Alert.alert(
-        remoteMessage.notification?.title || 'Notifikasi',
-        remoteMessage.notification?.body || 'Anda memiliki pesan baru',
-        [
-          {
-            text: 'Lihat',
-            onPress: () => {
-              // Navigate ke screen notifikasi jika diperlukan
-              navigateToScreen('Notification');
-            },
-          },
-          {
-            text: 'Tutup',
-            style: 'cancel',
-          },
-        ],
-      );
-    });
-
-    return unsubscribe;
-  }, []);
-
-  // Handle background/quit state messages
-  useEffect(() => {
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-      console.log('Message handled in the background:', remoteMessage);
-    });
-
-    // Check if app was opened from a notification
-    messaging()
-      .getInitialNotification()
-      .then(remoteMessage => {
-        if (remoteMessage) {
-          console.log(
-            'App opened from quit state by notification:',
-            remoteMessage,
-          );
-          // Navigate ke screen yang sesuai jika diperlukan
-          navigateToScreen('Notification');
-        }
-      });
-
-    // Handle notification open when app is in background
-    messaging().onNotificationOpenedApp(remoteMessage => {
-      console.log(
-        'App opened from background state by notification:',
-        remoteMessage,
-      );
-      // Navigate ke screen yang sesuai
-      navigateToScreen('Notification');
-    });
-  }, []);
-
   // Request permission dan get token saat app start
   useEffect(() => {
     requestUserPermission().then(() => {
@@ -328,6 +302,31 @@ export default function App() {
       }
     }
   };
+
+  // Pindahkan useEffect ke sini
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log('Received foreground message:', remoteMessage);
+
+      // Tampilkan notifikasi lokal
+      PushNotification.localNotification({
+        channelId: 'email_channel',
+        title: remoteMessage.notification?.title || 'Notifikasi',
+        message: remoteMessage.notification?.body || 'Ada email baru',
+        playSound: true,
+        soundName: 'default',
+        importance: 'high',
+        vibrate: true,
+        vibration: 300,
+        smallIcon: 'ic_portal', // Gunakan icon yang sudah ada
+        largeIcon: '',
+        priority: 'high',
+        invokeApp: true,
+      });
+    });
+
+    return unsubscribe;
+  }, []);
 
   // Jika splash screen masih ditampilkan
   if (showSplash) {
