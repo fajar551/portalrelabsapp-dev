@@ -3,8 +3,8 @@ import {NavigationContainer} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Linking,
-  Platform,
   StyleSheet,
   View,
 } from 'react-native';
@@ -32,21 +32,21 @@ interface ScreenProps {
 }
 
 // Konfigurasi untuk background message
-messaging().setBackgroundMessageHandler(async remoteMessage => {
-  console.log('Message handled in the background!', remoteMessage);
+// messaging().setBackgroundMessageHandler(async remoteMessage => {
+//   console.log('Message handled in the background!', remoteMessage);
 
-  // Tampilkan notifikasi lokal
-  PushNotification.localNotification({
-    channelId: 'email_channel',
-    title: remoteMessage.notification?.title || 'Notifikasi',
-    message: remoteMessage.notification?.body || 'Ada email baru',
-    playSound: true,
-    soundName: 'default',
-    importance: 'high',
-    vibrate: true,
-    vibration: 300,
-  });
-});
+//   // Tampilkan notifikasi lokal
+//   PushNotification.localNotification({
+//     channelId: 'email_channel',
+//     title: remoteMessage.notification?.title || 'Notifikasi',
+//     message: remoteMessage.notification?.body || 'Ada email baru',
+//     playSound: true,
+//     soundName: 'default',
+//     importance: 'high',
+//     vibrate: true,
+//     vibration: 300,
+//   });
+// });
 
 PushNotification.configure({
   onRegister: function (token) {
@@ -163,25 +163,36 @@ export default function App() {
     };
   }, []);
 
-  // Request notification permission
-  const requestUserPermission = async () => {
-    if (Platform.OS === 'ios') {
-      const authStatus = await messaging().requestPermission();
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-      if (enabled) {
-        console.log('Authorization status:', authStatus);
-      }
-    } else {
-      // For Android, permission is granted by default
-      const enabled = await messaging().hasPermission();
-      if (!enabled) {
-        await messaging().requestPermission();
-      }
-    }
+  const showNotificationPrompt = () => {
+    Alert.alert(
+      'Izinkan Notifikasi',
+      'Aplikasi membutuhkan izin untuk mengirim notifikasi. Aktifkan sekarang?',
+      [
+        {
+          text: 'Tidak',
+          style: 'cancel',
+        },
+        {
+          text: 'Izinkan',
+          onPress: () => messaging().requestPermission(),
+        },
+      ],
+      {cancelable: false},
+    );
   };
+
+  useEffect(() => {
+    messaging()
+      .hasPermission()
+      .then(status => {
+        if (
+          status === messaging.AuthorizationStatus.NOT_DETERMINED ||
+          status === messaging.AuthorizationStatus.DENIED
+        ) {
+          showNotificationPrompt();
+        }
+      });
+  }, []);
 
   // Get FCM Token dan kirim ke backend
   const getFCMToken = async () => {
@@ -214,9 +225,7 @@ export default function App() {
 
   // Request permission dan get token saat app start
   useEffect(() => {
-    requestUserPermission().then(() => {
-      getFCMToken();
-    });
+    getFCMToken();
   }, []);
 
   // Handler ketika animasi splash screen selesai
@@ -306,9 +315,6 @@ export default function App() {
   // Pindahkan useEffect ke sini
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      console.log('Received foreground message:', remoteMessage);
-
-      // Tampilkan notifikasi lokal
       PushNotification.localNotification({
         channelId: 'email_channel',
         title: remoteMessage.notification?.title || 'Notifikasi',
@@ -318,13 +324,11 @@ export default function App() {
         importance: 'high',
         vibrate: true,
         vibration: 300,
-        smallIcon: 'ic_portal', // Gunakan icon yang sudah ada
-        largeIcon: '',
+        smallIcon: 'ic_portal',
         priority: 'high',
         invokeApp: true,
       });
     });
-
     return unsubscribe;
   }, []);
 
