@@ -5,6 +5,8 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  PermissionsAndroid,
+  Platform,
   StyleSheet,
   View,
 } from 'react-native';
@@ -82,6 +84,30 @@ PushNotification.createChannel(
   },
   created => console.log(`Channel created: ${created}`),
 );
+
+const checkAndRequestNotificationPermission = async () => {
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    try {
+      const granted = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      );
+      if (!granted) {
+        const result = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+        );
+        // Optional: Tampilkan alert jika user tetap menolak
+        if (result !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert(
+            'Izin Notifikasi',
+            'Aplikasi tidak dapat mengirim notifikasi tanpa izin. Silakan aktifkan izin notifikasi di pengaturan.',
+          );
+        }
+      }
+    } catch (error) {
+      console.log('Error checking/requesting notification permission:', error);
+    }
+  }
+};
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -303,6 +329,10 @@ export default function App() {
       });
     });
     return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    checkAndRequestNotificationPermission();
   }, []);
 
   // Jika splash screen masih ditampilkan
