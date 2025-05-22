@@ -102,10 +102,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
 
-  const handleLoginSuccess = async (userData: any) => {
+  const handleLoginSuccess = async (_userData: any) => {
     try {
       // Get dan simpan FCM token
-      const fcmToken = await getFCMToken(userData.id);
+      const fcmToken = await getFCMToken();
       if (!fcmToken) {
         console.error('Failed to setup push notification');
       }
@@ -283,8 +283,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             {/* Client Dropdown untuk Testing */}
             <View style={styles.testingSection}>
               <Text style={styles.testingSectionTitle2}>
-                PT Relabs Net DayaCipta © {new Date().getFullYear()}, Relabs is
-                a Member of PT Qwords Company International Group
+                PT Relabs Net DayaCipta © {new Date().getFullYear()}, {'\n'}{' '}
+                Relabs is a Member of{'\n'}PT Qwords Company International Group
               </Text>
               {/* <ClientDropdown /> */}
             </View>

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -61,6 +61,9 @@ const HomeScreen = ({
       paymentmethod?: string;
     }>
   >([]);
+
+  // Tambahkan ref untuk ScrollView
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const fetchUserData = async () => {
     try {
@@ -283,42 +286,80 @@ const HomeScreen = ({
 
   // Tambahkan state untuk carousel index
   const [activePromoIndex, setActivePromoIndex] = useState(0);
+  const dotAnimation = useRef(new Animated.Value(0)).current;
 
   // Data promo
   const promoItems = [
-    {
-      title: 'Enjoy Your',
-      subtitle: 'First Privilege',
-      tag: 'Voucher',
-    },
-    {
-      title: 'Special Offer',
-      subtitle: 'New Customer',
-      tag: '50% Off',
-    },
-    {
-      title: 'Weekend Deal',
-      subtitle: 'Limited Time',
-      tag: 'Promo',
-    },
-    {
-      title: 'Member Benefits',
-      subtitle: 'Premium Access',
-      tag: 'Exclusive',
-    },
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner1.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner2.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner3.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner4.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner5.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner6.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner7.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner8.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner9.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner10.jpg'},
   ];
+
+  // State untuk banner yang berhasil dimuat
+  const [visibleBanners, setVisibleBanners] = useState(promoItems);
+
+  // Handler jika gambar gagal dimuat
+  const handleImageError = (index: number) => {
+    setVisibleBanners(prev => prev.filter((_, i) => i !== index));
+  };
 
   // Tambahkan fungsi handle scroll untuk promo carousel
   const handlePromoScroll = (
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     const scrollX = event.nativeEvent.contentOffset.x;
-    // Simpan kalkulasi yang sama tapi dalam bentuk yang lebih stabil
-    const cardWidth = width - 110; // Sesuaikan dengan width - 120 + 10
-    const index = Math.round(scrollX / cardWidth);
-    const safeIndex = Math.min(Math.max(0, index), promoItems.length - 1);
+    const cardWidth = width - 50;
+    const index = scrollX / cardWidth;
+
+    // Animasikan dot saat scroll
+    Animated.timing(dotAnimation, {
+      toValue: index,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+
+    const safeIndex = Math.min(
+      Math.max(0, Math.round(index)),
+      promoItems.length - 1,
+    );
     setActivePromoIndex(safeIndex);
   };
+
+  // Fungsi untuk auto scroll dengan useCallback
+  const autoScroll = useCallback(() => {
+    if (visibleBanners.length === 0) {
+      return;
+    }
+    let nextIndex = activePromoIndex + 1;
+    if (nextIndex >= visibleBanners.length) {
+      nextIndex = 0;
+    }
+    if (scrollViewRef.current) {
+      const offsetX = nextIndex * (width - 50);
+      Animated.parallel([
+        Animated.timing(dotAnimation, {
+          toValue: nextIndex,
+          duration: 500,
+          useNativeDriver: false,
+        }),
+      ]).start();
+      scrollViewRef.current.scrollTo({x: offsetX, animated: true});
+      setActivePromoIndex(nextIndex);
+    }
+  }, [activePromoIndex, visibleBanners.length, dotAnimation]);
+
+  // Setup auto scroll interval
+  useEffect(() => {
+    const interval = setInterval(autoScroll, 2000);
+    return () => clearInterval(interval);
+  }, [autoScroll]);
 
   // Jika terjadi error, tampilkan pesan dan tombol retry
   if (error) {
@@ -375,9 +416,13 @@ const HomeScreen = ({
             <Text style={styles.onlineText}>Online</Text>
           </View>
           <TouchableOpacity
-            style={styles.notifIcon}
+            style={styles.notifIcon2}
             onPress={() => navigateTo('Notification')}>
-            <Text style={styles.notifText}>🔔</Text>
+            {/* <Text style={styles.notifText}>🔔</Text> */}
+            <Image
+              source={require('../assets/lonceng.png')}
+              style={styles.logoutImage}
+            />
           </TouchableOpacity>
           <TouchableOpacity style={styles.notifIcon2} onPress={onLogout}>
             {/* <Text style={styles.notifText2}>⇨</Text> */}
@@ -409,7 +454,7 @@ const HomeScreen = ({
           ) : (
             <>
               <View style={styles.profileInfo}>
-                <Text style={styles.helloText}>Hello,</Text>
+                <Text style={styles.helloText}>Halo,</Text>
                 <Text style={styles.userName}>{userData?.name || 'User'}</Text>
                 <Text style={styles.userEmail}>
                   ✉️ {userData?.email || 'Loading...'}
@@ -422,13 +467,13 @@ const HomeScreen = ({
         {/* Account Info Card */}
         <View style={styles.accountCard}>
           <View style={styles.accountInfoItem}>
-            <Text style={styles.accountLabel}>No. Akun</Text>
+            <Text style={styles.accountLabel}>ID Pelanggan</Text>
             <Text style={styles.accountValue}>{userData?.id || '-'}</Text>
           </View>
           <View style={styles.accountInfoDivider} />
           <View style={styles.accountInfoItem}>
             {/* <Text style={styles.accountLabel}>Billing Status</Text> */}
-            <Text style={styles.accountLabel}>Status Klien</Text>
+            <Text style={styles.accountLabel}>Status Layanan</Text>
             <Text style={styles.blueText}>{userData?.status || '-'}</Text>
           </View>
         </View>
@@ -441,36 +486,24 @@ const HomeScreen = ({
 
           {/* Promo Carousel */}
           <ScrollView
+            ref={scrollViewRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             onScroll={handlePromoScroll}
             scrollEventThrottle={16}
             decelerationRate={0.9}
-            snapToInterval={width - 40}
+            snapToInterval={width}
             snapToAlignment="start"
             contentOffset={{x: 0, y: 0}}
             contentContainerStyle={styles.promoScrollContent}>
-            {promoItems.map((promo, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.promoCard,
-                  index > 0 ? styles.promoCardMargin : undefined,
-                ]}>
-                <View style={styles.promoLogoContainer}>
-                  <Image
-                    source={require('../assets/guarantee.webp')}
-                    style={styles.promoLogo}
-                    resizeMode="contain"
-                  />
-                </View>
-                <View style={styles.promoContent}>
-                  <Text style={styles.promoTitle}>{promo.title}</Text>
-                  <Text style={styles.promoSubtitle}>{promo.subtitle}</Text>
-                  <View style={styles.voucherTag}>
-                    <Text style={styles.voucherText}>{promo.tag}</Text>
-                  </View>
-                </View>
+            {visibleBanners.map((promo, index) => (
+              <View key={index} style={styles.promoCard}>
+                <Image
+                  source={{uri: promo.imageUrl}}
+                  style={styles.promoImage}
+                  resizeMode="cover"
+                  onError={() => handleImageError(index)}
+                />
               </View>
             ))}
           </ScrollView>
@@ -512,15 +545,38 @@ const HomeScreen = ({
 
           {/* Carousel Indicators */}
           <View style={styles.carouselIndicator}>
-            {promoItems.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.carouselDot,
-                  activePromoIndex === index && styles.carouselActiveDot,
-                ]}
-              />
-            ))}
+            {visibleBanners.map((_, index) => {
+              const inputRange = [index - 1, index, index + 1];
+              const dotWidth = dotAnimation.interpolate({
+                inputRange,
+                outputRange: [8, 20, 8],
+                extrapolate: 'clamp',
+              });
+              const opacity = dotAnimation.interpolate({
+                inputRange,
+                outputRange: [0.5, 1, 0.5],
+                extrapolate: 'clamp',
+              });
+              const backgroundColor = dotAnimation.interpolate({
+                inputRange,
+                outputRange: ['#ddd', '#ffb444', '#ddd'],
+                extrapolate: 'clamp',
+              });
+
+              return (
+                <Animated.View
+                  key={index}
+                  style={[
+                    styles.carouselDot,
+                    {
+                      width: dotWidth,
+                      opacity,
+                      backgroundColor,
+                    },
+                  ]}
+                />
+              );
+            })}
           </View>
 
           {/* Offers Section */}
@@ -654,12 +710,12 @@ const HomeScreen = ({
           <Text style={[styles.navIcon, styles.activeNav]}>🏠</Text>
           <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Notification')}>
           <Text style={styles.navIcon}>🛒</Text>
           <Text style={styles.navText}>Notification</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
@@ -754,9 +810,10 @@ const styles = StyleSheet.create({
     height: 40,
   },
   logo: {
-    height: 40,
+    height: 80,
     width: 80,
-    marginLeft: -17,
+    marginTop: -20,
+    // marginLeft: -17,
   },
   headerRight: {
     flexDirection: 'row',
@@ -769,7 +826,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
-    marginRight: 10,
+    marginRight: 5,
   },
   onlineDot: {
     width: 8,
@@ -913,17 +970,18 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   promoScrollContent: {
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingVertical: 10,
   },
   promoCard: {
-    width: width - 120,
-    // backgroundColor: 'red',
-    backgroundColor: '#fd7e14',
-    borderRadius: 10,
-    padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: width,
+    height: 180,
+    // overflow: 'hidden',
+    margin: 10,
+  },
+  promoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 15,
   },
   promoCard2: {
     width: width - 120,
@@ -1095,16 +1153,9 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   carouselDot: {
-    width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ddd',
     marginHorizontal: 4,
-  },
-  carouselActiveDot: {
-    backgroundColor: '#ffb444',
-    width: 20, // Dot yang aktif lebih panjang
-    borderRadius: 4,
   },
   carouselContainer: {
     paddingHorizontal: 10, // Padding untuk seluruh container

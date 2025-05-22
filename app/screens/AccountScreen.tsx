@@ -105,7 +105,7 @@ const AccountScreen = ({
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>YProfil</Text>
+        <Text style={styles.headerTitle}>Profil</Text>
         {/* <TouchableOpacity style={styles.settingsButton}>
           <Text style={styles.settingsIcon}>⚙️</Text>
         </TouchableOpacity> */}
@@ -150,14 +150,14 @@ const AccountScreen = ({
           <Text style={styles.sectionTitle}>ID Relabs</Text>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>ID</Text>
-              <Text style={styles.infoValue}>{clientData?.email}</Text>
-            </View>
-            <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Nama</Text>
               <Text style={styles.infoValue}>
                 {clientData?.firstname} {clientData?.lastname}
               </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoValue}>{clientData?.email}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>No. Telepon</Text>
@@ -178,24 +178,28 @@ const AccountScreen = ({
           </View>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>No. Akun</Text>
-              <Text style={styles.infoValue}>{clientData?.id}</Text>
-            </View>
-            <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Nama</Text>
               <Text style={styles.infoValue}>
                 {clientData?.firstname} {clientData?.lastname}
               </Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Alamat</Text>
-              <Text style={styles.infoValue}>
-                {clientData?.address1} {clientData?.city} {clientData?.postcode}
-              </Text>
+              <Text style={styles.infoLabel}>Status Akun</Text>
+              <Text style={styles.infoValue}>{clientData?.status}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Perusahaan</Text>
+              <Text style={styles.infoValue}>{clientData?.company}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Email</Text>
               <Text style={styles.infoValue}>{clientData?.email}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Alamat</Text>
+              <Text style={styles.infoValue}>
+                {clientData?.address1} {clientData?.city} {clientData?.postcode}
+              </Text>
             </View>
           </View>
         </View>

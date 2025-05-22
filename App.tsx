@@ -23,7 +23,12 @@ import PaymentSuccessScreen from './app/screens/PaymentSuccessScreen';
 import ResetPasswordScreen from './app/screens/ResetPasswordScreen';
 import SplashScreen from './app/screens/SplashScreen';
 import VerifyCodeScreen from './app/screens/VerifyCodeScreen';
-import {checkLoginStatus, isTokenExpired, logoutUser} from './src/services/api';
+import {
+  checkLoginStatus,
+  getFCMToken,
+  isTokenExpired,
+  logoutUser,
+} from './src/services/api';
 
 // Type untuk props yang diteruskan ke screens
 interface ScreenProps {
@@ -194,49 +199,17 @@ export default function App() {
       });
   }, []);
 
-  // Get FCM Token dan kirim ke backend
-  const getFCMToken = async () => {
-    try {
-      const token = await messaging().getToken();
-      console.log('FCM Token:', token);
-
-      // Kirim token ke backend
-      const response = await fetch(
-        'https://portal.relabs.id/mobile/save-fcm-token',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer YOUR_AUTH_TOKEN', // Ganti dengan token auth yang valid
-          },
-          body: JSON.stringify({
-            user_id: 469, // Ganti dengan user_id yang sedang login
-            fcm_token: token,
-          }),
-        },
-      );
-
-      const result = await response.json();
-      console.log('Save FCM Token result:', result);
-    } catch (error) {
-      console.error('Error saving FCM token:', error);
-    }
-  };
-
-  // Request permission dan get token saat app start
-  useEffect(() => {
-    getFCMToken();
-  }, []);
-
   // Handler ketika animasi splash screen selesai
   const handleSplashComplete = () => {
     setShowSplash(false);
   };
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = async () => {
     setIsLoggedIn(true);
     setSessionExpired(false);
     setCurrentScreen('Home');
+    // Panggil getFCMToken setelah login berhasil
+    await getFCMToken();
   };
 
   const handleLogout = async () => {
@@ -324,7 +297,7 @@ export default function App() {
         importance: 'high',
         vibrate: true,
         vibration: 300,
-        smallIcon: 'ic_portal',
+        smallIcon: 'ic_launcher',
         priority: 'high',
         invokeApp: true,
       });

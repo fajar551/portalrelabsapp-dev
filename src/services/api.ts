@@ -520,19 +520,34 @@ export const getInvoiceDetails = async (invoiceId: any) => {
   }
 };
 
-export const getFCMToken = async (userId: number) => {
+export const getFCMToken = async () => {
   try {
-    await messaging().registerDeviceForRemoteMessages();
+    // Cek status login terlebih dahulu
+    const isLoggedIn = await checkLoginStatus();
+    if (!isLoggedIn) {
+      console.log('User belum login, skip FCM token registration');
+      return null;
+    }
+
     const token = await messaging().getToken();
     console.log('FCM Token:', token);
 
-    // Ambil token dari SessionManager
+    // Ambil token auth dari SessionManager
     const authToken = await SessionManager.getToken();
-
     if (!authToken) {
       console.error('No auth token found');
       return null;
     }
+
+    // Ambil data user dari AsyncStorage
+    const userDataStr = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
+    if (!userDataStr) {
+      console.error('No user data found');
+      return null;
+    }
+
+    const userData = JSON.parse(userDataStr);
+    const userId = userData.id;
 
     // Kirim token ke backend
     const response = await fetch(
@@ -551,12 +566,8 @@ export const getFCMToken = async (userId: number) => {
     );
 
     const result = await response.json();
-    if (result.status !== 'success') {
-      throw new Error(result.message || 'Failed to save FCM token');
-    }
-
     console.log('Save FCM Token result:', result);
-    return token;
+    return result;
   } catch (error) {
     console.error('Error saving FCM token:', error);
     return null;

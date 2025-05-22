@@ -96,12 +96,12 @@ const NotificationScreen = ({
   }, []);
 
   // Pindahkan fungsi ini ke dalam komponen
-  const resetReadNotifications = async () => {
-    await AsyncStorage.removeItem(READ_KEY);
-    setReadNotifications([]);
-    await AsyncStorage.removeItem(READ_BILL_KEY);
-    setReadBills([]);
-  };
+  // const resetReadNotifications = async () => {
+  //   await AsyncStorage.removeItem(READ_KEY);
+  //   setReadNotifications([]);
+  //   await AsyncStorage.removeItem(READ_BILL_KEY);
+  //   setReadBills([]);
+  // };
 
   // Fungsi untuk mengambil isi <p>, <li>, <ol>, <h6> dari HTML
   const extractTextFromHtml = (html: string) => {
@@ -241,22 +241,22 @@ const NotificationScreen = ({
   }, []);
 
   // Fungsi untuk mengetes notifikasi lokal
-  const testPushNotification = () => {
-    console.log('Tombol Tes Notifikasi ditekan');
-    PushNotification.localNotification({
-      /* Android Only Properties */
-      channelId: 'email_channel',
-      title: 'Tes Notifikasi',
-      message: 'Ini adalah notifikasi tes dari aplikasi',
-      playSound: true,
-      soundName: 'default',
-      importance: 'high',
-      vibrate: true,
-      vibration: 300,
-      /* iOS and Android properties */
-      userInfo: {id: 'test'},
-    });
-  };
+  // const testPushNotification = () => {
+  //   console.log('Tombol Tes Notifikasi ditekan');
+  //   PushNotification.localNotification({
+  //     /* Android Only Properties */
+  //     channelId: 'email_channel',
+  //     title: 'Tes Notifikasi',
+  //     message: 'Ini adalah notifikasi tes dari aplikasi',
+  //     playSound: true,
+  //     soundName: 'default',
+  //     importance: 'high',
+  //     vibrate: true,
+  //     vibration: 300,
+  //     /* iOS and Android properties */
+  //     userInfo: {id: 'test'},
+  //   });
+  // };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -270,9 +270,9 @@ const NotificationScreen = ({
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pesan</Text>
-        <TouchableOpacity style={styles.soundButton}>
+        {/* <TouchableOpacity style={styles.soundButton}>
           <Text style={styles.soundButtonText}>🔊</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Tab Navigation */}
@@ -297,7 +297,7 @@ const NotificationScreen = ({
         />
       </View>
 
-      <View style={styles.logoutContainer}>
+      {/* <View style={styles.logoutContainer}>
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => navigateTo('Home')}>
@@ -305,7 +305,6 @@ const NotificationScreen = ({
         </TouchableOpacity>
       </View>
 
-      {/* Tombol Reset Penanda */}
       <View style={styles.logoutContainer2}>
         <TouchableOpacity
           style={styles.logoutButton2}
@@ -314,26 +313,21 @@ const NotificationScreen = ({
         </TouchableOpacity>
       </View>
 
-      {/* Tombol Test Notifikasi */}
       <View style={styles.logoutContainer2}>
         <TouchableOpacity
           style={[styles.logoutButton2, {backgroundColor: '#28a745'}]}
           onPress={testPushNotification}>
           <Text style={styles.logoutButtonText2}>Tes Notifikasi</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       {/* Daftar Notifikasi atau Tagihan */}
       {activeTab === 'Notifikasi' ? (
         <ScrollView style={styles.notificationsList}>
           {loading ? (
-            <Text style={{textAlign: 'center', marginTop: 20}}>
-              Memuat data...
-            </Text>
+            <Text style={[styles.ta, styles.mt20]}>Memuat data...</Text>
           ) : notifications.length === 0 ? (
-            <Text style={{textAlign: 'center', marginTop: 20}}>
-              Tidak ada notifikasi
-            </Text>
+            <Text style={[styles.ta, styles.mt20]}>Tidak ada notifikasi</Text>
           ) : (
             notifications.map(notification => (
               <TouchableOpacity
@@ -366,9 +360,7 @@ const NotificationScreen = ({
       ) : (
         <ScrollView style={styles.notificationsList}>
           {loading ? (
-            <Text style={{textAlign: 'center', marginTop: 20}}>
-              Memuat data...
-            </Text>
+            <Text style={[styles.ta, styles.mt20]}>Memuat data...</Text>
           ) : notifications.filter(
               n =>
                 n.subject &&
@@ -376,9 +368,7 @@ const NotificationScreen = ({
                   '[Tagihan] Pembayaran Layanan Internet Qwords',
                 ),
             ).length === 0 ? (
-            <Text style={{textAlign: 'center', marginTop: 20}}>
-              Tidak ada tagihan
-            </Text>
+            <Text style={[styles.ta, styles.mt20]}>Tidak ada tagihan</Text>
           ) : (
             notifications
               .filter(
@@ -480,6 +470,12 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     // marginVertical: 20,
+  },
+  ta: {
+    textAlign: 'center',
+  },
+  mt20: {
+    marginTop: 20,
   },
   logoutButton: {
     backgroundColor: '#fd7e14',

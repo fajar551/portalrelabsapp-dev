@@ -29,20 +29,12 @@
         </intent-filter>
       </activity>
 
-      <!-- <service
-          android:name=".java.MyFirebaseMessagingService"
-          android:exported="false">
-          <intent-filter>
-              <action android:name="com.google.firebase.MESSAGING_EVENT" />
-          </intent-filter>
-      </service> -->
-
         <meta-data
           android:name="com.google.firebase.messaging.default_notification_channel_id"
           android:value="email_channel"
           tools:replace="android:value" />
         <meta-data
           android:name="com.google.firebase.messaging.default_notification_icon"
-          android:resource="@mipmap/ic_portal" />
+          android:resource="@mipmap/ic_launcher" />
     </application>
 </manifest>

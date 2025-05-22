@@ -6,6 +6,7 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  Image,
   Text,
   TouchableOpacity,
   View,
@@ -248,10 +249,17 @@ const InvoiceDetailScreen = ({
                   </Text>
                 </View>
                 <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Pajak:</Text>
+                    <Text style={styles.detailValue}>
+                      {formatCurrency(selectedInvoice.tax)}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Total:</Text>
                   <Text style={styles.detailTotal}>
                     {formatCurrency(selectedInvoice.total)}
                   </Text>
+
                 </View>
               </View>
             </View>
@@ -272,9 +280,9 @@ const InvoiceDetailScreen = ({
                         {formatCurrency(item.amount)}
                       </Text>
                     </View>
-                    {item.taxed === 1 && (
+                    {/* {item.taxed === 1 && (
                       <Text style={styles.taxedItem}>Termasuk Pajak</Text>
-                    )}
+                    )} */}
                   </View>
                 ))
               ) : (
@@ -362,8 +370,13 @@ const InvoiceDetailScreen = ({
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navText}>Akun</Text>
+          <View style={styles.personIcon}>
+            <Image
+              source={require('../assets/user.png')}
+              style={styles.iconImage}
+            />
+          </View>
+          <Text style={[styles.navText]}>Akun</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -394,6 +407,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
     textAlign: 'center',
+  },
+  personIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fd7e14',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 7.5,
+  },
+  iconImage: {
+    width: 14,
+    height: 14,
+    tintColor: 'white',
   },
   backBtn: {
     width: 40,
@@ -582,6 +609,7 @@ const styles = StyleSheet.create({
   },
   itemAmount: {
     fontWeight: 'bold',
+    color: '#666',
   },
   taxedItem: {
     color: '#666',
