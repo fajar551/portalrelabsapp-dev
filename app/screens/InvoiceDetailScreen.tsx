@@ -1,16 +1,17 @@
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Image,
   RefreshControl,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
-  Image,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {getDetailedClientInvoices} from '../../src/services/api';
 
 const InvoiceDetailScreen = ({
@@ -153,7 +154,11 @@ const InvoiceDetailScreen = ({
       <StatusBar backgroundColor="#2e7ce4" barStyle="light-content" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['#ffb347', '#fd7e14']}
+        start={{x: 0, y: 0}}
+        end={{x: 0, y: 1}}
+        style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => navigateTo('Pay')}>
@@ -161,7 +166,7 @@ const InvoiceDetailScreen = ({
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detail Invoice</Text>
         <View style={styles.emptySpace} />
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
@@ -203,153 +208,119 @@ const InvoiceDetailScreen = ({
           </ScrollView>
         </View>
 
-        {selectedInvoice && (
-          <>
-            {/* Invoice Summary */}
-            <View style={styles.invoiceSummary}>
-              <View style={styles.invoiceHeader}>
-                <Text style={styles.invoiceTitle}>
-                  {selectedInvoice.invoicenum
-                    ? `Invoice #${selectedInvoice.invoicenum}`
-                    : `Invoice #${selectedInvoice.id}`}
+        {/* Invoice Summary */}
+        <View style={styles.invoiceSummary}>
+          <View style={styles.invoiceHeader}>
+            <Text style={styles.invoiceTitle}>
+              {selectedInvoice.invoicenum
+                ? `Invoice #${selectedInvoice.invoicenum}`
+                : `Invoice #${selectedInvoice.id}`}
+            </Text>
+            <View
+              style={[
+                styles.statusBadge,
+                selectedInvoice.status === 'Unpaid'
+                  ? styles.unpaidBadge
+                  : selectedInvoice.status === 'Paid'
+                  ? styles.paidBadge
+                  : styles.otherStatusBadge,
+              ]}>
+              <Text style={styles.statusText}>
+                {selectedInvoice.status_text || selectedInvoice.status}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Tanggal Invoice:</Text>
+            <Text style={styles.detailValue}>
+              {selectedInvoice.formatted_date || selectedInvoice.date}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Jatuh Tempo:</Text>
+            <Text style={styles.detailValue}>
+              {selectedInvoice.formatted_duedate || selectedInvoice.duedate}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Metode Pembayaran:</Text>
+            <Text style={styles.detailValue}>
+              {selectedInvoice.paymentmethod || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Pajak:</Text>
+            <Text style={styles.detailValue}>
+              {formatCurrency(selectedInvoice.tax)}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Total:</Text>
+            <Text style={styles.detailTotal}>
+              {formatCurrency(selectedInvoice.total)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Invoice Items */}
+        <Text style={styles.sectionTitle}>Item Invoice:</Text>
+        {invoiceItems.length > 0 ? (
+          invoiceItems.map((item: any, index: number) => (
+            <View key={item.id || index} style={styles.invoiceItem}>
+              <Text style={styles.itemDescription}>{item.description}</Text>
+              <View style={styles.itemAmountRow}>
+                <Text style={styles.itemLabel}>Jumlah:</Text>
+                <Text style={styles.itemAmount}>
+                  {formatCurrency(item.amount)}
                 </Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    selectedInvoice.status === 'Unpaid'
-                      ? styles.unpaidBadge
-                      : selectedInvoice.status === 'Paid'
-                      ? styles.paidBadge
-                      : styles.otherStatusBadge,
-                  ]}>
-                  <Text style={styles.statusText}>
-                    {selectedInvoice.status_text || selectedInvoice.status}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.invoiceDetails}>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Tanggal Invoice:</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedInvoice.formatted_date || selectedInvoice.date}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Jatuh Tempo:</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedInvoice.formatted_duedate ||
-                      selectedInvoice.duedate}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Metode Pembayaran:</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedInvoice.paymentmethod || 'N/A'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Pajak:</Text>
-                    <Text style={styles.detailValue}>
-                      {formatCurrency(selectedInvoice.tax)}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Total:</Text>
-                  <Text style={styles.detailTotal}>
-                    {formatCurrency(selectedInvoice.total)}
-                  </Text>
-
-                </View>
               </View>
             </View>
+          ))
+        ) : (
+          <Text style={styles.noItemsText}>
+            Tidak ada item detail yang tersedia
+          </Text>
+        )}
 
-            {/* Invoice Items */}
-            <View style={styles.invoiceItems}>
-              <Text style={styles.sectionTitle}>Item Invoice:</Text>
-
-              {invoiceItems.length > 0 ? (
-                invoiceItems.map((item: any, index: number) => (
-                  <View key={item.id || index} style={styles.invoiceItem}>
-                    <Text style={styles.itemDescription}>
-                      {item.description}
-                    </Text>
-                    <View style={styles.itemAmountRow}>
-                      <Text style={styles.itemLabel}>Jumlah:</Text>
-                      <Text style={styles.itemAmount}>
-                        {formatCurrency(item.amount)}
-                      </Text>
-                    </View>
-                    {/* {item.taxed === 1 && (
-                      <Text style={styles.taxedItem}>Termasuk Pajak</Text>
-                    )} */}
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.noItemsText}>
-                  Tidak ada item detail yang tersedia
-                </Text>
-              )}
-            </View>
-
-            {/* Hosting Services related to this invoice (if any) */}
-            {invoiceData.hosting && invoiceData.hosting.length > 0 && (
-              <View style={styles.hostingServices}>
-                <Text style={styles.sectionTitle}>
-                  Layanan Hosting Terkait:
-                </Text>
-
-                {invoiceData.hosting.map((service: any) => (
-                  <View key={service.hosting_id} style={styles.hostingItem}>
-                    <Text style={styles.hostingName}>
-                      {service.product_name}
-                    </Text>
-                    <Text style={styles.hostingDomain}>{service.domain}</Text>
-                    <View style={styles.hostingDetails}>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Status:</Text>
-                        <Text
-                          style={[
-                            styles.hostingStatus,
-                            service.domainstatus === 'Active' &&
-                              styles.activeStatus,
-                            service.domainstatus === 'Pending' &&
-                              styles.pendingStatus,
-                            service.domainstatus === 'Suspended' &&
-                              styles.suspendedStatus,
-                          ]}>
-                          {service.domainstatus}
-                        </Text>
-                      </View>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>
-                          Siklus Penagihan:
-                        </Text>
-                        <Text style={styles.detailValue}>
-                          {service.billingcycle}
-                        </Text>
-                      </View>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>
-                          Jatuh Tempo Berikutnya:
-                        </Text>
-                        <Text style={styles.detailValue}>
-                          {service.nextduedate}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                ))}
+        {/* Hosting Services related to this invoice (if any) */}
+        <View style={styles.hostingServices}>
+          <Text style={styles.sectionTitle}>Layanan Hosting Terkait:</Text>
+          {invoiceData.hosting.map((service: any) => (
+            <View key={service.hosting_id} style={styles.hostingItem}>
+              <Text style={styles.hostingName}>{service.product_name}</Text>
+              <Text style={styles.hostingDomain}>{service.domain}</Text>
+              <View style={styles.hostingDetails}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Status:</Text>
+                  <Text
+                    style={[
+                      styles.hostingStatus,
+                      service.domainstatus === 'Active' && styles.activeStatus,
+                      service.domainstatus === 'Pending' &&
+                        styles.pendingStatus,
+                      service.domainstatus === 'Suspended' &&
+                        styles.suspendedStatus,
+                    ]}>
+                    {service.domainstatus}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Siklus Penagihan:</Text>
+                  <Text style={styles.detailValue}>{service.billingcycle}</Text>
+                </View>
+                <Text style={styles.detailLabel}>Jatuh Tempo Berikutnya:</Text>
+                <Text style={styles.detailValue}>{service.nextduedate}</Text>
               </View>
-            )}
+            </View>
+          ))}
+        </View>
 
-            {/* Pay Button (if unpaid) */}
-            {selectedInvoice.status === 'Unpaid' && (
-              <TouchableOpacity style={styles.payButton}>
-                <Text style={styles.payButtonText}>Bayar Sekarang</Text>
-              </TouchableOpacity>
-            )}
-          </>
+        {/* Pay Button (if unpaid) */}
+        {selectedInvoice.status === 'Unpaid' && (
+          <TouchableOpacity style={styles.payButton}>
+            <Text style={styles.payButtonText}>Bayar Sekarang</Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
 
@@ -394,7 +365,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    backgroundColor: '#fd7e14',
     flexDirection: 'row',
     paddingVertical: 15,
     paddingHorizontal: 15,
@@ -549,9 +519,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     zIndex: 100,
-  },
-  invoiceDetails: {
-    marginTop: 10,
   },
   detailRow: {
     flexDirection: 'row',

@@ -22,6 +22,7 @@ import {
   getPaymentGateways,
   getPaymentHistory,
 } from '../../src/services/api';
+import LinearGradient from 'react-native-linear-gradient';
 
 // Mendapatkan lebar layar untuk kalkulasi
 // const {width} = Dimensions.get('window');
@@ -400,10 +401,14 @@ const PayScreen = ({
     <SafeAreaView style={styles.root}>
       <StatusBar backgroundColor="#00008B" barStyle="light-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['#ffb347', '#fd7e14']}
+        start={{x: 0, y: 0}}
+        end={{x: 0, y: 1}}
+        style={styles.header}
+      >
         <Text style={styles.headerTitle}>Pembayaran</Text>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
@@ -478,7 +483,7 @@ const PayScreen = ({
                             inputRange: [0, 1],
                             outputRange: ['0%', '100%'],
                           }),
-                          transform: [{translateX: -4}], // Menggeser dot agar berada di tengah progress bar (lebar dot = 8px)
+                          transform: [{translateX: -4}],
                           backgroundColor: getProgressBarColor(),
                         },
                       ]}
@@ -744,7 +749,7 @@ const PayScreen = ({
               <View style={styles.successIconContainer}>
                 <Text style={styles.successIcon}>👨‍💻</Text>
               </View>
-              <Text style={styles.modalTitle}>Successful Payment</Text>
+              <Text style={styles.modalTitle}>Pembayaran Berhasil</Text>
             </View>
 
             {isDetailLoading ? (
@@ -763,20 +768,20 @@ const PayScreen = ({
                       : `${selectedPayment?.month} ${selectedPayment?.year}`}
                   </Text>
                   <View style={styles.totalBillContainer}>
-                    <Text style={styles.totalBillLabel}>Total Bill</Text>
+                    <Text style={styles.totalBillLabel}>Total Tagihan</Text>
                     <Text style={styles.totalBillAmount}>
                       Rp {selectedPayment?.amount.toLocaleString('id-ID')}
                     </Text>
                   </View>
                   <View style={styles.paidStatusContainer}>
-                    <Text style={styles.paidStatusText}>Paid</Text>
+                    <Text style={styles.paidStatusText}>Dibayar</Text>
                   </View>
                 </View>
 
                 <View style={styles.billingDetailContainer}>
                   <View style={styles.billingDetailRow}>
                     <Text style={styles.billingDetailLabel2}>
-                      Billing Statement Date
+                      Tanggal Tagihan
                     </Text>
                     <Text style={styles.billingDetailValue}>
                       {selectedPayment?.datepaid
@@ -794,7 +799,7 @@ const PayScreen = ({
 
                   <View style={styles.billingDetailRow}>
                     <Text style={styles.billingDetailLabel}>
-                      PREVIOUS BALANCE
+                      SALDO SEBELUMNYA
                     </Text>
                     <Text style={styles.billingDetailValue}>
                       Rp {selectedPayment?.amount.toLocaleString('id-ID')}
@@ -802,7 +807,7 @@ const PayScreen = ({
                   </View>
 
                   <View style={styles.billingDetailRow}>
-                    <Text style={styles.billingDetailLabel}>Total Paid</Text>
+                    <Text style={styles.billingDetailLabel}>Total Dibayar</Text>
                     <Text style={styles.billingDetailValueNegative}>
                       -Rp {selectedPayment?.amount.toLocaleString('id-ID')}
                     </Text>
@@ -810,7 +815,7 @@ const PayScreen = ({
 
                   <View style={styles.billingDetailRow}>
                     <Text style={styles.billingDetailLabel}>
-                      Payment Method
+                      Metode Pembayaran
                     </Text>
                     <Text style={styles.billingDetailValue}>
                       {selectedPayment?.paymentmethod || ''}
@@ -835,7 +840,7 @@ const PayScreen = ({
                   {selectedPayment?.taxes?.map((tax, index) => (
                     <View key={`tax-${index}`} style={styles.billingDetailRow}>
                       <Text style={styles.billingDetailLabel}>
-                        Tax{tax.description ? ` - ${tax.description}` : ''}
+                        {tax.description}
                       </Text>
                       <Text style={styles.billingDetailValue}>
                         Rp {tax.amount.toLocaleString('id-ID')}

@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {getClientProfile} from '../../src/services/api';
 
 // Mendapatkan lebar layar untuk kalkulasi
@@ -104,12 +105,13 @@ const AccountScreen = ({
       <StatusBar backgroundColor="#2e7ce4" barStyle="light-content" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['#ffb347', '#fd7e14']}
+        start={{x: 0, y: 0}}
+        end={{x: 0, y: 1}}
+        style={styles.header}>
         <Text style={styles.headerTitle}>Profil</Text>
-        {/* <TouchableOpacity style={styles.settingsButton}>
-          <Text style={styles.settingsIcon}>⚙️</Text>
-        </TouchableOpacity> */}
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
@@ -127,7 +129,11 @@ const AccountScreen = ({
         </View> */}
 
         {/* Main Profile */}
-        <View style={styles.mainProfile}>
+        <LinearGradient
+          colors={['#fd7e14', '#ffb347']}
+          start={{x: 0, y: 0}}
+          end={{x: 0, y: 1}}
+          style={styles.mainProfile}>
           <View style={styles.profileInfo}>
             <Text style={styles.userName}>
               {clientData?.firstname} {clientData?.lastname}
@@ -143,7 +149,7 @@ const AccountScreen = ({
               />
             </View>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* First ID */}
         <View style={styles.sectionContainer}>
@@ -270,7 +276,6 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   header: {
-    backgroundColor: '#fd7e14',
     flexDirection: 'row',
     paddingVertical: 15,
     paddingHorizontal: 15,
@@ -303,7 +308,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   mainProfile: {
-    backgroundColor: '#fd7e14',
     paddingHorizontal: 15,
     paddingBottom: 20,
     flexDirection: 'row',
@@ -374,7 +378,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   infoLabel: {
-    width: 80,
+    width: 100,
     fontSize: 14,
     color: '#666',
   },

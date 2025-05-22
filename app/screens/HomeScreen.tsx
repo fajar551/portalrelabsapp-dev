@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 // import {getUserData} from '../../src/services/api';
+import LinearGradient from 'react-native-linear-gradient';
 import {getClientInvoices, getPaymentHistory} from '../../src/services/api';
 
 // Mendapatkan lebar layar untuk kalkulasi
@@ -402,7 +403,11 @@ const HomeScreen = ({
       <StatusBar backgroundColor="#fd7e14" barStyle="light-content" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['#ffb347', '#fd7e14']}
+        start={{x: 0, y: 0}}
+        end={{x: 0, y: 1}}
+        style={styles.header}>
         <View style={styles.logoContainer}>
           <Image
             source={require('../assets/logo.png')}
@@ -432,7 +437,7 @@ const HomeScreen = ({
             />
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
@@ -445,10 +450,14 @@ const HomeScreen = ({
           />
         }>
         {/* Profile Section */}
-        <View style={styles.profileSection}>
+        <LinearGradient
+          colors={['#fd7e14', '#ffb347']}
+          start={{x: 0, y: 0}}
+          end={{x: 0, y: 1}}
+          style={styles.profileSection}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#fd7e14" />
+              <ActivityIndicator size="large" color="#fff" />
               <Text style={styles.loadingText}>Memuat data pengguna...</Text>
             </View>
           ) : (
@@ -462,7 +471,7 @@ const HomeScreen = ({
               </View>
             </>
           )}
-        </View>
+        </LinearGradient>
 
         {/* Account Info Card */}
         <View style={styles.accountCard}>
@@ -749,7 +758,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   header: {
-    backgroundColor: '#fd7e14',
     flexDirection: 'row',
     paddingVertical: 15,
     paddingHorizontal: 15,
@@ -869,14 +877,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileSection: {
-    backgroundColor: '#fd7e14',
-    paddingHorizontal: 16,
     paddingBottom: 45,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    // marginLeft: 15,
   },
   profileInfo: {
     flex: 2,
+    marginLeft: 15,
   },
   helloText: {
     color: 'white',
@@ -1168,7 +1176,7 @@ const styles = StyleSheet.create({
     minHeight: 120,
   },
   loadingText: {
-    color: '#666',
+    color: '#fff',
     fontSize: 14,
     marginTop: 10,
   },
