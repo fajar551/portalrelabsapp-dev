@@ -719,12 +719,12 @@ const HomeScreen = ({
           <Text style={[styles.navIcon, styles.activeNav]}>🏠</Text>
           <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity
+        <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Notification')}>
           <Text style={styles.navIcon}>🛒</Text>
           <Text style={styles.navText}>Notification</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>

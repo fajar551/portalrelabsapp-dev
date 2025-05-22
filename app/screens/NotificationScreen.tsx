@@ -270,9 +270,9 @@ const NotificationScreen = ({
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pesan</Text>
-        {/* <TouchableOpacity style={styles.soundButton}>
-          <Text style={styles.soundButtonText}>🔊</Text>
-        </TouchableOpacity> */}
+        <TouchableOpacity style={styles.soundButton}>
+          {/* <Text style={styles.soundButtonText}>🔊</Text> */}
+        </TouchableOpacity>
       </View>
 
       {/* Tab Navigation */}
@@ -412,12 +412,14 @@ const NotificationScreen = ({
             <View style={styles.qwordsModalHeader}>
               <Text style={styles.qwordsBrand}>Pesan</Text>
             </View>
-            {/* Body abu-abu */}
-            <View style={styles.qwordsModalBody}>
+            {/* Body abu-abu dengan ScrollView agar konten bisa discroll */}
+            <ScrollView
+              style={styles.qwordsModalBody}
+              contentContainerStyle={styles.qwordsModalBodyContent}>
               <Text style={styles.qwordsText}>
                 {extractTextFromHtml(selectedNotification.message)}
               </Text>
-            </View>
+            </ScrollView>
             {/* Footer */}
             <View style={styles.qwordsModalFooter}>
               <Text style={styles.qwordsFooterText}>
@@ -643,8 +645,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#e6e6e6',
     borderRadius: 8,
     width: '92%',
+    maxHeight: '90%',
     padding: 0,
     overflow: 'hidden',
+    flexShrink: 1,
   },
   qwordsModalHeader: {
     flexDirection: 'row',
@@ -666,6 +670,12 @@ const styles = StyleSheet.create({
   },
   qwordsModalBody: {
     padding: 18,
+    flexGrow: 1,
+    minHeight: 60,
+    maxHeight: 350,
+  },
+  qwordsModalBodyContent: {
+    paddingBottom: 18,
   },
   qwordsText: {
     color: '#23242a',
