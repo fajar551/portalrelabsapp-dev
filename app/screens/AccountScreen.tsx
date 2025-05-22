@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {getClientProfile} from '../../src/services/api';
+import LogoutConfirmModal from '../components/LogoutConfirmModal';
 
 // Mendapatkan lebar layar untuk kalkulasi
 const {width} = Dimensions.get('window');
@@ -29,6 +30,7 @@ const AccountScreen = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -212,7 +214,9 @@ const AccountScreen = ({
 
         {/* Tambahkan Tombol Logout di bawah sebagai elemen terakhir ScrollView */}
         <View style={styles.logoutContainer}>
-          <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => setShowLogoutModal(true)}>
             <Text style={styles.logoutButtonText}>Logout</Text>
           </TouchableOpacity>
         </View>
@@ -238,7 +242,9 @@ const AccountScreen = ({
           <Text style={styles.navIcon}>💳</Text>
           <Text style={styles.navText}>Tagihan</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={onLogout}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => setShowLogoutModal(true)}>
           <View style={styles.personIcon}>
             <Image
               source={require('../assets/user.png')}
@@ -248,6 +254,15 @@ const AccountScreen = ({
           <Text style={[styles.navText, styles.activeNavText]}>Akun</Text>
         </TouchableOpacity>
       </View>
+
+      <LogoutConfirmModal
+        visible={showLogoutModal}
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={() => {
+          setShowLogoutModal(false);
+          onLogout();
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -404,7 +419,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   activeAccountText2: {
-    color: '#999',
+    color: '#666',
     marginLeft: -210,
     // fontWeight: 'bold',
     fontSize: 14,
