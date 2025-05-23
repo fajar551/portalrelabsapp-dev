@@ -17,8 +17,14 @@ import {
   View,
 } from 'react-native';
 // import {getUserData} from '../../src/services/api';
+import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
-import {getClientInvoices, getPaymentHistory} from '../../src/services/api';
+import {
+  getClientInvoices,
+  getNotifications,
+  getPaymentHistory,
+} from '../../src/services/api';
+import LogoutConfirmModal from '../components/LogoutConfirmModal';
 
 // Mendapatkan lebar layar untuk kalkulasi
 const {width} = Dimensions.get('window');
@@ -65,6 +71,8 @@ const HomeScreen = ({
 
   // Tambahkan ref untuk ScrollView
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const [notifCount, setNotifCount] = useState(0);
 
   const fetchUserData = async () => {
     try {
@@ -362,6 +370,54 @@ const HomeScreen = ({
     return () => clearInterval(interval);
   }, [autoScroll]);
 
+  // Ambil jumlah notifikasi belum dibaca
+  useFocusEffect(
+    useCallback(() => {
+      const fetchNotifCount = async () => {
+        try {
+          const notifications = await getNotifications();
+          const readIds = await AsyncStorage.getItem('READ_NOTIFICATIONS');
+          const readArr = readIds ? JSON.parse(readIds) : [];
+
+          console.log('Total notifikasi:', notifications.length);
+          console.log('ID notifikasi yang sudah dibaca:', readArr);
+
+          // Filter notifikasi yang belum dibaca
+          const unread = notifications.filter((n: any) => {
+            // Pastikan ID ada dan konversi ke string untuk perbandingan
+            const notificationId = String(n.id);
+            const isRead = readArr.includes(notificationId);
+            const isNotTagihan = n.subject && !n.subject.includes('[Tagihan]');
+
+            console.log('Checking notification:', {
+              id: notificationId,
+              isRead,
+              isNotTagihan,
+              subject: n.subject,
+            });
+
+            return !isRead && isNotTagihan;
+          });
+
+          console.log('Jumlah notifikasi unread:', unread.length);
+          setNotifCount(unread.length);
+        } catch (e) {
+          console.log('Error fetchNotifCount:', e);
+          setNotifCount(0);
+        }
+      };
+      fetchNotifCount();
+    }, []),
+  );
+
+  // Tambahkan state untuk logout modal
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogout = () => {
+    // Implementasi log out
+    onLogout();
+  };
+
   // Jika terjadi error, tampilkan pesan dan tombol retry
   if (error) {
     // Cek apakah error terkait dengan token atau autentikasi
@@ -423,14 +479,19 @@ const HomeScreen = ({
           <TouchableOpacity
             style={styles.notifIcon2}
             onPress={() => navigateTo('Notification')}>
-            {/* <Text style={styles.notifText}>🔔</Text> */}
             <Image
               source={require('../assets/lonceng.png')}
               style={styles.logoutImage}
             />
+            {notifCount > 0 && (
+              <View style={styles.notifBadge}>
+                <Text style={styles.notifBadgeText}>{notifCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.notifIcon2} onPress={onLogout}>
-            {/* <Text style={styles.notifText2}>⇨</Text> */}
+          <TouchableOpacity
+            style={styles.notifIcon2}
+            onPress={() => setShowLogoutModal(true)}>
             <Image
               source={require('../assets/logoutt.png')}
               style={styles.logoutImage}
@@ -743,6 +804,13 @@ const HomeScreen = ({
           <Text style={[styles.navText]}>Akun</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmModal
+        visible={showLogoutModal}
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+      />
     </SafeAreaView>
   );
 };
@@ -1337,6 +1405,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fd7e14',
     textAlign: 'center',
+  },
+  notifBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 2,
+    backgroundColor: '#fd7e14',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    zIndex: 10,
+  },
+  notifBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 

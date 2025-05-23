@@ -49,7 +49,13 @@ const loadReadBills = async () => {
 };
 
 const saveReadNotifications = async (ids: number[]) => {
-  await AsyncStorage.setItem(READ_KEY, JSON.stringify(ids));
+  try {
+    console.log('Menyimpan notifikasi yang sudah dibaca:', ids);
+    await AsyncStorage.setItem(READ_KEY, JSON.stringify(ids));
+    console.log('Berhasil menyimpan ke AsyncStorage');
+  } catch (error) {
+    console.error('Error saving to AsyncStorage:', error);
+  }
 };
 
 const saveReadBills = async (ids: number[]) => {
@@ -96,12 +102,12 @@ const NotificationScreen = ({
   }, []);
 
   // Pindahkan fungsi ini ke dalam komponen
-  // const resetReadNotifications = async () => {
-  //   await AsyncStorage.removeItem(READ_KEY);
-  //   setReadNotifications([]);
-  //   await AsyncStorage.removeItem(READ_BILL_KEY);
-  //   setReadBills([]);
-  // };
+  const resetReadNotifications = async () => {
+    await AsyncStorage.removeItem(READ_KEY);
+    setReadNotifications([]);
+    await AsyncStorage.removeItem(READ_BILL_KEY);
+    setReadBills([]);
+  };
 
   // Fungsi untuk mengambil isi <p>, <li>, <ol>, <h6> dari HTML
   const extractTextFromHtml = (html: string) => {
@@ -297,7 +303,7 @@ const NotificationScreen = ({
         />
       </View>
 
-      {/* <View style={styles.logoutContainer}>
+      <View style={styles.logoutContainer}>
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => navigateTo('Home')}>
@@ -313,7 +319,7 @@ const NotificationScreen = ({
         </TouchableOpacity>
       </View>
 
-      <View style={styles.logoutContainer2}>
+      {/* <View style={styles.logoutContainer2}>
         <TouchableOpacity
           style={[styles.logoutButton2, {backgroundColor: '#28a745'}]}
           onPress={testPushNotification}>
@@ -332,13 +338,17 @@ const NotificationScreen = ({
             notifications.map(notification => (
               <TouchableOpacity
                 key={notification.id}
-                onPress={() => {
-                  setReadNotifications(prev => {
-                    const updated = [...new Set([...prev, notification.id])];
-                    saveReadNotifications(updated);
-                    return updated;
-                  });
-                  setSelectedNotification(notification);
+                onPress={async () => {
+                  try {
+                    const updated = [
+                      ...new Set([...readNotifications, notification.id]),
+                    ];
+                    await saveReadNotifications(updated);
+                    setReadNotifications(updated);
+                    setSelectedNotification(notification);
+                  } catch (error) {
+                    console.error('Error saving read notification:', error);
+                  }
                 }}>
                 <View style={styles.notificationItem}>
                   {!readNotifications.includes(notification.id) && (

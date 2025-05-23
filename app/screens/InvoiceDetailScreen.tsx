@@ -264,6 +264,7 @@ const InvoiceDetailScreen = ({
         </View>
 
         {/* Invoice Items */}
+        <View style={styles.invoiceSummary}>
         <Text style={styles.sectionTitle}>Item Invoice:</Text>
         {invoiceItems.length > 0 ? (
           invoiceItems.map((item: any, index: number) => (
@@ -281,7 +282,8 @@ const InvoiceDetailScreen = ({
           <Text style={styles.noItemsText}>
             Tidak ada item detail yang tersedia
           </Text>
-        )}
+          )}
+        </View>
 
         {/* Hosting Services related to this invoice (if any) */}
         <View style={styles.hostingServices}>

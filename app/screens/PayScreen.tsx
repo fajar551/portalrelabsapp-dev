@@ -16,13 +16,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {
   getClientInvoices,
   getInvoiceDetails,
   getPaymentGateways,
   getPaymentHistory,
 } from '../../src/services/api';
-import LinearGradient from 'react-native-linear-gradient';
 
 // Mendapatkan lebar layar untuk kalkulasi
 // const {width} = Dimensions.get('window');
@@ -67,7 +67,7 @@ const PayScreen = ({
       amount: number;
     }>;
   } | null>(null);
-  const [selectedGateway] = useState<{
+  const [selectedGateway, setSelectedGateway] = useState<{
     id: number;
     name: string;
     description: string;
@@ -318,42 +318,15 @@ const PayScreen = ({
   };
 
   // Select a payment gateway
-  const selectPaymentGateway = async (gateway: {
+  const selectPaymentGateway = (gateway: {
     id: number;
     name: string;
     description: string;
     instructions: string;
     is_va?: boolean;
   }) => {
-    try {
-      // Simpan gateway yang dipilih ke AsyncStorage
-      await AsyncStorage.setItem('selectedGateway', JSON.stringify(gateway));
-
-      // Simpan invoice yang sedang aktif ke AsyncStorage
-      if (billingPeriod.amount > 0) {
-        const invoices = await getClientInvoices();
-        const unpaidInvoice = invoices.find(
-          (invoice: any) =>
-            invoice.status === 'Unpaid' || invoice.status === 'Belum Dibayar',
-        );
-
-        if (unpaidInvoice) {
-          await AsyncStorage.setItem(
-            'currentInvoice',
-            JSON.stringify(unpaidInvoice),
-          );
-        }
-      }
-
-      // Navigasi ke halaman instruksi pembayaran
-      navigateTo('PaymentInstructions');
-    } catch (err: any) {
-      console.error('Error saving gateway data:', err);
-      Alert.alert(
-        'Error',
-        'Gagal menyimpan data pembayaran. Silakan coba lagi.',
-      );
-    }
+    setSelectedGateway(gateway);
+    // Tidak langsung navigasi, tunggu tombol "Pay Now" ditekan
   };
 
   const onRefresh = async () => {
@@ -405,8 +378,7 @@ const PayScreen = ({
         colors={['#ffb347', '#fd7e14']}
         start={{x: 0, y: 0}}
         end={{x: 0, y: 1}}
-        style={styles.header}
-      >
+        style={styles.header}>
         <Text style={styles.headerTitle}>Pembayaran</Text>
       </LinearGradient>
 
@@ -655,7 +627,35 @@ const PayScreen = ({
                   renderItem={({item}) => (
                     <TouchableOpacity
                       style={styles.gatewayItem}
-                      onPress={() => selectPaymentGateway(item)}>
+                      onPress={async () => {
+                        try {
+                          await AsyncStorage.setItem(
+                            'selectedGateway',
+                            JSON.stringify(item),
+                          );
+                          if (billingPeriod.amount > 0) {
+                            const invoices = await getClientInvoices();
+                            const unpaidInvoice = invoices.find(
+                              (invoice: any) =>
+                                invoice.status === 'Unpaid' ||
+                                invoice.status === 'Belum Dibayar',
+                            );
+                            if (unpaidInvoice) {
+                              await AsyncStorage.setItem(
+                                'currentInvoice',
+                                JSON.stringify(unpaidInvoice),
+                              );
+                            }
+                          }
+                          setPaymentGatewayModalVisible(false);
+                          navigateTo('PaymentInstructions');
+                        } catch (err) {
+                          Alert.alert(
+                            'Error',
+                            'Gagal menyimpan data pembayaran. Silakan coba lagi.',
+                          );
+                        }
+                      }}>
                       <View style={styles.gatewayInfo}>
                         <Text style={styles.gatewayName}>{item.name}</Text>
                         <Text style={styles.gatewayDescription}>

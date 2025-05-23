@@ -5,6 +5,7 @@ import {
   Alert,
   Clipboard,
   Image,
+  Linking,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -181,6 +182,60 @@ const PaymentInstructionsScreen = ({
     );
   };
 
+  // Fungsi untuk handle klik Pay Now
+  const handlePayNow = async () => {
+    try {
+      const invoiceStr = await AsyncStorage.getItem('currentInvoice');
+      const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
+      if (!invoice || !invoice.id) {
+        Alert.alert('Error', 'Invoice tidak ditemukan');
+        return;
+      }
+
+      const payload = {invoiceid: invoice.id};
+
+      const response = await fetch(
+        'https://portal.relabs.id/danaxendit/payNow',
+        {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.log('Status error:', response.status, text);
+        Alert.alert('Error', `Status: ${response.status}\n${text}`);
+        return;
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        const text = await response.text();
+        console.log('Gagal parse JSON:', text);
+        Alert.alert('Error', 'Response bukan JSON: ' + text);
+        return;
+      }
+
+      console.log('Response dari backend:', data);
+
+      if (data.result === 'success' && data.redirect_url) {
+        Linking.openURL(data.redirect_url);
+      } else {
+        Alert.alert(
+          'Gagal',
+          data.message || 'Gagal mendapatkan link pembayaran',
+        );
+      }
+    } catch (err) {
+      console.log('Error:', err);
+      Alert.alert('Error', 'Terjadi kesalahan saat proses pembayaran');
+    }
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -275,6 +330,17 @@ const PaymentInstructionsScreen = ({
             onPress={handlePaymentComplete}>
             <Text style={styles.confirmButtonText}>Saya Sudah Bayar</Text>
           </TouchableOpacity>
+
+          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit */}
+          {selectedGateway &&
+            selectedGateway.name &&
+            selectedGateway.name.toLowerCase().includes('dana') && (
+              <TouchableOpacity
+                onPress={handlePayNow}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            )}
         </View>
       </ScrollView>
 
@@ -519,6 +585,18 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     tintColor: 'white',
+  },
+  payNowButton: {
+    backgroundColor: 'orange',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 15,
+  },
+  payNowButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
