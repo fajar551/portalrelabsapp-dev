@@ -192,6 +192,25 @@ const PaymentInstructionsScreen = ({
         return;
       }
 
+      // Update payment method ke DANA sebelum proses pembayaran
+      // const csrfToken = await getCsrfToken();
+      const updateRes = await updatePaymentMethod(invoice.id, 'danaxendit');
+      console.log('Update Payment Method Response:', updateRes);
+
+      if (
+        updateRes === 'DANA' ||
+        updateRes === 'danaxendit' ||
+        updateRes === 'gopaymidtrans'
+      ) {
+        // Anggap sukses, lanjutkan proses pembayaran
+      } else if (updateRes.result !== 'success') {
+        Alert.alert(
+          'Error',
+          updateRes.message || 'Gagal update metode pembayaran',
+        );
+        return;
+      }
+
       const payload = {
         invoiceid: invoice.id,
       };
@@ -248,7 +267,17 @@ const PaymentInstructionsScreen = ({
         return;
       }
 
-      // Sesuaikan dengan payload yang diharapkan backend
+      // Update payment method ke Gopay sebelum proses pembayaran
+      // const csrfToken = await getCsrfToken();
+      const updateRes = await updatePaymentMethod(invoice.id, 'gopaymidtrans');
+      if (updateRes.result !== 'success') {
+        Alert.alert(
+          'Error',
+          updateRes.message || 'Gagal update metode pembayaran',
+        );
+        return;
+      }
+
       const payload = {
         invoiceid: invoice.id,
       };
@@ -309,6 +338,41 @@ const PaymentInstructionsScreen = ({
       );
     }
   };
+
+  const updatePaymentMethod = async (
+    invoiceId: string | number,
+    paymentMethod: string,
+  ) => {
+    const payload = {
+      id: invoiceId,
+      paymentmethod: paymentMethod,
+    };
+
+    const response = await fetch(
+      'https://portal.relabs.id/billinginfo/updatepayment',
+      {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload),
+      },
+    );
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      data = {result: 'error', message: await response.text()};
+    }
+    console.log('Update Payment Method Response:', data);
+    return data;
+  };
+
+  // const getCsrfToken = async () => {
+  //   // Implementasi untuk mendapatkan CSRF token dari backend
+  //   // Ini adalah contoh sederhana, Anda mungkin perlu mengimplementasikan logika yang sesuai
+  //   // untuk mendapatkan CSRF token dari backend.
+  //   return 'dummy_csrf_token'; // Ganti dengan logika yang sesuai
+  // };
 
   if (isLoading) {
     return (
