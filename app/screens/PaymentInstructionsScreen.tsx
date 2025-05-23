@@ -314,6 +314,37 @@ const PaymentInstructionsScreen = ({
     }
   };
 
+  const handleShopeepayPayNow = async () => {
+    try {
+      const invoiceStr = await AsyncStorage.getItem('currentInvoice');
+      const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
+      if (!invoice || !invoice.id) {
+        Alert.alert('Error', 'Invoice tidak ditemukan');
+        return;
+      }
+
+      // Update payment method ke ShopeePay
+      const updateRes = await updatePaymentMethod(
+        invoice.id,
+        'shopeepayxendit',
+      );
+      if (
+        (typeof updateRes === 'string' &&
+          updateRes.toLowerCase().includes('shopeepay')) ||
+        (updateRes.result && updateRes.result === 'success')
+      ) {
+        // Setelah update berhasil, buka halaman invoice web
+        const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+        Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Gagal update metode pembayaran ke ShopeePay');
+      }
+    } catch (err) {
+      console.log('Error:', err);
+      Alert.alert('Error', 'Terjadi kesalahan saat proses pembayaran.');
+    }
+  };
+
   const updatePaymentMethod = async (
     invoiceId: string | number,
     paymentMethod: string,
@@ -444,7 +475,7 @@ const PaymentInstructionsScreen = ({
             <Text style={styles.confirmButtonText}>Saya Sudah Bayar</Text>
           </TouchableOpacity>
 
-          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit atau Gopay */}
+          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit atau Gopay atau OVO atau ShopeePay */}
           {selectedGateway &&
             selectedGateway.name &&
             (selectedGateway.name.toLowerCase().includes('dana') ? (
@@ -462,6 +493,12 @@ const PaymentInstructionsScreen = ({
             ) : selectedGateway.name.toLowerCase().includes('ovo') ? (
               <TouchableOpacity
                 onPress={handleOvoPayNow}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('shopeepay') ? (
+              <TouchableOpacity
+                onPress={handleShopeepayPayNow}
                 style={styles.payNowButton}>
                 <Text style={styles.payNowButtonText}>Pay Now</Text>
               </TouchableOpacity>
