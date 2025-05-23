@@ -379,8 +379,8 @@ const HomeScreen = ({
           const readIds = await AsyncStorage.getItem('READ_NOTIFICATIONS');
           const readArr = readIds ? JSON.parse(readIds) : [];
 
-          console.log('Total notifikasi:', notifications.length);
-          console.log('ID notifikasi yang sudah dibaca:', readArr);
+          // console.log('Total notifikasi:', notifications.length);
+          // console.log('ID notifikasi yang sudah dibaca:', readArr);
 
           // Filter notifikasi yang belum dibaca
           const unread = notifications.filter((n: any) => {

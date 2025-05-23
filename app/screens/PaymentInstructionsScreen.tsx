@@ -192,7 +192,9 @@ const PaymentInstructionsScreen = ({
         return;
       }
 
-      const payload = {invoiceid: invoice.id};
+      const payload = {
+        invoiceid: invoice.id,
+      };
 
       const response = await fetch(
         'https://portal.relabs.id/danaxendit/payNow',
@@ -233,6 +235,78 @@ const PaymentInstructionsScreen = ({
     } catch (err) {
       console.log('Error:', err);
       Alert.alert('Error', 'Terjadi kesalahan saat proses pembayaran');
+    }
+  };
+
+  // Fungsi untuk handle klik Pay Now Gopay
+  const handleGopayPayNow = async () => {
+    try {
+      const invoiceStr = await AsyncStorage.getItem('currentInvoice');
+      const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
+      if (!invoice || !invoice.id) {
+        Alert.alert('Error', 'Invoice tidak ditemukan');
+        return;
+      }
+
+      // Sesuaikan dengan payload yang diharapkan backend
+      const payload = {
+        invoiceid: invoice.id,
+      };
+
+      const headers = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'User-Agent': 'PortalRelabsApp/1.0',
+      };
+
+      console.log('Sending request to Gopay with payload:', payload);
+
+      const response = await fetch(
+        'https://portal.relabs.id/gopaymidtrans/payNow',
+        {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(payload),
+        },
+      );
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+
+      if (!response.ok) {
+        throw new Error(
+          `HTTP error! status: ${response.status}, body: ${responseText}`,
+        );
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed response data:', data);
+      } catch (e) {
+        console.log('Failed to parse JSON:', e);
+        throw new Error('Invalid JSON response');
+      }
+
+      if (data.result === 'success' && data.redirect_url) {
+        // Buka URL redirect Midtrans
+        Linking.openURL(data.redirect_url);
+      } else {
+        Alert.alert(
+          'Gagal',
+          data.message || 'Gagal mendapatkan link pembayaran',
+        );
+      }
+    } catch (err) {
+      console.log('Error:', err);
+      Alert.alert(
+        'Error',
+        'Terjadi kesalahan saat proses pembayaran. Mohon coba lagi beberapa saat.',
+      );
     }
   };
 
@@ -331,16 +405,22 @@ const PaymentInstructionsScreen = ({
             <Text style={styles.confirmButtonText}>Saya Sudah Bayar</Text>
           </TouchableOpacity>
 
-          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit */}
+          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit atau Gopay */}
           {selectedGateway &&
             selectedGateway.name &&
-            selectedGateway.name.toLowerCase().includes('dana') && (
+            (selectedGateway.name.toLowerCase().includes('dana') ? (
               <TouchableOpacity
                 onPress={handlePayNow}
                 style={styles.payNowButton}>
                 <Text style={styles.payNowButtonText}>Pay Now</Text>
               </TouchableOpacity>
-            )}
+            ) : selectedGateway.name.toLowerCase().includes('gopay') ? (
+              <TouchableOpacity
+                onPress={handleGopayPayNow}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : null)}
         </View>
       </ScrollView>
 
