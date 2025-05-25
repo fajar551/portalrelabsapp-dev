@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {getInvoiceById} from '../../src/services/api';
+import { getInvoiceById } from '../../src/services/api';
 
 const PaymentInstructionsScreen = ({
   navigateTo,
@@ -324,13 +324,16 @@ const PaymentInstructionsScreen = ({
     // Hapus semua tag HTML dari instruksi
     let plainInstructions = instructions.replace(/<\/?[^>]+(>|$)/g, '');
 
-    // Ganti dengan instruksi standar yang lebih sederhana
-    if (virtualAccountNumber) {
+    // Jika metode pembayaran adalah VA, tampilkan instruksi dengan nomor VA
+    if (
+      selectedGateway?.name?.toLowerCase().includes('va') &&
+      virtualAccountNumber
+    ) {
       return `Silahkan melakukan pembayaran ke nomor Virtual Account Anda berikut:\n\n${virtualAccountNumber}`;
     }
 
-    // Jika tidak ada VA, tampilkan instruksi tanpa tag HTML
-    return plainInstructions;
+    // Jika bukan VA, tampilkan instruksi untuk Pay Now
+    return 'Silahkan menekan tombol Pay Now di bawah, untuk melakukan pembayaran';
   };
 
   // Handle kembali ke halaman Pay
@@ -681,20 +684,22 @@ const PaymentInstructionsScreen = ({
               </Text>
             </View>
 
-            {virtualAccountNumber && (
-              <View style={styles.vaNumberContainer}>
-                <Text style={styles.vaLabel}>Nomor Virtual Account</Text>
-                <Text style={styles.vaNumber}>{virtualAccountNumber}</Text>
-                <TouchableOpacity
-                  style={styles.copyButton}
-                  onPress={() => {
-                    Clipboard.setString(virtualAccountNumber);
-                    Alert.alert('Berhasil', 'Nomor VA disalin ke clipboard');
-                  }}>
-                  <Text style={styles.copyButtonText}>Salin</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+            {/* Tampilkan VA hanya jika metode pembayaran adalah VA */}
+            {selectedGateway?.name?.toLowerCase().includes('va') &&
+              virtualAccountNumber && (
+                <View style={styles.vaNumberContainer}>
+                  <Text style={styles.vaLabel}>Nomor Virtual Account</Text>
+                  <Text style={styles.vaNumber}>{virtualAccountNumber}</Text>
+                  <TouchableOpacity
+                    style={styles.copyButton}
+                    onPress={() => {
+                      Clipboard.setString(virtualAccountNumber);
+                      Alert.alert('Berhasil', 'Nomor VA disalin ke clipboard');
+                    }}>
+                    <Text style={styles.copyButtonText}>Salin</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
           </View>
 
           {/* Instructions */}
