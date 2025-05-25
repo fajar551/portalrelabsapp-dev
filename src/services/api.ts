@@ -573,3 +573,32 @@ export const getFCMToken = async () => {
     return null;
   }
 };
+
+export const getDomainStatus = async (userid: string) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) {
+      throw new Error('Token tidak ditemukan');
+    }
+
+    const response = await fetch(`${CONFIG.API_URL}/mobile/domain-status/${userid}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal mengambil status domain');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error fetching domain status:', error);
+    throw error;
+  }
+};

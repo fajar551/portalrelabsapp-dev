@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -19,10 +19,11 @@ import {
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 // import {getUserData} from '../../src/services/api';
-import {useFocusEffect} from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {
   getClientInvoices,
+  getDomainStatus,
   getNotifications,
   getPaymentHistory,
 } from '../../src/services/api';
@@ -75,6 +76,8 @@ const HomeScreen = ({
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [notifCount, setNotifCount] = useState(0);
+
+  const [domainStatus, setDomainStatus] = useState<string>('');
 
   const fetchUserData = async () => {
     try {
@@ -174,6 +177,20 @@ const HomeScreen = ({
     }
   };
 
+  const fetchDomainStatus = useCallback(async () => {
+    try {
+      if (userData?.id) {
+        console.log('Fetching domain status for user ID:', userData.id);
+        const status = await getDomainStatus(userData.id.toString());
+        console.log('Domain status received:', status);
+        setDomainStatus(status);
+      }
+    } catch (err) {
+      console.error('Error fetching domain status:', err);
+      setDomainStatus('-');
+    }
+  }, [userData?.id]);
+
   useEffect(() => {
     // Fungsi untuk menangani fetch data saat pertama kali komponen load
     const fetchInitialData = async () => {
@@ -182,6 +199,7 @@ const HomeScreen = ({
       try {
         await fetchUserData();
         await fetchInvoiceData();
+        await fetchDomainStatus();
       } catch (err: any) {
         console.error('Error loading initial data:', err);
         setError(err instanceof Error ? err.message : 'Gagal memuat data');
@@ -192,7 +210,7 @@ const HomeScreen = ({
     };
 
     fetchInitialData();
-  }, []);
+  }, [fetchDomainStatus]);
 
   // Format tanggal untuk tampilan
   const formatDate = (date: Date) => {
@@ -269,22 +287,19 @@ const HomeScreen = ({
 
   const onRefresh = async () => {
     setRefreshing(true);
-    setIsLoading(true); // Tambahkan loading state
-    setIsBillingLoading(true); // Set loading billing period
+    setIsLoading(true);
+    setIsBillingLoading(true);
 
     try {
-      // Panggil keduanya secara berurutan, pastikan invoice data diambil baru
       await fetchUserData();
       await fetchInvoiceData();
-
-      // Log untuk debugging
-      console.log('Refresh selesai, billingPeriod:', billingPeriod);
+      await fetchDomainStatus();
     } catch (err: any) {
       console.error('Error saat refresh:', err);
       setError(err instanceof Error ? err.message : 'Gagal memuat data');
     } finally {
       setIsLoading(false);
-      setIsBillingLoading(false); // Selesai loading billing period
+      setIsBillingLoading(false);
       setRefreshing(false);
     }
   };
@@ -544,9 +559,8 @@ const HomeScreen = ({
           </View>
           <View style={styles.accountInfoDivider} />
           <View style={styles.accountInfoItem}>
-            {/* <Text style={styles.accountLabel}>Billing Status</Text> */}
             <Text style={styles.accountLabel}>Status Layanan</Text>
-            <Text style={styles.blueText}>{userData?.status || '-'}</Text>
+            <Text style={styles.blueText}>{domainStatus || '-'}</Text>
           </View>
         </View>
 

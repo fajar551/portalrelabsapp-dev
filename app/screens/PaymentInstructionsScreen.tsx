@@ -265,11 +265,14 @@ const PaymentInstructionsScreen = ({
                   await ensureVACreated(invoice.id, vaType);
 
                   // Update payment method
-                  const updateRes = await updatePaymentMethod(
+                  const methodUpdateRes = await updatePaymentMethod(
                     invoice.id,
                     vaType,
                   );
-                  console.log('Update Payment Method Response:', updateRes);
+                  console.log(
+                    'Update Payment Method Response:',
+                    methodUpdateRes,
+                  );
 
                   // Tunggu 2 detik untuk memastikan VA sudah diupdate di server
                   await new Promise(resolve => setTimeout(resolve, 2000));
@@ -367,13 +370,13 @@ const PaymentInstructionsScreen = ({
                       const retryGetVA = async (retryCount = 0) => {
                         try {
                           // Panggil updatePaymentMethod lagi untuk memastikan VA dibuat
-                          const updateRes = await updatePaymentMethod(
+                          const retryUpdateRes = await updatePaymentMethod(
                             invoice.id,
                             vaType,
                           );
                           console.log(
                             'Retry update payment method:',
-                            updateRes,
+                            retryUpdateRes,
                           );
 
                           const retryInvoiceDetails = await getInvoiceById(
@@ -473,12 +476,12 @@ const PaymentInstructionsScreen = ({
                                                         'conventionalpayment',
                                                         'xendit',
                                                       );
-                                                  const updateRes =
+                                                  const switchMethodRes =
                                                     await updatePaymentMethod(
                                                       invoice.id,
                                                       newVaType,
                                                     );
-                                                  if (updateRes) {
+                                                  if (switchMethodRes) {
                                                     setVirtualAccountNumber(
                                                       method.va_number,
                                                     );
