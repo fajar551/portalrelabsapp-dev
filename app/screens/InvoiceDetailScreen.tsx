@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
-  Image,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -12,6 +11,8 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Icon2 from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getDetailedClientInvoices} from '../../src/services/api';
 
 const InvoiceDetailScreen = ({
@@ -162,7 +163,7 @@ const InvoiceDetailScreen = ({
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => navigateTo('Pay')}>
-          <Text style={styles.backBtnText}>←</Text>
+          <Icon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detail Invoice</Text>
         <View style={styles.emptySpace} />
@@ -265,23 +266,23 @@ const InvoiceDetailScreen = ({
 
         {/* Invoice Items */}
         <View style={styles.invoiceSummary}>
-        <Text style={styles.sectionTitle}>Item Invoice:</Text>
-        {invoiceItems.length > 0 ? (
-          invoiceItems.map((item: any, index: number) => (
-            <View key={item.id || index} style={styles.invoiceItem}>
-              <Text style={styles.itemDescription}>{item.description}</Text>
-              <View style={styles.itemAmountRow}>
-                <Text style={styles.itemLabel}>Jumlah:</Text>
-                <Text style={styles.itemAmount}>
-                  {formatCurrency(item.amount)}
-                </Text>
+          <Text style={styles.sectionTitle}>Item Invoice:</Text>
+          {invoiceItems.length > 0 ? (
+            invoiceItems.map((item: any, index: number) => (
+              <View key={item.id || index} style={styles.invoiceItem}>
+                <Text style={styles.itemDescription}>{item.description}</Text>
+                <View style={styles.itemAmountRow}>
+                  <Text style={styles.itemLabel}>Jumlah:</Text>
+                  <Text style={styles.itemAmount}>
+                    {formatCurrency(item.amount)}
+                  </Text>
+                </View>
               </View>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.noItemsText}>
-            Tidak ada item detail yang tersedia
-          </Text>
+            ))
+          ) : (
+            <Text style={styles.noItemsText}>
+              Tidak ada item detail yang tersedia
+            </Text>
           )}
         </View>
 
@@ -331,25 +332,20 @@ const InvoiceDetailScreen = ({
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
-          <Text style={styles.navIcon}>🏠</Text>
+          <Icon name="home" size={24} color="#666" />
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
-          <Text style={[styles.navIcon, styles.activeNav]}>💳</Text>
+          <Icon name="receipt" size={24} color="#fd7e14" />
           <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
-          <View style={styles.personIcon}>
-            <Image
-              source={require('../assets/user.png')}
-              style={styles.iconImage}
-            />
-          </View>
-          <Text style={[styles.navText]}>Akun</Text>
+          <Icon2 name="person" size={24} color="#666" />
+          <Text style={styles.navText}>Akun</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getFCMToken, loginUser} from '../../src/services/api';
 // import ClientDropdown from '../components/ClientDropdown';
 // import { useNavigation } from '@react-navigation/native';
@@ -237,9 +238,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}>
-                <Text style={styles.eyeText}>
-                  {showPassword ? 'Tutup' : 'Lihat'}
-                </Text>
+                <Icon
+                  name={showPassword ? 'visibility-off' : 'visibility'}
+                  size={24}
+                  color="#ffb444"
+                />
               </TouchableOpacity>
             </View>
 

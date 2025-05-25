@@ -102,12 +102,12 @@ const NotificationScreen = ({
   }, []);
 
   // Pindahkan fungsi ini ke dalam komponen
-  const resetReadNotifications = async () => {
-    await AsyncStorage.removeItem(READ_KEY);
-    setReadNotifications([]);
-    await AsyncStorage.removeItem(READ_BILL_KEY);
-    setReadBills([]);
-  };
+  // const resetReadNotifications = async () => {
+  //   await AsyncStorage.removeItem(READ_KEY);
+  //   setReadNotifications([]);
+  //   await AsyncStorage.removeItem(READ_BILL_KEY);
+  //   setReadBills([]);
+  // };
 
   // Fungsi untuk mengambil isi <p>, <li>, <ol>, <h6> dari HTML
   const extractTextFromHtml = (html: string) => {
@@ -303,7 +303,7 @@ const NotificationScreen = ({
         />
       </View>
 
-      <View style={styles.logoutContainer}>
+      {/* <View style={styles.logoutContainer}>
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => navigateTo('Home')}>
@@ -317,7 +317,7 @@ const NotificationScreen = ({
           onPress={resetReadNotifications}>
           <Text style={styles.logoutButtonText2}>Reset Penanda</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       {/* <View style={styles.logoutContainer2}>
         <TouchableOpacity

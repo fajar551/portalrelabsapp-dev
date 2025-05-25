@@ -13,6 +13,8 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Icon2 from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getClientProfile} from '../../src/services/api';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 
@@ -227,30 +229,17 @@ const AccountScreen = ({
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
-          <Text style={styles.navIcon}>🏠</Text>
+          <Icon name="home" size={24} color="#666" />
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => navigateTo('PaymentSuccess')}>
-          <Text style={styles.navIcon}>🛒</Text>
-          <Text style={styles.navText}>Buy</Text>
-        </TouchableOpacity> */}
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
-          <Text style={styles.navIcon}>💳</Text>
+          <Icon name="receipt" size={24} color="#666" />
           <Text style={styles.navText}>Tagihan</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setShowLogoutModal(true)}>
-          <View style={styles.personIcon}>
-            <Image
-              source={require('../assets/user.png')}
-              style={styles.iconImage}
-            />
-          </View>
+        <TouchableOpacity style={styles.navItem}>
+          <Icon2 name="person" size={24} color="#fd7e14" />
           <Text style={[styles.navText, styles.activeNavText]}>Akun</Text>
         </TouchableOpacity>
       </View>

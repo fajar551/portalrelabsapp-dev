@@ -5,7 +5,6 @@ import {
   Alert,
   Animated,
   FlatList,
-  Image,
   Modal,
   RefreshControl,
   SafeAreaView,
@@ -17,6 +16,8 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Icon2 from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
   getClientInvoices,
   getInvoiceDetails,
@@ -67,7 +68,7 @@ const PayScreen = ({
       amount: number;
     }>;
   } | null>(null);
-  const [selectedGateway, setSelectedGateway] = useState<{
+  const [selectedGateway] = useState<{
     id: number;
     name: string;
     description: string;
@@ -317,18 +318,6 @@ const PayScreen = ({
     setPaymentGatewayModalVisible(true);
   };
 
-  // Select a payment gateway
-  const selectPaymentGateway = (gateway: {
-    id: number;
-    name: string;
-    description: string;
-    instructions: string;
-    is_va?: boolean;
-  }) => {
-    setSelectedGateway(gateway);
-    // Tidak langsung navigasi, tunggu tombol "Pay Now" ditekan
-  };
-
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchInvoiceData();
@@ -566,29 +555,17 @@ const PayScreen = ({
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
-          <Text style={styles.navIcon}>🏠</Text>
+          <Icon name="home" size={24} color="#666" />
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => navigateTo('PaymentSuccess')}>
-          <Text style={styles.navIcon}>🛒</Text>
-          <Text style={styles.navText}>Buy</Text>
-        </TouchableOpacity> */}
         <TouchableOpacity style={styles.navItem}>
-          <Text style={[styles.navIcon, styles.activeNav]}>💳</Text>
+          <Icon name="receipt" size={24} color="#fd7e14" />
           <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
-          <View style={styles.personIcon}>
-            <Image
-              source={require('../assets/user.png')}
-              style={styles.iconImage}
-              resizeMode="contain"
-            />
-          </View>
+          <Icon2 name="person" size={24} color="#666" />
           <Text style={styles.navText}>Akun</Text>
         </TouchableOpacity>
       </View>

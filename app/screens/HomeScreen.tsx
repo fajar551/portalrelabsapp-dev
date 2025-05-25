@@ -16,6 +16,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Icon2 from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 // import {getUserData} from '../../src/services/api';
 import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -777,31 +779,20 @@ const HomeScreen = ({
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem}>
-          <Text style={[styles.navIcon, styles.activeNav]}>🏠</Text>
+          <Icon name="home" size={24} color="#fd7e14" />
           <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigateTo('Notification')}>
-          <Text style={styles.navIcon}>🛒</Text>
-          <Text style={styles.navText}>Notification</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
-          <Text style={styles.navIcon}>💳</Text>
+          <Icon name="receipt" size={24} color="#666" />
           <Text style={styles.navText}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
-          <View style={styles.personIcon}>
-            <Image
-              source={require('../assets/user.png')}
-              style={styles.iconImage}
-            />
-          </View>
-          <Text style={[styles.navText]}>Akun</Text>
+          <Icon2 name="person" size={24} color="#666" />
+          <Text style={styles.navText}>Akun</Text>
         </TouchableOpacity>
       </View>
 

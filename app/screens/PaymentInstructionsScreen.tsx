@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -33,7 +33,7 @@ const PaymentInstructionsScreen = ({
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       // Ambil data gateway dari AsyncStorage
       const gatewayData = await AsyncStorage.getItem('selectedGateway');
@@ -362,11 +362,11 @@ const PaymentInstructionsScreen = ({
       setIsLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -380,7 +380,7 @@ const PaymentInstructionsScreen = ({
     }
 
     // Hapus semua tag HTML dari instruksi
-    let plainInstructions = instructions.replace(/<\/?[^>]+(>|$)/g, '');
+    instructions = instructions.replace(/<\/?[^>]+(>|$)/g, '');
 
     // Jika metode pembayaran adalah ATM Bersama, tampilkan instruksi khusus
     if (
@@ -621,38 +621,6 @@ const PaymentInstructionsScreen = ({
         Linking.openURL(url);
       } else {
         Alert.alert('Error', 'Gagal update metode pembayaran ke LinkAja');
-      }
-    } catch (err) {
-      console.log('Error:', err);
-      Alert.alert('Error', 'Terjadi kesalahan saat proses pembayaran.');
-    }
-  };
-
-  const handleVAPayNow = async (vaType: string) => {
-    try {
-      const invoiceStr = await AsyncStorage.getItem('currentInvoice');
-      const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
-      if (!invoice || !invoice.id) {
-        Alert.alert('Error', 'Invoice tidak ditemukan');
-        return;
-      }
-
-      // Update payment method ke VA yang dipilih
-      const updateRes = await updatePaymentMethod(invoice.id, vaType);
-      console.log('Update Payment Method Response:', updateRes);
-
-      if (
-        updateRes === vaType.toUpperCase() ||
-        updateRes === vaType.toLowerCase() ||
-        (typeof updateRes === 'string' &&
-          updateRes.toLowerCase().includes(vaType.toLowerCase())) ||
-        (updateRes.result && updateRes.result === 'success')
-      ) {
-        // Setelah update berhasil, buka halaman invoice web
-        const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
-        Linking.openURL(url);
-      } else {
-        Alert.alert('Error', `Gagal update metode pembayaran ke ${vaType}`);
       }
     } catch (err) {
       console.log('Error:', err);

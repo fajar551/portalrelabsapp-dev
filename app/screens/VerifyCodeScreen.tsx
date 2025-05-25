@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface VerifyCodeScreenProps {
   navigateToScreen: (screen: string) => void;
@@ -276,9 +277,11 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}>
-                <Text style={styles.eyeText}>
-                  {showPassword ? 'Tutup' : 'Lihat'}
-                </Text>
+                <Icon
+                  name={showPassword ? 'visibility-off' : 'visibility'}
+                  size={24}
+                  color="#ffb444"
+                />
               </TouchableOpacity>
             </View>
 
@@ -296,9 +299,11 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
               <TouchableOpacity
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 style={styles.eyeButton}>
-                <Text style={styles.eyeText}>
-                  {showConfirmPassword ? 'Tutup' : 'Lihat'}
-                </Text>
+                <Icon
+                  name={showConfirmPassword ? 'visibility-off' : 'visibility'}
+                  size={24}
+                  color="#ffb444"
+                />
               </TouchableOpacity>
             </View>
 
@@ -410,11 +415,6 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 10,
-  },
-  eyeText: {
-    color: '#ffb444',
-    fontSize: 14,
-    fontWeight: '500',
   },
   submitButton: {
     backgroundColor: '#ffb444',
