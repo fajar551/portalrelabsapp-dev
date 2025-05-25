@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getInvoiceById } from '../../src/services/api';
+import {getInvoiceById} from '../../src/services/api';
 
 const PaymentInstructionsScreen = ({
   navigateTo,
@@ -92,10 +92,39 @@ const PaymentInstructionsScreen = ({
                 vaType = 'cimbvaxendit';
               } else if (selectedGatewayName.includes('permatabank')) {
                 vaType = 'permatabankvaxendit';
+              } else if (
+                selectedGatewayName
+                  .toLowerCase()
+                  .replace(/\s+/g, '')
+                  .includes('atmbersama')
+              ) {
+                vaType = 'atmbersamaxendit';
+                console.log('ATM Bersama detected, vaType set to:', vaType);
+              } else if (
+                selectedGatewayName.toLowerCase().includes('alfamart')
+              ) {
+                vaType = 'alfamartxendit';
+                console.log('Alfamart detected, vaType set to:', vaType);
+              } else if (
+                selectedGatewayName.toLowerCase().includes('cash payment')
+              ) {
+                vaType = 'cashpayment';
+                console.log('Cash Payment detected, vaType set to:', vaType);
+              } else if (
+                selectedGatewayName.toLowerCase().includes('credit card') ||
+                selectedGatewayName.toLowerCase().includes('ccmidtrans') ||
+                selectedGatewayName.toLowerCase().includes('visa') ||
+                selectedGatewayName.toLowerCase().includes('mastercard') ||
+                selectedGatewayName.toLowerCase().includes('jbc') ||
+                selectedGatewayName.toLowerCase().includes('american express')
+              ) {
+                vaType = 'ccmidtrans';
+                console.log('Credit Card detected, vaType set to:', vaType);
               }
 
-              // Jika gateway adalah VA, lakukan POST request ke updatepayment
+              // Jika gateway adalah VA atau ATM Bersama, lakukan POST request ke updatepayment
               if (vaType) {
+                console.log('Processing VA type:', vaType);
                 try {
                   const response = await fetch(
                     'https://portal.relabs.id/billinginfo/updatepayment',
@@ -135,12 +164,25 @@ const PaymentInstructionsScreen = ({
                       updatedInvoiceDetails.payment_info
                         .available_payment_methods
                     ) {
+                      console.log(
+                        'Available payment methods:',
+                        JSON.stringify(
+                          updatedInvoiceDetails.payment_info
+                            .available_payment_methods,
+                        ),
+                      );
                       // Cari metode pembayaran yang sesuai dengan vaType
                       const matchingMethod =
                         updatedInvoiceDetails.payment_info.available_payment_methods.find(
                           (method: any) => {
                             const methodGateway =
                               method.gateway?.toLowerCase() || '';
+                            console.log(
+                              'Checking method gateway:',
+                              methodGateway,
+                              'against vaType:',
+                              vaType,
+                            );
                             // Cek untuk BNI VA khusus
                             if (vaType.toLowerCase().includes('bni')) {
                               return methodGateway.includes('bniva');
@@ -228,6 +270,22 @@ const PaymentInstructionsScreen = ({
                                   if (vaType.toLowerCase().includes('bni')) {
                                     return methodGateway.includes('bniva');
                                   }
+                                  // Cek untuk ATM Bersama
+                                  // if (
+                                  //   vaType
+                                  //     .toLowerCase()
+                                  //     .includes('atmbersamaxendit')
+                                  // ) {
+                                  //   const isMatch =
+                                  //     methodGateway.includes(
+                                  //       'atmbersamaxendit',
+                                  //     );
+                                  //   console.log(
+                                  //     'Retry ATM Bersama match:',
+                                  //     isMatch,
+                                  //   );
+                                  //   return isMatch;
+                                  // }
                                   return methodGateway.includes(
                                     vaType.toLowerCase().replace('xendit', ''),
                                   );
@@ -324,15 +382,30 @@ const PaymentInstructionsScreen = ({
     // Hapus semua tag HTML dari instruksi
     let plainInstructions = instructions.replace(/<\/?[^>]+(>|$)/g, '');
 
-    // Jika metode pembayaran adalah VA, tampilkan instruksi dengan nomor VA
+    // Jika metode pembayaran adalah ATM Bersama, tampilkan instruksi khusus
+    if (
+      selectedGateway?.name
+        ?.toLowerCase()
+        .replace(/\s+/g, '')
+        .includes('atmbersama') &&
+      virtualAccountNumber
+    ) {
+      return 'Silahkan melakukan pembayaran ke ATM Bersama dengan menekan tombol Bayar Sekarang dibawah';
+    }
+
+    // Jika metode pembayaran adalah VA (selain ATM Bersama), tampilkan instruksi dengan nomor VA
     if (
       selectedGateway?.name?.toLowerCase().includes('va') &&
+      !selectedGateway?.name
+        ?.toLowerCase()
+        .replace(/\s+/g, '')
+        .includes('atmbersama') &&
       virtualAccountNumber
     ) {
       return `Silahkan melakukan pembayaran ke nomor Virtual Account Anda berikut:\n\n${virtualAccountNumber}`;
     }
 
-    // Jika bukan VA, tampilkan instruksi untuk Pay Now
+    // Jika bukan VA atau ATM Bersama, tampilkan instruksi untuk Pay Now
     return 'Silahkan menekan tombol Pay Now di bawah, untuk melakukan pembayaran';
   };
 
@@ -684,8 +757,31 @@ const PaymentInstructionsScreen = ({
               </Text>
             </View>
 
-            {/* Tampilkan VA hanya jika metode pembayaran adalah VA */}
+            {/* Debug logs */}
+            {console.log('Selected Gateway:', selectedGateway?.name)}
+            {console.log(
+              'Selected Gateway Lowercase:',
+              selectedGateway?.name?.toLowerCase(),
+            )}
+            {console.log(
+              'Selected Gateway No Space:',
+              selectedGateway?.name?.toLowerCase().replace(/\s+/g, ''),
+            )}
+            {console.log('Virtual Account Number:', virtualAccountNumber)}
+            {console.log(
+              'Is ATM Bersama:',
+              selectedGateway?.name
+                ?.toLowerCase()
+                .replace(/\s+/g, '')
+                .includes('atmbersama'),
+            )}
+
+            {/* Tampilkan VA untuk metode pembayaran VA lainnya */}
             {selectedGateway?.name?.toLowerCase().includes('va') &&
+              !selectedGateway?.name
+                ?.toLowerCase()
+                .replace(/\s+/g, '')
+                .includes('atmbersama') &&
               virtualAccountNumber && (
                 <View style={styles.vaNumberContainer}>
                   <Text style={styles.vaLabel}>Nomor Virtual Account</Text>
@@ -719,38 +815,277 @@ const PaymentInstructionsScreen = ({
             <Text style={styles.confirmButtonText}>Saya Sudah Bayar</Text>
           </TouchableOpacity>
 
-          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit atau Gopay atau OVO atau ShopeePay atau LinkAja */}
+          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit atau Gopay atau OVO atau ShopeePay atau LinkAja atau ATM Bersama atau Alfamart atau Cash Payment atau Credit Card */}
           {selectedGateway &&
             selectedGateway.name &&
             (selectedGateway.name.toLowerCase().includes('dana') ? (
               <TouchableOpacity
                 onPress={handlePayNow}
                 style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
+                <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
               </TouchableOpacity>
             ) : selectedGateway.name.toLowerCase().includes('gopay') ? (
               <TouchableOpacity
                 onPress={handleGopayPayNow}
                 style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
+                <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
               </TouchableOpacity>
             ) : selectedGateway.name.toLowerCase().includes('ovo') ? (
               <TouchableOpacity
                 onPress={handleOvoPayNow}
                 style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
+                <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
               </TouchableOpacity>
             ) : selectedGateway.name.toLowerCase().includes('shopeepay') ? (
               <TouchableOpacity
                 onPress={handleShopeepayPayNow}
                 style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
+                <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
               </TouchableOpacity>
             ) : selectedGateway.name.toLowerCase().includes('linkaja') ? (
               <TouchableOpacity
                 onPress={handleLinkajaPayNow}
                 style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
+                <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name
+                .toLowerCase()
+                .replace(/\s+/g, '')
+                .includes('atmbersama') ? (
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    const invoiceStr = await AsyncStorage.getItem(
+                      'currentInvoice',
+                    );
+                    const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
+                    if (!invoice || !invoice.id) {
+                      Alert.alert('Error', 'Invoice tidak ditemukan');
+                      return;
+                    }
+
+                    // Update payment method ke ATM Bersama
+                    const updateRes = await updatePaymentMethod(
+                      invoice.id,
+                      'atmbersamaxendit',
+                    );
+                    console.log('Update Payment Method Response:', updateRes);
+
+                    // Cek response untuk ATM Bersama
+                    if (
+                      updateRes === 'ATM BERSAMA' ||
+                      updateRes === 'ATM Bersama' ||
+                      updateRes === 'atmbersamaxendit' ||
+                      (typeof updateRes === 'string' &&
+                        (updateRes
+                          .toLowerCase()
+                          .replace(/\s+/g, '')
+                          .includes('atmbersama') ||
+                          updateRes
+                            .toLowerCase()
+                            .replace(/\s+/g, '')
+                            .includes('atmbersamaxendit'))) ||
+                      (updateRes.result && updateRes.result === 'success') ||
+                      (typeof updateRes === 'object' && updateRes.success) ||
+                      (typeof updateRes === 'object' &&
+                        updateRes.status === 'success')
+                    ) {
+                      // Setelah update berhasil, buka halaman invoice web
+                      const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+                      Linking.openURL(url);
+                    } else {
+                      console.log('Response tidak sesuai:', updateRes);
+                      Alert.alert(
+                        'Error',
+                        'Gagal update metode pembayaran ke ATM Bersama',
+                      );
+                    }
+                  } catch (err) {
+                    console.log('Error:', err);
+                    Alert.alert(
+                      'Error',
+                      'Terjadi kesalahan saat proses pembayaran.',
+                    );
+                  }
+                }}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('alfamart') ? (
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    const invoiceStr = await AsyncStorage.getItem(
+                      'currentInvoice',
+                    );
+                    const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
+                    if (!invoice || !invoice.id) {
+                      Alert.alert('Error', 'Invoice tidak ditemukan');
+                      return;
+                    }
+
+                    // Update payment method ke Alfamart
+                    const updateRes = await updatePaymentMethod(
+                      invoice.id,
+                      'alfamartxendit',
+                    );
+                    console.log('Update Payment Method Response:', updateRes);
+
+                    // Cek response untuk Alfamart
+                    if (
+                      updateRes === 'ALFAMART' ||
+                      updateRes === 'Alfamart' ||
+                      updateRes === 'alfamartxendit' ||
+                      (typeof updateRes === 'string' &&
+                        (updateRes.toLowerCase().includes('alfamart') ||
+                          updateRes
+                            .toLowerCase()
+                            .includes('alfamartxendit'))) ||
+                      (updateRes.result && updateRes.result === 'success') ||
+                      (typeof updateRes === 'object' && updateRes.success) ||
+                      (typeof updateRes === 'object' &&
+                        updateRes.status === 'success')
+                    ) {
+                      // Setelah update berhasil, buka halaman invoice web
+                      const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+                      Linking.openURL(url);
+                    } else {
+                      console.log('Response tidak sesuai:', updateRes);
+                      Alert.alert(
+                        'Error',
+                        'Gagal update metode pembayaran ke Alfamart',
+                      );
+                    }
+                  } catch (err) {
+                    console.log('Error:', err);
+                    Alert.alert(
+                      'Error',
+                      'Terjadi kesalahan saat proses pembayaran.',
+                    );
+                  }
+                }}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('cash payment') ? (
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    const invoiceStr = await AsyncStorage.getItem(
+                      'currentInvoice',
+                    );
+                    const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
+                    if (!invoice || !invoice.id) {
+                      Alert.alert('Error', 'Invoice tidak ditemukan');
+                      return;
+                    }
+
+                    // Update payment method ke Cash Payment
+                    const updateRes = await updatePaymentMethod(
+                      invoice.id,
+                      'cashpayment',
+                    );
+                    console.log('Update Payment Method Response:', updateRes);
+
+                    // Cek response untuk Cash Payment
+                    if (
+                      updateRes === 'CASH PAYMENT' ||
+                      updateRes === 'Cash Payment' ||
+                      updateRes === 'cashpayment' ||
+                      (typeof updateRes === 'string' &&
+                        (updateRes.toLowerCase().includes('cashpayment') ||
+                          updateRes.toLowerCase().includes('cash payment'))) ||
+                      (updateRes.result && updateRes.result === 'success') ||
+                      (typeof updateRes === 'object' && updateRes.success) ||
+                      (typeof updateRes === 'object' &&
+                        updateRes.status === 'success')
+                    ) {
+                      // Setelah update berhasil, buka halaman invoice web
+                      const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+                      Linking.openURL(url);
+                    } else {
+                      console.log('Response tidak sesuai:', updateRes);
+                      Alert.alert(
+                        'Error',
+                        'Gagal update metode pembayaran ke Cash Payment',
+                      );
+                    }
+                  } catch (err) {
+                    console.log('Error:', err);
+                    Alert.alert(
+                      'Error',
+                      'Terjadi kesalahan saat proses pembayaran.',
+                    );
+                  }
+                }}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('credit card') ||
+              selectedGateway.name.toLowerCase().includes('visa') ||
+              selectedGateway.name.toLowerCase().includes('mastercard') ||
+              selectedGateway.name.toLowerCase().includes('jbc') ||
+              selectedGateway.name
+                .toLowerCase()
+                .includes('american express') ? (
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    const invoiceStr = await AsyncStorage.getItem(
+                      'currentInvoice',
+                    );
+                    const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
+                    if (!invoice || !invoice.id) {
+                      Alert.alert('Error', 'Invoice tidak ditemukan');
+                      return;
+                    }
+
+                    // Update payment method ke Credit Card
+                    const updateRes = await updatePaymentMethod(
+                      invoice.id,
+                      'ccmidtrans',
+                    );
+                    console.log('Update Payment Method Response:', updateRes);
+
+                    // Cek response untuk Credit Card
+                    if (
+                      updateRes === 'CREDIT CARD' ||
+                      updateRes === 'Credit Card' ||
+                      updateRes === 'ccmidtrans' ||
+                      (typeof updateRes === 'string' &&
+                        (updateRes.toLowerCase().includes('credit card') ||
+                          updateRes.toLowerCase().includes('ccmidtrans') ||
+                          updateRes.toLowerCase().includes('visa') ||
+                          updateRes.toLowerCase().includes('mastercard') ||
+                          updateRes.toLowerCase().includes('jbc') ||
+                          updateRes
+                            .toLowerCase()
+                            .includes('american express'))) ||
+                      (updateRes.result && updateRes.result === 'success') ||
+                      (typeof updateRes === 'object' && updateRes.success) ||
+                      (typeof updateRes === 'object' &&
+                        updateRes.status === 'success')
+                    ) {
+                      // Setelah update berhasil, buka halaman invoice web
+                      const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+                      Linking.openURL(url);
+                    } else {
+                      console.log('Response tidak sesuai:', updateRes);
+                      Alert.alert(
+                        'Error',
+                        'Gagal update metode pembayaran ke Credit Card',
+                      );
+                    }
+                  } catch (err) {
+                    console.log('Error:', err);
+                    Alert.alert(
+                      'Error',
+                      'Terjadi kesalahan saat proses pembayaran.',
+                    );
+                  }
+                }}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
               </TouchableOpacity>
             ) : null)}
         </View>
@@ -764,12 +1099,6 @@ const PaymentInstructionsScreen = ({
           <Text style={styles.navIcon}>🏠</Text>
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => navigateTo('PaymentSuccess')}>
-          <Text style={styles.navIcon}>🛒</Text>
-          <Text style={styles.navText}>Buy</Text>
-        </TouchableOpacity> */}
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
