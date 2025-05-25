@@ -345,6 +345,70 @@ const PaymentInstructionsScreen = ({
     }
   };
 
+  const handleLinkajaPayNow = async () => {
+    try {
+      const invoiceStr = await AsyncStorage.getItem('currentInvoice');
+      const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
+      if (!invoice || !invoice.id) {
+        Alert.alert('Error', 'Invoice tidak ditemukan');
+        return;
+      }
+
+      // Update payment method ke LinkAja
+      const updateRes = await updatePaymentMethod(invoice.id, 'linkajaxendit');
+      console.log('Update Payment Method Response:', updateRes);
+
+      if (
+        updateRes === 'LINKAJA' ||
+        updateRes === 'linkajaxendit' ||
+        (typeof updateRes === 'string' &&
+          updateRes.toLowerCase().includes('linkaja')) ||
+        (updateRes.result && updateRes.result === 'success')
+      ) {
+        // Setelah update berhasil, buka halaman invoice web
+        const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+        Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Gagal update metode pembayaran ke LinkAja');
+      }
+    } catch (err) {
+      console.log('Error:', err);
+      Alert.alert('Error', 'Terjadi kesalahan saat proses pembayaran.');
+    }
+  };
+
+  const handleVAPayNow = async (vaType: string) => {
+    try {
+      const invoiceStr = await AsyncStorage.getItem('currentInvoice');
+      const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
+      if (!invoice || !invoice.id) {
+        Alert.alert('Error', 'Invoice tidak ditemukan');
+        return;
+      }
+
+      // Update payment method ke VA yang dipilih
+      const updateRes = await updatePaymentMethod(invoice.id, vaType);
+      console.log('Update Payment Method Response:', updateRes);
+
+      if (
+        updateRes === vaType.toUpperCase() ||
+        updateRes === vaType.toLowerCase() ||
+        (typeof updateRes === 'string' &&
+          updateRes.toLowerCase().includes(vaType.toLowerCase())) ||
+        (updateRes.result && updateRes.result === 'success')
+      ) {
+        // Setelah update berhasil, buka halaman invoice web
+        const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+        Linking.openURL(url);
+      } else {
+        Alert.alert('Error', `Gagal update metode pembayaran ke ${vaType}`);
+      }
+    } catch (err) {
+      console.log('Error:', err);
+      Alert.alert('Error', 'Terjadi kesalahan saat proses pembayaran.');
+    }
+  };
+
   const updatePaymentMethod = async (
     invoiceId: string | number,
     paymentMethod: string,
@@ -475,7 +539,7 @@ const PaymentInstructionsScreen = ({
             <Text style={styles.confirmButtonText}>Saya Sudah Bayar</Text>
           </TouchableOpacity>
 
-          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit atau Gopay atau OVO atau ShopeePay */}
+          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit atau Gopay atau OVO atau ShopeePay atau LinkAja atau VA */}
           {selectedGateway &&
             selectedGateway.name &&
             (selectedGateway.name.toLowerCase().includes('dana') ? (
@@ -499,6 +563,54 @@ const PaymentInstructionsScreen = ({
             ) : selectedGateway.name.toLowerCase().includes('shopeepay') ? (
               <TouchableOpacity
                 onPress={handleShopeepayPayNow}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('linkaja') ? (
+              <TouchableOpacity
+                onPress={handleLinkajaPayNow}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('bni') ? (
+              <TouchableOpacity
+                onPress={() => handleVAPayNow('bnivaxendit')}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('sampoerna') ? (
+              <TouchableOpacity
+                onPress={() => handleVAPayNow('sampoernavaxendit')}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('bri') ? (
+              <TouchableOpacity
+                onPress={() => handleVAPayNow('brivaxendit')}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('mandiri') ? (
+              <TouchableOpacity
+                onPress={() => handleVAPayNow('mandirivaxendit')}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('bca') ? (
+              <TouchableOpacity
+                onPress={() => handleVAPayNow('bcavaxendit')}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('cimb') ? (
+              <TouchableOpacity
+                onPress={() => handleVAPayNow('cimbvaxendit')}
+                style={styles.payNowButton}>
+                <Text style={styles.payNowButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            ) : selectedGateway.name.toLowerCase().includes('permatabank') ? (
+              <TouchableOpacity
+                onPress={() => handleVAPayNow('permatabankvaxendit')}
                 style={styles.payNowButton}>
                 <Text style={styles.payNowButtonText}>Pay Now</Text>
               </TouchableOpacity>
