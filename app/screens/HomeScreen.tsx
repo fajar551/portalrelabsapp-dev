@@ -528,9 +528,9 @@ const HomeScreen = ({
               <View style={styles.profileInfo}>
                 <Text style={styles.helloText}>Halo,</Text>
                 <Text style={styles.userName}>{userData?.name || 'User'}</Text>
-                <Text style={styles.userEmail}>
+                {/* <Text style={styles.userEmail}>
                   ✉️ {userData?.email || 'Loading...'}
-                </Text>
+                </Text> */}
               </View>
             </>
           )}
@@ -779,19 +779,29 @@ const HomeScreen = ({
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem}>
-          <Icon name="home" size={24} color="#fd7e14" />
+          <LinearGradient
+            colors={['#ffb347', '#fd7e14']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.navIconContainer}>
+            <Icon name="home" size={24} color="#fff" />
+          </LinearGradient>
           <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
-          <Icon name="receipt" size={24} color="#666" />
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="receipt" size={24} color="#666" />
+          </View>
           <Text style={styles.navText}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
-          <Icon2 name="person" size={24} color="#666" />
+          <View style={styles.navIconContainerInactive}>
+            <Icon2 name="person" size={24} color="#666" />
+          </View>
           <Text style={styles.navText}>Akun</Text>
         </TouchableOpacity>
       </View>
@@ -1414,6 +1424,33 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  navIconContainer: {
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#fd7e14',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    marginBottom: 4,
+  },
+  navIconContainerInactive: {
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+    marginBottom: 4,
   },
 });
 

@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Image,
   RefreshControl,
   SafeAreaView,
@@ -17,9 +16,6 @@ import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getClientProfile} from '../../src/services/api';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
-
-// Mendapatkan lebar layar untuk kalkulasi
-const {width} = Dimensions.get('window');
 
 const AccountScreen = ({
   navigateTo,
@@ -180,8 +176,10 @@ const AccountScreen = ({
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Akun Portal Relabs</Text>
           <View style={styles.activeAccountBadge}>
-            <Text style={styles.activeAccountText}>{clientData?.id}</Text>
-            <Text style={styles.activeAccountText2}>digunakan</Text>
+            <View style={styles.activeAccountRow}>
+              <Text style={styles.activeAccountText}>{clientData?.id} </Text>
+              <Text style={styles.activeAccountText2}>digunakan</Text>
+            </View>
             <View style={styles.checkIcon}>
               <Text>✓</Text>
             </View>
@@ -229,17 +227,27 @@ const AccountScreen = ({
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
-          <Icon name="home" size={24} color="#666" />
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="home" size={24} color="#666" />
+          </View>
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
-          <Icon name="receipt" size={24} color="#666" />
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="receipt" size={24} color="#666" />
+          </View>
           <Text style={styles.navText}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
-          <Icon2 name="person" size={24} color="#fd7e14" />
+          <LinearGradient
+            colors={['#ffb347', '#fd7e14']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.navIconContainer}>
+            <Icon2 name="person" size={24} color="#fff" />
+          </LinearGradient>
           <Text style={[styles.navText, styles.activeNavText]}>Akun</Text>
         </TouchableOpacity>
       </View>
@@ -375,7 +383,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
     marginBottom: 15,
-    width: width - 30,
+    width: '100%',
   },
   infoRow: {
     flexDirection: 'row',
@@ -400,7 +408,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
-    width: width - 30,
+    width: '100%',
+  },
+  activeAccountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   activeAccountText: {
     color: '#fd7e14',
@@ -409,8 +422,6 @@ const styles = StyleSheet.create({
   },
   activeAccountText2: {
     color: '#666',
-    marginLeft: -210,
-    // fontWeight: 'bold',
     fontSize: 14,
   },
   checkIcon: {
@@ -428,6 +439,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
   },
   navItem: {
     flex: 1,
@@ -489,6 +505,33 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     tintColor: 'white',
+  },
+  navIconContainer: {
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#fd7e14',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    marginBottom: 4,
+  },
+  navIconContainerInactive: {
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+    marginBottom: 4,
   },
 });
 

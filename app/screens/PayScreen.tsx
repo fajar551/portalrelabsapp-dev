@@ -555,17 +555,27 @@ const PayScreen = ({
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
-          <Icon name="home" size={24} color="#666" />
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="home" size={24} color="#666" />
+          </View>
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
-          <Icon name="receipt" size={24} color="#fd7e14" />
+          <LinearGradient
+            colors={['#ffb347', '#fd7e14']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.navIconContainer}>
+            <Icon name="receipt" size={24} color="#fff" />
+          </LinearGradient>
           <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
-          <Icon2 name="person" size={24} color="#666" />
+          <View style={styles.navIconContainerInactive}>
+            <Icon2 name="person" size={24} color="#666" />
+          </View>
           <Text style={styles.navText}>Akun</Text>
         </TouchableOpacity>
       </View>
@@ -1055,6 +1065,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
   },
   navItem: {
     flex: 1,
@@ -1238,127 +1253,32 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  navIconImage: {
-    width: 20,
-    height: 20,
-    tintColor: '#666',
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 3,
-  },
-  activeIconContainer: {
-    // Tidak perlu tambahan style karena icon sudah berwarna
-  },
-  activeIconImage: {
-    tintColor: '#fd7e14',
-  },
-  // Styles for new Due Date Card
-  dueCardContainer: {
-    padding: 15,
-    backgroundColor: '#f5f5f5',
-  },
-  dueCard: {
-    backgroundColor: '#fff',
+  navIconContainer: {
+    width: 45,
+    height: 45,
     borderRadius: 12,
-    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#fd7e14',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    marginBottom: 4,
+  },
+  navIconContainerInactive: {
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 2,
     elevation: 3,
-  },
-  dueCardHeader: {
-    marginBottom: 20,
-  },
-  dueCardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  amountContainer: {
-    marginTop: 5,
-  },
-  amountLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  amountValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fd7e14',
-  },
-  periodProgressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  dateColumn: {
-    alignItems: 'center',
-  },
-  dateValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  dateMonth: {
-    fontSize: 14,
-    color: '#666',
-  },
-  progressBarWrapper: {
-    flex: 1,
-    marginHorizontal: 15,
-    alignItems: 'center',
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 5,
-  },
-  dueCardFooter: {
-    alignItems: 'center',
-  },
-  duePayButton: {
-    backgroundColor: '#fd7e14',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    width: '100%',
-  },
-  duePayButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  progressLineContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 5,
-    position: 'relative',
-  },
-  progressLineBg: {
-    height: 2,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    width: '100%',
-    borderRadius: 1,
-    overflow: 'hidden',
-  },
-  progressLine: {
-    height: 2,
-    borderRadius: 1,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    position: 'absolute',
-    left: 0, // Akan diposisikan oleh Animated, menggantikan static value
+    marginBottom: 4,
   },
   errorText: {
     color: 'red',
@@ -1488,6 +1408,111 @@ const styles = StyleSheet.create({
   },
   modalCloseButton: {
     padding: 5,
+  },
+  dueCardContainer: {
+    padding: 15,
+    backgroundColor: '#f5f5f5',
+  },
+  dueCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  dueCardHeader: {
+    marginBottom: 20,
+  },
+  dueCardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  amountContainer: {
+    marginTop: 5,
+  },
+  amountLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  amountValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fd7e14',
+  },
+  periodProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  dateColumn: {
+    alignItems: 'center',
+  },
+  dateValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  dateMonth: {
+    fontSize: 14,
+    color: '#666',
+  },
+  progressBarWrapper: {
+    flex: 1,
+    marginHorizontal: 15,
+    alignItems: 'center',
+  },
+  progressLineContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    position: 'relative',
+  },
+  progressLineBg: {
+    height: 2,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    width: '100%',
+    borderRadius: 1,
+    overflow: 'hidden',
+  },
+  progressLine: {
+    height: 2,
+    borderRadius: 1,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    position: 'absolute',
+    left: 0,
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+  },
+  dueCardFooter: {
+    alignItems: 'center',
+  },
+  duePayButton: {
+    backgroundColor: '#fd7e14',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  duePayButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

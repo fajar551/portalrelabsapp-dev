@@ -1,6 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -13,7 +17,10 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {getDetailedClientInvoices} from '../../src/services/api';
+import {
+  getDetailedClientInvoices,
+  getPaymentGateways,
+} from '../../src/services/api';
 
 const InvoiceDetailScreen = ({
   navigateTo,
@@ -29,6 +36,9 @@ const InvoiceDetailScreen = ({
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(
     null,
   );
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [isGatewaysLoading, setIsGatewaysLoading] = useState(false);
 
   useEffect(() => {
     fetchInvoiceDetails();
@@ -81,6 +91,63 @@ const InvoiceDetailScreen = ({
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const handlePayNow = async () => {
+    try {
+      if (!selectedInvoiceId) {
+        Alert.alert('Error', 'Invoice ID tidak ditemukan');
+        return;
+      }
+
+      setIsGatewaysLoading(true);
+      // Ambil metode pembayaran dari API
+      const gateways = await getPaymentGateways();
+
+      if (gateways && gateways.length > 0) {
+        setPaymentMethods(gateways);
+        setShowPaymentMethods(true);
+      } else {
+        Alert.alert('Error', 'Tidak ada metode pembayaran yang tersedia');
+      }
+    } catch (err) {
+      console.error('Error in handlePayNow:', err);
+      Alert.alert('Error', 'Gagal memproses pembayaran');
+    } finally {
+      setIsGatewaysLoading(false);
+    }
+  };
+
+  const handlePaymentMethodSelect = async (method: any) => {
+    try {
+      // Simpan invoice dan payment method ke AsyncStorage
+      await AsyncStorage.setItem(
+        'currentInvoice',
+        JSON.stringify({
+          id: selectedInvoiceId,
+          total: getSelectedInvoice()?.total,
+        }),
+      );
+
+      await AsyncStorage.setItem(
+        'selectedGateway',
+        JSON.stringify({
+          id: method.id,
+          name: method.name,
+          description: method.description,
+          instructions: method.instructions,
+          gateway_name: method.gateway_name,
+          is_va: method.is_va,
+        }),
+      );
+
+      // Navigate ke PaymentInstructionsScreen
+      navigateTo('PaymentInstructions');
+      setShowPaymentMethods(false);
+    } catch (err) {
+      console.error('Error selecting payment method:', err);
+      Alert.alert('Error', 'Gagal memilih metode pembayaran');
+    }
   };
 
   // Render loading state
@@ -321,7 +388,7 @@ const InvoiceDetailScreen = ({
 
         {/* Pay Button (if unpaid) */}
         {selectedInvoice.status === 'Unpaid' && (
-          <TouchableOpacity style={styles.payButton}>
+          <TouchableOpacity style={styles.payButton} onPress={handlePayNow}>
             <Text style={styles.payButtonText}>Bayar Sekarang</Text>
           </TouchableOpacity>
         )}
@@ -332,22 +399,89 @@ const InvoiceDetailScreen = ({
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
-          <Icon name="home" size={24} color="#666" />
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="home" size={24} color="#666" />
+          </View>
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
-          <Icon name="receipt" size={24} color="#fd7e14" />
+          <LinearGradient
+            colors={['#ffb347', '#fd7e14']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.navIconContainer}>
+            <Icon name="receipt" size={24} color="#fff" />
+          </LinearGradient>
           <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
-          <Icon2 name="person" size={24} color="#666" />
+          <View style={styles.navIconContainerInactive}>
+            <Icon2 name="person" size={24} color="#666" />
+          </View>
           <Text style={styles.navText}>Akun</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Payment Methods Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showPaymentMethods}
+        onRequestClose={() => setShowPaymentMethods(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.gatewayModalContent}>
+            <View style={styles.gatewayModalHeader}>
+              <Text style={styles.gatewayModalTitle}>
+                Pilih Metode Pembayaran
+              </Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowPaymentMethods(false)}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.gatewayList}>
+              {isGatewaysLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#fd7e14" />
+                  <Text style={styles.loadingText}>
+                    Memuat metode pembayaran...
+                  </Text>
+                </View>
+              ) : paymentMethods.length > 0 ? (
+                <FlatList
+                  data={paymentMethods}
+                  keyExtractor={item => item.id.toString()}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      style={styles.gatewayItem}
+                      onPress={() => handlePaymentMethodSelect(item)}>
+                      <View style={styles.gatewayInfo}>
+                        <Text style={styles.gatewayName}>{item.name}</Text>
+                        <Text style={styles.gatewayDescription}>
+                          {item.description}
+                        </Text>
+                      </View>
+                      <Text style={styles.arrowIcon}>›</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              ) : (
+                <View style={styles.noGatewaysContainer}>
+                  <Text style={styles.noGatewaysText}>
+                    Tidak ada metode pembayaran tersedia
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -652,6 +786,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
   },
   navItem: {
     flex: 1,
@@ -672,6 +811,112 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: '#fd7e14',
     fontWeight: 'bold',
+  },
+  navIconContainer: {
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#fd7e14',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    marginBottom: 4,
+  },
+  navIconContainerInactive: {
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+    marginBottom: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gatewayModalContent: {
+    width: '90%',
+    maxHeight: '70%',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    padding: 20,
+    alignSelf: 'center',
+  },
+  gatewayModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
+  },
+  gatewayModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 1,
+  },
+  gatewayList: {
+    maxHeight: '80%',
+  },
+  gatewayItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  gatewayInfo: {
+    flex: 1,
+  },
+  gatewayName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  gatewayDescription: {
+    fontSize: 14,
+    color: '#666',
+  },
+  modalCloseButton: {
+    padding: 5,
+  },
+  closeButtonText: {
+    fontSize: 20,
+    color: '#333',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noGatewaysContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noGatewaysText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+  },
+  arrowIcon: {
+    color: '#666',
+    fontSize: 16,
   },
 });
 

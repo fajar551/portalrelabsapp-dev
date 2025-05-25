@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   Alert,
   Clipboard,
-  Image,
   Linking,
   RefreshControl,
   SafeAreaView,
@@ -15,6 +14,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon2 from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getInvoiceById} from '../../src/services/api';
 
 const PaymentInstructionsScreen = ({
@@ -32,6 +34,139 @@ const PaymentInstructionsScreen = ({
   const [paymentInstructions, setPaymentInstructions] = useState<string>('');
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [refreshing, setRefreshing] = useState(false);
+
+  const ensureVACreated = useCallback(
+    async (invoiceId: string | number, vaType: string) => {
+      try {
+        // Hit endpoint untuk membuat VA
+        const response = await fetch(
+          'https://portal.relabs.id/billinginfo/updatepayment',
+          {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              id: invoiceId,
+              paymentmethod: vaType,
+            }),
+          },
+        );
+
+        const data = await response.json();
+        console.log('VA Creation Response:', data);
+
+        // Tunggu 2 detik untuk memastikan VA sudah dibuat di server
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        return data;
+      } catch (err) {
+        console.error('Error creating VA:', err);
+        throw err;
+      }
+    },
+    [],
+  );
+
+  const updatePaymentMethod = useCallback(
+    async (invoiceId: string | number, paymentMethod: string) => {
+      try {
+        // Pastikan VA dibuat terlebih dahulu
+        await ensureVACreated(invoiceId, paymentMethod);
+
+        const payload = {
+          id: invoiceId,
+          paymentmethod: paymentMethod,
+        };
+
+        const response = await fetch(
+          'https://portal.relabs.id/billinginfo/updatepayment',
+          {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+          },
+        );
+
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          data = await response.text(); // return string
+        }
+        console.log('Update Payment Method Response:', data);
+
+        // Jika update berhasil, langsung ambil detail invoice terbaru
+        if (
+          data === paymentMethod.toUpperCase() ||
+          data === paymentMethod.toLowerCase() ||
+          (typeof data === 'object' && data.result === 'success')
+        ) {
+          // Tunggu 2 detik untuk memastikan data sudah diupdate di server
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Ambil detail invoice terbaru
+          const invoiceDetails = await getInvoiceById(invoiceId);
+          console.log(
+            'Latest Invoice Details after update:',
+            JSON.stringify(invoiceDetails),
+          );
+
+          // Cek VA di payment_info
+          if (invoiceDetails?.payment_info) {
+            const vaNumber =
+              invoiceDetails.payment_info.va_number ||
+              invoiceDetails.payment_info.virtual_account_number ||
+              invoiceDetails.payment_info.account_number;
+
+            if (vaNumber) {
+              setVirtualAccountNumber(vaNumber);
+              return data;
+            }
+
+            // Jika VA belum ada di payment_info, cek di available_payment_methods
+            if (invoiceDetails.payment_info.available_payment_methods) {
+              const matchingMethod =
+                invoiceDetails.payment_info.available_payment_methods.find(
+                  (method: any) => {
+                    const methodGateway = method.gateway?.toLowerCase() || '';
+                    return methodGateway.includes(
+                      paymentMethod.toLowerCase().replace('xendit', ''),
+                    );
+                  },
+                );
+
+              if (matchingMethod?.va_number) {
+                setVirtualAccountNumber(matchingMethod.va_number);
+                return data;
+              }
+            }
+          }
+        }
+
+        return data;
+      } catch (err) {
+        console.error('Error in updatePaymentMethod:', err);
+        throw err;
+      }
+    },
+    [ensureVACreated],
+  );
+
+  const redirectToWebInvoice = useCallback(
+    async (invoiceId: string | number, paymentMethod: string) => {
+      try {
+        // Update payment method terlebih dahulu
+        await updatePaymentMethod(invoiceId, paymentMethod);
+
+        // Buka halaman invoice di website
+        const url = `https://portal.relabs.id/billing/invoices/view/${invoiceId}`;
+        await Linking.openURL(url);
+      } catch (err) {
+        console.error('Error redirecting to web invoice:', err);
+        Alert.alert('Error', 'Gagal membuka halaman invoice');
+      }
+    },
+    [updatePaymentMethod],
+  );
 
   const loadData = useCallback(async () => {
     try {
@@ -122,24 +257,19 @@ const PaymentInstructionsScreen = ({
                 console.log('Credit Card detected, vaType set to:', vaType);
               }
 
-              // Jika gateway adalah VA atau ATM Bersama, lakukan POST request ke updatepayment
+              // Jika gateway adalah VA, lakukan POST request ke updatepayment
               if (vaType) {
                 console.log('Processing VA type:', vaType);
                 try {
-                  const response = await fetch(
-                    'https://portal.relabs.id/billinginfo/updatepayment',
-                    {
-                      method: 'POST',
-                      headers: {'Content-Type': 'application/json'},
-                      body: JSON.stringify({
-                        id: invoice.id,
-                        paymentmethod: vaType,
-                      }),
-                    },
-                  );
+                  // Pastikan VA dibuat terlebih dahulu
+                  await ensureVACreated(invoice.id, vaType);
 
-                  const responseText = await response.text();
-                  console.log('Update Payment Method Response:', responseText);
+                  // Update payment method
+                  const updateRes = await updatePaymentMethod(
+                    invoice.id,
+                    vaType,
+                  );
+                  console.log('Update Payment Method Response:', updateRes);
 
                   // Tunggu 2 detik untuk memastikan VA sudah diupdate di server
                   await new Promise(resolve => setTimeout(resolve, 2000));
@@ -270,22 +400,6 @@ const PaymentInstructionsScreen = ({
                                   if (vaType.toLowerCase().includes('bni')) {
                                     return methodGateway.includes('bniva');
                                   }
-                                  // Cek untuk ATM Bersama
-                                  // if (
-                                  //   vaType
-                                  //     .toLowerCase()
-                                  //     .includes('atmbersamaxendit')
-                                  // ) {
-                                  //   const isMatch =
-                                  //     methodGateway.includes(
-                                  //       'atmbersamaxendit',
-                                  //     );
-                                  //   console.log(
-                                  //     'Retry ATM Bersama match:',
-                                  //     isMatch,
-                                  //   );
-                                  //   return isMatch;
-                                  // }
                                   return methodGateway.includes(
                                     vaType.toLowerCase().replace('xendit', ''),
                                   );
@@ -317,9 +431,112 @@ const PaymentInstructionsScreen = ({
                             // Tunggu 3 detik sebelum retry berikutnya
                             setTimeout(() => retryGetVA(retryCount + 1), 3000);
                           } else {
-                            setVirtualAccountNumber(
-                              'Nomor VA belum tersedia. Silakan coba beberapa saat lagi.',
-                            );
+                            // Jika sudah mencapai maksimal retry dan masih belum ada VA
+                            if (vaType.toLowerCase().includes('bni')) {
+                              Alert.alert(
+                                'VA BNI Belum Tersedia',
+                                'Nomor VA BNI belum tersedia. Apakah Anda ingin mencoba metode pembayaran lain atau membuka halaman invoice di website?',
+                                [
+                                  {
+                                    text: 'Tidak',
+                                    style: 'cancel',
+                                    onPress: () => {
+                                      setVirtualAccountNumber(
+                                        'Nomor VA belum tersedia. Silakan coba beberapa saat lagi.',
+                                      );
+                                    },
+                                  },
+                                  {
+                                    text: 'Buka di Website',
+                                    onPress: () => {
+                                      redirectToWebInvoice(invoice.id, vaType);
+                                    },
+                                  },
+                                  {
+                                    text: 'Coba Metode Lain',
+                                    onPress: () => {
+                                      // Tampilkan opsi metode pembayaran lain yang tersedia
+                                      const availableMethods =
+                                        retryInvoiceDetails?.payment_info
+                                          ?.available_payment_methods || [];
+                                      if (availableMethods.length > 0) {
+                                        const methodOptions =
+                                          availableMethods.map(
+                                            (method: any) => ({
+                                              text: method.gateway_name,
+                                              onPress: async () => {
+                                                try {
+                                                  const newVaType =
+                                                    method.gateway
+                                                      .toLowerCase()
+                                                      .replace(
+                                                        'conventionalpayment',
+                                                        'xendit',
+                                                      );
+                                                  const updateRes =
+                                                    await updatePaymentMethod(
+                                                      invoice.id,
+                                                      newVaType,
+                                                    );
+                                                  if (updateRes) {
+                                                    setVirtualAccountNumber(
+                                                      method.va_number,
+                                                    );
+                                                    setSelectedGateway({
+                                                      name: method.gateway_name,
+                                                    });
+                                                  }
+                                                } catch (err) {
+                                                  console.error(
+                                                    'Error switching payment method:',
+                                                    err,
+                                                  );
+                                                  Alert.alert(
+                                                    'Error',
+                                                    'Gagal mengubah metode pembayaran',
+                                                  );
+                                                }
+                                              },
+                                            }),
+                                          );
+
+                                        Alert.alert(
+                                          'Pilih Metode Pembayaran',
+                                          'Silakan pilih metode pembayaran lain:',
+                                          methodOptions,
+                                        );
+                                      } else {
+                                        setVirtualAccountNumber(
+                                          'Nomor VA belum tersedia. Silakan coba beberapa saat lagi.',
+                                        );
+                                      }
+                                    },
+                                  },
+                                ],
+                              );
+                            } else {
+                              Alert.alert(
+                                'VA Belum Tersedia',
+                                'Nomor VA belum tersedia. Apakah Anda ingin membuka halaman invoice di website?',
+                                [
+                                  {
+                                    text: 'Tidak',
+                                    style: 'cancel',
+                                    onPress: () => {
+                                      setVirtualAccountNumber(
+                                        'Nomor VA belum tersedia. Silakan coba beberapa saat lagi.',
+                                      );
+                                    },
+                                  },
+                                  {
+                                    text: 'Buka di Website',
+                                    onPress: () => {
+                                      redirectToWebInvoice(invoice.id, vaType);
+                                    },
+                                  },
+                                ],
+                              );
+                            }
                           }
                         } catch (err) {
                           console.error('Error retrying VA fetch:', err);
@@ -362,7 +579,7 @@ const PaymentInstructionsScreen = ({
       setIsLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [updatePaymentMethod, ensureVACreated, redirectToWebInvoice]);
 
   useEffect(() => {
     loadData();
@@ -628,32 +845,23 @@ const PaymentInstructionsScreen = ({
     }
   };
 
-  const updatePaymentMethod = async (
-    invoiceId: string | number,
-    paymentMethod: string,
-  ) => {
-    const payload = {
-      id: invoiceId,
-      paymentmethod: paymentMethod,
-    };
-
-    const response = await fetch(
-      'https://portal.relabs.id/billinginfo/updatepayment',
-      {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload),
-      },
-    );
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (e) {
-      data = await response.text(); // return string
+  const handleVAPayNow = async () => {
+    if (!_invoiceData?.id) {
+      Alert.alert('Error', 'Invoice ID tidak ditemukan');
+      return;
     }
-    console.log('Update Payment Method Response:', data);
-    return data;
+
+    try {
+      // Update payment method terlebih dahulu
+      await updatePaymentMethod(_invoiceData.id, 'bni');
+
+      // Buka halaman invoice di website
+      const url = `https://portal.relabs.id/billing/invoices/view/${_invoiceData.id}`;
+      await Linking.openURL(url);
+    } catch (err) {
+      console.error('Error in handleVAPayNow:', err);
+      Alert.alert('Error', 'Gagal membuka halaman pembayaran');
+    }
   };
 
   // const getCsrfToken = async () => {
@@ -821,61 +1029,7 @@ const PaymentInstructionsScreen = ({
                 .replace(/\s+/g, '')
                 .includes('atmbersama') ? (
               <TouchableOpacity
-                onPress={async () => {
-                  try {
-                    const invoiceStr = await AsyncStorage.getItem(
-                      'currentInvoice',
-                    );
-                    const invoice = invoiceStr ? JSON.parse(invoiceStr) : null;
-                    if (!invoice || !invoice.id) {
-                      Alert.alert('Error', 'Invoice tidak ditemukan');
-                      return;
-                    }
-
-                    // Update payment method ke ATM Bersama
-                    const updateRes = await updatePaymentMethod(
-                      invoice.id,
-                      'atmbersamaxendit',
-                    );
-                    console.log('Update Payment Method Response:', updateRes);
-
-                    // Cek response untuk ATM Bersama
-                    if (
-                      updateRes === 'ATM BERSAMA' ||
-                      updateRes === 'ATM Bersama' ||
-                      updateRes === 'atmbersamaxendit' ||
-                      (typeof updateRes === 'string' &&
-                        (updateRes
-                          .toLowerCase()
-                          .replace(/\s+/g, '')
-                          .includes('atmbersama') ||
-                          updateRes
-                            .toLowerCase()
-                            .replace(/\s+/g, '')
-                            .includes('atmbersamaxendit'))) ||
-                      (updateRes.result && updateRes.result === 'success') ||
-                      (typeof updateRes === 'object' && updateRes.success) ||
-                      (typeof updateRes === 'object' &&
-                        updateRes.status === 'success')
-                    ) {
-                      // Setelah update berhasil, buka halaman invoice web
-                      const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
-                      Linking.openURL(url);
-                    } else {
-                      console.log('Response tidak sesuai:', updateRes);
-                      Alert.alert(
-                        'Error',
-                        'Gagal update metode pembayaran ke ATM Bersama',
-                      );
-                    }
-                  } catch (err) {
-                    console.log('Error:', err);
-                    Alert.alert(
-                      'Error',
-                      'Terjadi kesalahan saat proses pembayaran.',
-                    );
-                  }
-                }}
+                onPress={handleVAPayNow}
                 style={styles.payNowButton}>
                 <Text style={styles.payNowButtonText}>Bayar Sekarang</Text>
               </TouchableOpacity>
@@ -1064,24 +1218,28 @@ const PaymentInstructionsScreen = ({
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
-          <Text style={styles.navIcon}>🏠</Text>
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="home" size={24} color="#666" />
+          </View>
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
-          <Text style={[styles.navIcon, styles.activeNav]}>💳</Text>
+          <LinearGradient
+            colors={['#ffb347', '#fd7e14']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.navIconContainer}>
+            <Icon name="receipt" size={24} color="#fff" />
+          </LinearGradient>
           <Text style={[styles.navText, styles.activeNavText]}>Pay</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
-          <View style={styles.personIcon}>
-            <Image
-              source={require('../assets/user.png')}
-              style={styles.iconImage}
-              resizeMode="contain"
-            />
+          <View style={styles.navIconContainerInactive}>
+            <Icon2 name="person" size={24} color="#666" />
           </View>
           <Text style={styles.navText}>Account</Text>
         </TouchableOpacity>
@@ -1260,15 +1418,42 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
   },
   navItem: {
     flex: 1,
     alignItems: 'center',
   },
-  navIcon: {
-    fontSize: 20,
-    marginBottom: 3,
-    color: '#666',
+  navIconContainer: {
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#fd7e14',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    marginBottom: 4,
+  },
+  navIconContainerInactive: {
+    width: 45,
+    height: 45,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+    marginBottom: 4,
   },
   navText: {
     fontSize: 10,
