@@ -141,6 +141,11 @@ const PaymentInstructionsScreen = ({
                           (method: any) => {
                             const methodGateway =
                               method.gateway?.toLowerCase() || '';
+                            // Cek untuk BNI VA khusus
+                            if (vaType.toLowerCase().includes('bni')) {
+                              return methodGateway.includes('bniva');
+                            }
+                            // Cek untuk VA lainnya
                             return methodGateway.includes(
                               vaType.toLowerCase().replace('xendit', ''),
                             );
@@ -155,6 +160,10 @@ const PaymentInstructionsScreen = ({
                           'for gateway:',
                           matchingMethod.gateway,
                         );
+                      } else {
+                        console.log(
+                          'No matching VA found in available_payment_methods',
+                        );
                       }
                     }
 
@@ -166,16 +175,111 @@ const PaymentInstructionsScreen = ({
                           .virtual_account_number ||
                         updatedInvoiceDetails.payment_info.account_number ||
                         '';
+                      console.log(
+                        'Trying to get VA from payment_info:',
+                        vaNumber,
+                      );
                     }
 
                     console.log('Selected VA Number:', vaNumber);
 
                     if (vaNumber) {
                       setVirtualAccountNumber(vaNumber);
+                    } else {
+                      // Jika VA belum tersedia, tampilkan pesan
+                      setVirtualAccountNumber(
+                        'Nomor VA sedang diproses. Silakan tunggu...',
+                      );
+
+                      // Fungsi untuk retry mengambil VA
+                      const retryGetVA = async (retryCount = 0) => {
+                        try {
+                          // Panggil updatePaymentMethod lagi untuk memastikan VA dibuat
+                          const updateRes = await updatePaymentMethod(
+                            invoice.id,
+                            vaType,
+                          );
+                          console.log(
+                            'Retry update payment method:',
+                            updateRes,
+                          );
+
+                          const retryInvoiceDetails = await getInvoiceById(
+                            invoice.id,
+                          );
+                          console.log(
+                            'Retry attempt',
+                            retryCount + 1,
+                            ':',
+                            JSON.stringify(retryInvoiceDetails),
+                          );
+
+                          // Cek di available_payment_methods terlebih dahulu
+                          let retryVaNumber = '';
+                          if (
+                            retryInvoiceDetails?.payment_info
+                              ?.available_payment_methods
+                          ) {
+                            const retryMatchingMethod =
+                              retryInvoiceDetails.payment_info.available_payment_methods.find(
+                                (method: any) => {
+                                  const methodGateway =
+                                    method.gateway?.toLowerCase() || '';
+                                  if (vaType.toLowerCase().includes('bni')) {
+                                    return methodGateway.includes('bniva');
+                                  }
+                                  return methodGateway.includes(
+                                    vaType.toLowerCase().replace('xendit', ''),
+                                  );
+                                },
+                              );
+                            if (retryMatchingMethod?.va_number) {
+                              retryVaNumber = retryMatchingMethod.va_number;
+                            }
+                          }
+
+                          // Jika tidak ada di available_payment_methods, cek di payment_info
+                          if (!retryVaNumber) {
+                            retryVaNumber =
+                              retryInvoiceDetails?.payment_info?.va_number ||
+                              retryInvoiceDetails?.payment_info
+                                ?.virtual_account_number ||
+                              retryInvoiceDetails?.payment_info
+                                ?.account_number ||
+                              '';
+                          }
+
+                          if (retryVaNumber) {
+                            setVirtualAccountNumber(retryVaNumber);
+                            return;
+                          }
+
+                          // Jika masih belum ada VA dan belum mencapai maksimal retry
+                          if (retryCount < 5) {
+                            // Tunggu 3 detik sebelum retry berikutnya
+                            setTimeout(() => retryGetVA(retryCount + 1), 3000);
+                          } else {
+                            setVirtualAccountNumber(
+                              'Nomor VA belum tersedia. Silakan coba beberapa saat lagi.',
+                            );
+                          }
+                        } catch (err) {
+                          console.error('Error retrying VA fetch:', err);
+                          if (retryCount < 5) {
+                            setTimeout(() => retryGetVA(retryCount + 1), 3000);
+                          }
+                        }
+                      };
+
+                      // Mulai retry setelah 3 detik
+                      setTimeout(() => retryGetVA(), 3000);
                     }
                   }
                 } catch (err) {
                   console.error('Error updating payment method:', err);
+                  setVirtualAccountNumber(
+                    'Gagal memperbarui metode pembayaran. Silakan coba lagi.',
+                  );
                 }
               } else {
                 // Jika bukan VA, gunakan VA number dari invoice details awal
@@ -610,7 +714,7 @@ const PaymentInstructionsScreen = ({
             <Text style={styles.confirmButtonText}>Saya Sudah Bayar</Text>
           </TouchableOpacity>
 
-          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit atau Gopay atau OVO atau ShopeePay atau LinkAja atau VA */}
+          {/* Tampilkan tombol hanya jika gateway DANA/danaxendit atau Gopay atau OVO atau ShopeePay atau LinkAja */}
           {selectedGateway &&
             selectedGateway.name &&
             (selectedGateway.name.toLowerCase().includes('dana') ? (
@@ -640,48 +744,6 @@ const PaymentInstructionsScreen = ({
             ) : selectedGateway.name.toLowerCase().includes('linkaja') ? (
               <TouchableOpacity
                 onPress={handleLinkajaPayNow}
-                style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
-              </TouchableOpacity>
-            ) : selectedGateway.name.toLowerCase().includes('bni') ? (
-              <TouchableOpacity
-                onPress={() => handleVAPayNow('bnivaxendit')}
-                style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
-              </TouchableOpacity>
-            ) : selectedGateway.name.toLowerCase().includes('sampoerna') ? (
-              <TouchableOpacity
-                onPress={() => handleVAPayNow('sampoernavaxendit')}
-                style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
-              </TouchableOpacity>
-            ) : selectedGateway.name.toLowerCase().includes('bri') ? (
-              <TouchableOpacity
-                onPress={() => handleVAPayNow('brivaxendit')}
-                style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
-              </TouchableOpacity>
-            ) : selectedGateway.name.toLowerCase().includes('mandiri') ? (
-              <TouchableOpacity
-                onPress={() => handleVAPayNow('mandirivaxendit')}
-                style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
-              </TouchableOpacity>
-            ) : selectedGateway.name.toLowerCase().includes('bca') ? (
-              <TouchableOpacity
-                onPress={() => handleVAPayNow('bcavaxendit')}
-                style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
-              </TouchableOpacity>
-            ) : selectedGateway.name.toLowerCase().includes('cimb') ? (
-              <TouchableOpacity
-                onPress={() => handleVAPayNow('cimbvaxendit')}
-                style={styles.payNowButton}>
-                <Text style={styles.payNowButtonText}>Pay Now</Text>
-              </TouchableOpacity>
-            ) : selectedGateway.name.toLowerCase().includes('permatabank') ? (
-              <TouchableOpacity
-                onPress={() => handleVAPayNow('permatabankvaxendit')}
                 style={styles.payNowButton}>
                 <Text style={styles.payNowButtonText}>Pay Now</Text>
               </TouchableOpacity>
