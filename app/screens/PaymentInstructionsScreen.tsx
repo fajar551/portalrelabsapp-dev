@@ -75,48 +75,119 @@ const PaymentInstructionsScreen = ({
               // Mendapatkan gateway yang dipilih
               const selectedGatewayName =
                 parsedGateway?.name?.toLowerCase() || '';
+              let vaType = '';
 
-              // Default mengambil VA dari payment_info utama
-              let vaNumber =
-                invoiceDetails.payment_info.va_number ||
-                invoiceDetails.payment_info.virtual_account_number ||
-                invoiceDetails.payment_info.account_number ||
-                '';
+              // Tentukan VA type berdasarkan gateway yang dipilih
+              if (selectedGatewayName.includes('bni')) {
+                vaType = 'bnivaxendit';
+              } else if (selectedGatewayName.includes('sampoerna')) {
+                vaType = 'sampoernavaxendit';
+              } else if (selectedGatewayName.includes('bri')) {
+                vaType = 'brivaxendit';
+              } else if (selectedGatewayName.includes('mandiri')) {
+                vaType = 'mandirivaxendit';
+              } else if (selectedGatewayName.includes('bca')) {
+                vaType = 'bcavaxendit';
+              } else if (selectedGatewayName.includes('cimb')) {
+                vaType = 'cimbvaxendit';
+              } else if (selectedGatewayName.includes('permatabank')) {
+                vaType = 'permatabankvaxendit';
+              }
 
-              // Cek available_payment_methods untuk mendapatkan VA yang sesuai dengan gateway yang dipilih
-              if (
-                invoiceDetails.payment_info.available_payment_methods &&
-                Array.isArray(
-                  invoiceDetails.payment_info.available_payment_methods,
-                )
-              ) {
-                // Cari gateway yang cocok dalam available_payment_methods
-                const matchingGateway =
-                  invoiceDetails.payment_info.available_payment_methods.find(
-                    (method: any) => {
-                      const methodName =
-                        method.gateway_name?.toLowerCase() || '';
-                      const methodGateway = method.gateway?.toLowerCase() || '';
-
-                      // Coba cocokkan gateway berdasarkan nama atau identifikasi lain
-                      return (
-                        methodGateway === selectedGatewayName ||
-                        methodName.includes(selectedGatewayName) ||
-                        selectedGatewayName.includes(methodGateway)
-                      );
+              // Jika gateway adalah VA, lakukan POST request ke updatepayment
+              if (vaType) {
+                try {
+                  const response = await fetch(
+                    'https://portal.relabs.id/billinginfo/updatepayment',
+                    {
+                      method: 'POST',
+                      headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({
+                        id: invoice.id,
+                        paymentmethod: vaType,
+                      }),
                     },
                   );
 
-                // Jika gateway cocok ditemukan, gunakan VA number dari gateway tersebut
-                if (matchingGateway && matchingGateway.va_number) {
-                  vaNumber = matchingGateway.va_number;
-                  console.log('Found matching VA for gateway:', vaNumber);
-                }
-              }
+                  const responseText = await response.text();
+                  console.log('Update Payment Method Response:', responseText);
 
-              // Set virtual account number
-              if (vaNumber) {
-                setVirtualAccountNumber(vaNumber);
+                  // Tunggu 2 detik untuk memastikan VA sudah diupdate di server
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+
+                  // Setelah update berhasil, ambil detail invoice lagi untuk mendapatkan VA yang baru
+                  const updatedInvoiceDetails = await getInvoiceById(
+                    invoice.id,
+                  );
+                  console.log(
+                    'Updated Invoice Details:',
+                    JSON.stringify(updatedInvoiceDetails),
+                  );
+
+                  if (
+                    updatedInvoiceDetails &&
+                    updatedInvoiceDetails.payment_info
+                  ) {
+                    // Cek available_payment_methods untuk mendapatkan VA yang sesuai
+                    let vaNumber = '';
+
+                    if (
+                      updatedInvoiceDetails.payment_info
+                        .available_payment_methods
+                    ) {
+                      // Cari metode pembayaran yang sesuai dengan vaType
+                      const matchingMethod =
+                        updatedInvoiceDetails.payment_info.available_payment_methods.find(
+                          (method: any) => {
+                            const methodGateway =
+                              method.gateway?.toLowerCase() || '';
+                            return methodGateway.includes(
+                              vaType.toLowerCase().replace('xendit', ''),
+                            );
+                          },
+                        );
+
+                      if (matchingMethod && matchingMethod.va_number) {
+                        vaNumber = matchingMethod.va_number;
+                        console.log(
+                          'Found matching VA:',
+                          vaNumber,
+                          'for gateway:',
+                          matchingMethod.gateway,
+                        );
+                      }
+                    }
+
+                    // Jika tidak ditemukan di available_payment_methods, coba ambil dari payment_info utama
+                    if (!vaNumber) {
+                      vaNumber =
+                        updatedInvoiceDetails.payment_info.va_number ||
+                        updatedInvoiceDetails.payment_info
+                          .virtual_account_number ||
+                        updatedInvoiceDetails.payment_info.account_number ||
+                        '';
+                    }
+
+                    console.log('Selected VA Number:', vaNumber);
+
+                    if (vaNumber) {
+                      setVirtualAccountNumber(vaNumber);
+                    }
+                  }
+                } catch (err) {
+                  console.error('Error updating payment method:', err);
+                }
+              } else {
+                // Jika bukan VA, gunakan VA number dari invoice details awal
+                const vaNumber =
+                  invoiceDetails.payment_info.va_number ||
+                  invoiceDetails.payment_info.virtual_account_number ||
+                  invoiceDetails.payment_info.account_number ||
+                  '';
+
+                if (vaNumber) {
+                  setVirtualAccountNumber(vaNumber);
+                }
               }
             }
           }
