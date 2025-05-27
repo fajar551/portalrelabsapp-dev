@@ -341,7 +341,7 @@ const HomeScreen = ({
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     const scrollX = event.nativeEvent.contentOffset.x;
-    const cardWidth = width - 50;
+    const cardWidth = width;
     const index = scrollX / cardWidth;
 
     // Animasikan dot saat scroll
@@ -368,7 +368,7 @@ const HomeScreen = ({
       nextIndex = 0;
     }
     if (scrollViewRef.current) {
-      const offsetX = nextIndex * (width - 50);
+      const offsetX = nextIndex * width;
       Animated.parallel([
         Animated.timing(dotAnimation, {
           toValue: nextIndex,
@@ -571,28 +571,39 @@ const HomeScreen = ({
           </View>
 
           {/* Promo Carousel */}
-          <ScrollView
-            ref={scrollViewRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            onScroll={handlePromoScroll}
-            scrollEventThrottle={16}
-            decelerationRate={0.9}
-            snapToInterval={width}
-            snapToAlignment="start"
-            contentOffset={{x: 0, y: 0}}
-            contentContainerStyle={styles.promoScrollContent}>
-            {visibleBanners.map((promo, index) => (
-              <View key={index} style={styles.promoCard}>
-                <Image
-                  source={{uri: promo.imageUrl}}
-                  style={styles.promoImage}
-                  resizeMode="cover"
-                  onError={() => handleImageError(index)}
-                />
-              </View>
-            ))}
-          </ScrollView>
+          <View
+            style={{
+              width: width,
+              height: 180,
+              overflow: 'hidden',
+              alignSelf: 'center',
+            }}>
+            <ScrollView
+              ref={scrollViewRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              onScroll={handlePromoScroll}
+              scrollEventThrottle={16}
+              decelerationRate={0.9}
+              snapToInterval={width}
+              snapToAlignment="start"
+              contentOffset={{x: 0, y: 0}}
+              contentContainerStyle={{
+                paddingHorizontal: 0,
+              }}
+              removeClippedSubviews={false}>
+              {visibleBanners.map((promo, index) => (
+                <View key={index} style={{width: width, height: 180}}>
+                  <Image
+                    source={{uri: promo.imageUrl}}
+                    style={{width: '100%', height: '100%'}}
+                    resizeMode="cover"
+                    onError={() => handleImageError(index)}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
 
           {/* <ScrollView
             horizontal
@@ -1050,7 +1061,7 @@ const styles = StyleSheet.create({
   },
   forYouSection: {
     marginTop: 25,
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
   },
   sectionHeader: {
     marginBottom: 10,
@@ -1066,13 +1077,10 @@ const styles = StyleSheet.create({
   promoCard: {
     width: width,
     height: 180,
-    // overflow: 'hidden',
-    margin: 10,
   },
   promoImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 15,
   },
   promoCard2: {
     width: width - 120,
