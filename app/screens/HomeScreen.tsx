@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -19,7 +19,7 @@ import {
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 // import {getUserData} from '../../src/services/api';
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {
   getClientInvoices,
@@ -316,16 +316,16 @@ const HomeScreen = ({
 
   // Data promo
   const promoItems = [
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner1.jpg'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner2.jpg'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner3.jpg'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner4.jpg'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner5.jpg'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner6.jpg'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner7.jpg'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner8.jpg'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner9.jpg'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner10.jpg'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner1.webp'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner2.webp'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner3.webp'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner4.webp'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner5.webp'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner6.webp'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner7.webp'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner8.webp'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner9.webp'},
+    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner10.webp'},
   ];
 
   // State untuk banner yang berhasil dimuat
@@ -1212,8 +1212,8 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: 'row',
     backgroundColor: 'white',
-    paddingTop: 10,
-    paddingBottom: 8,
+    paddingTop: 5,
+    paddingBottom: 4,
     borderTopWidth: 1,
     borderTopColor: '#eee',
   },
@@ -1221,13 +1221,35 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  navIcon: {
-    fontSize: 20,
-    marginBottom: 3,
-    color: '#666',
+  navIconContainer: {
+    width: 35,
+    height: 35,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#fd7e14',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    marginBottom: 2,
+  },
+  navIconContainerInactive: {
+    width: 35,
+    height: 35,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+    marginBottom: 2,
   },
   navText: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#666',
   },
   activeNav: {
@@ -1438,33 +1460,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
-  },
-  navIconContainer: {
-    width: 45,
-    height: 45,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#fd7e14',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-    marginBottom: 4,
-  },
-  navIconContainerInactive: {
-    width: 45,
-    height: 45,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 3,
-    marginBottom: 4,
   },
 });
 

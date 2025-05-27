@@ -3,6 +3,7 @@ import messaging from '@react-native-firebase/messaging';
 import {useFocusEffect} from '@react-navigation/native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {
+  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -331,7 +332,10 @@ const NotificationScreen = ({
       {activeTab === 'Notifikasi' ? (
         <ScrollView style={styles.notificationsList}>
           {loading ? (
-            <Text style={[styles.ta, styles.mt20]}>Memuat data...</Text>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#fd7e14" />
+              <Text style={styles.loadingText}>Memuat notifikasi...</Text>
+            </View>
           ) : notifications.length === 0 ? (
             <Text style={[styles.ta, styles.mt20]}>Tidak ada notifikasi</Text>
           ) : (
@@ -370,7 +374,10 @@ const NotificationScreen = ({
       ) : (
         <ScrollView style={styles.notificationsList}>
           {loading ? (
-            <Text style={[styles.ta, styles.mt20]}>Memuat data...</Text>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#fd7e14" />
+              <Text style={styles.loadingText}>Memuat tagihan...</Text>
+            </View>
           ) : notifications.filter(
               n =>
                 n.subject &&
@@ -770,6 +777,18 @@ const styles = StyleSheet.create({
   billStatus: {
     color: '#666',
     fontSize: 14,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    minHeight: 200,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
 });
 
