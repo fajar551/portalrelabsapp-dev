@@ -4,7 +4,9 @@ import {
   ActivityIndicator,
   Alert,
   Clipboard,
+  Dimensions,
   Linking,
+  Modal,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -36,6 +38,9 @@ const PaymentInstructionsScreen = ({
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState<'va' | 'bank' | 'other'>('other');
 
   const ensureVACreated = useCallback(
     async (invoiceId: string | number, vaType: string) => {
@@ -661,47 +666,31 @@ const PaymentInstructionsScreen = ({
         .includes('atmbersama');
 
     if (selectedGateway?.name?.toLowerCase().includes('bank transfer')) {
-      Alert.alert(
-        'Konfirmasi Pembayaran',
+      setModalType('bank');
+      setModalMessage(
         'Silahkan konfirmasi bukti pembayaran ke  0819 9277 1888',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigateTo('Pay'),
-            style: 'default',
-          },
-        ],
-        {cancelable: false},
       );
+      setShowModal(true);
     } else if (isVA) {
-      Alert.alert(
-        'Konfirmasi Pembayaran',
+      setModalType('va');
+      setModalMessage(
         'Silakan menunggu sekitar 5-10 menit untuk status berubah menjadi Sudah Dibayar',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigateTo('Pay'),
-            style: 'default',
-          },
-        ],
-        {cancelable: false},
       );
+      setShowModal(true);
     } else {
-      Alert.alert(
-        'Konfirmasi Pembayaran',
-        'Apakah Anda sudah melakukan pembayaran?',
-        [
-          {
-            text: 'Belum',
-            style: 'cancel',
-          },
-          {
-            text: 'Sudah',
-            onPress: () => navigateTo('Pay'),
-          },
-        ],
-      );
+      setModalType('other');
+      setModalMessage('Apakah Anda sudah melakukan pembayaran?');
+      setShowModal(true);
     }
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    navigateTo('Pay');
+  };
+
+  const handleModalCancel = () => {
+    setShowModal(false);
   };
 
   // Fungsi untuk handle klik Pay Now
@@ -1304,6 +1293,61 @@ const PaymentInstructionsScreen = ({
           <Text style={styles.navText}>Account</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Custom Modal */}
+      <Modal
+        visible={showModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Konfirmasi Pembayaran</Text>
+            </View>
+            <View style={styles.modalContent}>
+              {modalType === 'va' && (
+                <View style={styles.modalIconContainer}>
+                  <Icon name="access-time" size={50} color="#fd7e14" />
+                </View>
+              )}
+              {modalType === 'bank' && (
+                <View style={styles.modalIconContainer}>
+                  <Icon name="phone" size={50} color="#fd7e14" />
+                </View>
+              )}
+              {modalType === 'other' && (
+                <View style={styles.modalIconContainer}>
+                  <Icon name="payment" size={50} color="#fd7e14" />
+                </View>
+              )}
+              <Text style={styles.modalMessage}>{modalMessage}</Text>
+            </View>
+            <View style={styles.modalButtonContainer}>
+              {modalType === 'other' ? (
+                <>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButtonCancel]}
+                    onPress={handleModalCancel}>
+                    <Text style={styles.modalButtonTextCancel}>Belum</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButtonConfirm]}
+                    onPress={handleModalClose}>
+                    <Text style={styles.modalButtonText}>Sudah</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={handleModalClose}>
+                  <Text style={styles.modalButtonText}>OK</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1559,6 +1603,83 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   boldText: {
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: Dimensions.get('window').width * 0.85,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalContent: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#fff5eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#fd7e14',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalButtonTextCancel: {
+    color: '#666',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });
