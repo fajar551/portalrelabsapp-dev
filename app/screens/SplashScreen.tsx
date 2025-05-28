@@ -105,6 +105,25 @@ const SplashScreen: React.FC<SplashScreenProps> = ({onAnimationComplete}) => {
         />
       </Animated.View>
 
+      {/* Version Text */}
+      <Animated.Text
+        style={[
+          styles.versionText,
+          {
+            opacity: fadeAnim,
+            transform: [
+              {
+                translateY: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                }),
+              },
+            ],
+          },
+        ]}>
+        Versi 1.1
+      </Animated.Text>
+
       {/* Animated circles decoration */}
       <Animated.View
         style={[
@@ -206,6 +225,17 @@ const styles = StyleSheet.create({
   circle3: {
     width: width * 1.2,
     height: width * 1.2,
+  },
+  versionText: {
+    position: 'absolute',
+    bottom: 50,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 2,
   },
 });
 

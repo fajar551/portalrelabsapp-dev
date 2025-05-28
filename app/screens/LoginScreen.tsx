@@ -1,9 +1,10 @@
 import CheckBox from '@react-native-community/checkbox';
 // import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
+  Animated,
   // Alert,
   Image,
   KeyboardAvoidingView,
@@ -44,6 +45,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   const [error, setError] = useState('');
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // State untuk popup
   const [showPassword, setShowPassword] = useState(false); // State untuk menampilkan/menyembunyikan password
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Memeriksa dan mengambil data yang tersimpan saat komponen dimuat
   useEffect(() => {
@@ -76,6 +78,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
     };
 
     loadSavedCredentials();
+  }, []);
+
+  useEffect(() => {
+    // Animate version text
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
   // Menyimpan atau menghapus kredensial berdasarkan status "Remember Me"
@@ -287,11 +298,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             <View style={styles.testingSection}>
               <Text style={styles.testingSectionTitle2}>
                 PT Relabs Net DayaCipta © {new Date().getFullYear()}, {'\n'}{' '}
-                Relabs adalah anggota dari{'\n'}PT Qwords Company
-                International Group
+                Relabs adalah anggota dari{'\n'}PT Qwords Company International
+                Group
               </Text>
               {/* <ClientDropdown /> */}
             </View>
+
+            {/* Version Text */}
+            <Animated.Text
+              style={[
+                styles.versionText,
+                {
+                  opacity: fadeAnim,
+                  transform: [
+                    {
+                      translateY: fadeAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
+              Versi 1.1
+            </Animated.Text>
           </View>
         </View>
       </ScrollView>
@@ -515,6 +545,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  versionText: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 12,
+    marginTop: 5,
+    marginBottom: 2,
+    fontStyle: 'italic',
   },
 });
 
