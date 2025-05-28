@@ -21,6 +21,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 // import {getUserData} from '../../src/services/api';
 import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   getClientInvoices,
   getDomainStatus,
@@ -78,6 +79,8 @@ const HomeScreen = ({
   const [notifCount, setNotifCount] = useState(0);
 
   const [domainStatus, setDomainStatus] = useState<string>('');
+
+  const insets = useSafeAreaInsets();
 
   const fetchUserData = async () => {
     try {
@@ -435,6 +438,9 @@ const HomeScreen = ({
     onLogout();
   };
 
+  const BANNER_MARGIN = 10;
+  const BANNER_WIDTH = width - 1.16 * BANNER_MARGIN;
+
   // Jika terjadi error, tampilkan pesan dan tombol retry
   if (error) {
     // Cek apakah error terkait dengan token atau autentikasi
@@ -518,7 +524,7 @@ const HomeScreen = ({
       </LinearGradient>
 
       <ScrollView
-        style={styles.scrollView}
+        style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -585,18 +591,28 @@ const HomeScreen = ({
               onScroll={handlePromoScroll}
               scrollEventThrottle={16}
               decelerationRate={0.9}
-              snapToInterval={width}
+              snapToInterval={BANNER_WIDTH}
               snapToAlignment="start"
               contentOffset={{x: 0, y: 0}}
-              contentContainerStyle={{
-                paddingHorizontal: 0,
-              }}
+              contentContainerStyle={
+                {
+                  // Tidak perlu paddingHorizontal di sini!
+                }
+              }
               removeClippedSubviews={false}>
               {visibleBanners.map((promo, index) => (
-                <View key={index} style={{width: width, height: 180}}>
+                <View
+                  key={index}
+                  style={{
+                    width: BANNER_WIDTH,
+                    height: 180,
+                    marginLeft: index === 0 ? BANNER_MARGIN : 0,
+                    marginRight:
+                      index === visibleBanners.length - 1 ? BANNER_MARGIN : 8, // 8 agar antar banner tidak terlalu rapat, bisa 0 jika ingin rapat
+                  }}>
                   <Image
                     source={{uri: promo.imageUrl}}
-                    style={{width: '100%', height: '100%'}}
+                    style={{width: '100%', height: '100%', borderRadius: 15}}
                     resizeMode="cover"
                     onError={() => handleImageError(index)}
                   />
@@ -799,10 +815,18 @@ const HomeScreen = ({
             </Text>
           </View>
         )}
+
+        {/* Spacer agar tombol tidak tertutup bottom nav */}
+        <View style={{height: 100 + insets.bottom}} />
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
+      <View
+        style={[
+          styles.bottomNav,
+          styles.bottomNavFixed,
+          {paddingBottom: insets.bottom},
+        ]}>
         <TouchableOpacity style={styles.navItem}>
           <LinearGradient
             colors={['#ffb347', '#fd7e14']}
@@ -811,7 +835,7 @@ const HomeScreen = ({
             style={styles.navIconContainer}>
             <Icon name="home" size={24} color="#fff" />
           </LinearGradient>
-          <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
+          <Text style={[styles.navText, styles.activeNavText]}>Beranda</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -868,8 +892,8 @@ const styles = StyleSheet.create({
     paddingRight: 35,
   },
   logoutImage: {
-    width: 24,
-    height: 24,
+    width: 25,
+    height: 25,
     marginTop: 17,
   },
   personIcon: {
@@ -910,16 +934,18 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     height: 40,
+    marginTop: 20,
   },
   logo: {
-    height: 80,
-    width: 80,
+    height: 85,
+    width: 85,
     marginTop: -20,
     // marginLeft: -17,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 35,
   },
   onlineStatus: {
     flexDirection: 'row',
@@ -942,16 +968,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   notifIcon: {
-    width: 34,
-    height: 34,
+    width: 35,
+    height: 35,
     marginTop: -1,
     marginRight: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   notifIcon2: {
-    width: 34,
-    height: 34,
+    width: 35,
+    height: 35,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -17,
@@ -1070,6 +1096,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#999',
+    marginLeft: 3,
   },
   promoScrollContent: {
     paddingVertical: 10,
@@ -1157,10 +1184,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 2,
     color: '#999',
+    marginLeft: 10,
   },
   offersSubtitle: {
     fontSize: 12,
     color: '#666',
+    marginLeft: 10,
   },
   voucherCardsContainer: {
     flexDirection: 'row',
@@ -1221,9 +1250,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'white',
     paddingTop: 5,
-    paddingBottom: 4,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+  },
+  bottomNavFixed: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  bottomNavPadding: {
+    // Akan diisi dinamis di komponen
   },
   navItem: {
     flex: 1,
@@ -1379,6 +1417,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     width: '100%',
+    marginBottom: 40,
   },
   duePayButtonText: {
     color: '#ffffff',

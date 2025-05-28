@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getClientProfile} from '../../src/services/api';
@@ -29,6 +30,7 @@ const AccountScreen = ({
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const fetchProfile = async () => {
     try {
@@ -114,7 +116,7 @@ const AccountScreen = ({
       </LinearGradient>
 
       <ScrollView
-        style={styles.scrollView}
+        style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -178,7 +180,7 @@ const AccountScreen = ({
           <View style={styles.activeAccountBadge}>
             <View style={styles.activeAccountRow}>
               <Text style={styles.activeAccountText}>{clientData?.id} </Text>
-              <Text style={styles.activeAccountText2}>digunakan</Text>
+              <Text style={styles.activeAccountText2}>ID Pelanggan Anda</Text>
             </View>
             <View style={styles.checkIcon}>
               <Text>✓</Text>
@@ -217,20 +219,25 @@ const AccountScreen = ({
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={() => setShowLogoutModal(true)}>
-            <Text style={styles.logoutButtonText}>Logout</Text>
+            <Text style={styles.logoutButtonText}>Keluar</Text>
           </TouchableOpacity>
         </View>
+        <View style={{height: 100 + insets.bottom}} />
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
+      <View
+        style={[
+          styles.bottomNav,
+          styles.bottomNavFixed,
+          {paddingBottom: insets.bottom},
+        ]}>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
           <View style={styles.navIconContainerInactive}>
             <Icon name="home" size={24} color="#666" />
           </View>
-          <Text style={styles.navText}>Home</Text>
+          <Text style={styles.navText}>Beranda</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -439,6 +446,13 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+  },
+  bottomNavFixed: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
   },
   navItem: {
     flex: 1,

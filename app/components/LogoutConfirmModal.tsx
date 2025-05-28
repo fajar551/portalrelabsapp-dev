@@ -25,7 +25,7 @@ const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
           start={{x: 0, y: 0}}
           end={{x: 0, y: 1}}
           style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Konfirmasi Logout</Text>
+          <Text style={styles.modalTitle}>Konfirmasi Keluar</Text>
         </LinearGradient>
         <View style={styles.modalContent}>
           {/* Ganti path icon sesuai kebutuhan, atau hapus jika tidak ada */}
@@ -42,7 +42,7 @@ const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
             <TouchableOpacity
               style={[styles.modalButton, styles.confirmButton]}
               onPress={onConfirm}>
-              <Text style={styles.confirmButtonText}>Ya, Logout</Text>
+              <Text style={styles.confirmButtonText}>Ya, Keluar</Text>
             </TouchableOpacity>
           </View>
         </View>

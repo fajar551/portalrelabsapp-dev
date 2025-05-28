@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
@@ -39,6 +40,7 @@ const InvoiceDetailScreen = ({
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [isGatewaysLoading, setIsGatewaysLoading] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     fetchInvoiceDetails();
@@ -237,7 +239,7 @@ const InvoiceDetailScreen = ({
       </LinearGradient>
 
       <ScrollView
-        style={styles.scrollView}
+        style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -392,17 +394,28 @@ const InvoiceDetailScreen = ({
             <Text style={styles.payButtonText}>Bayar Sekarang</Text>
           </TouchableOpacity>
         )}
+        <View style={{height: 100 + insets.bottom}} />
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
+      <View
+        style={[
+          styles.bottomNav,
+          {
+            paddingBottom: insets.bottom,
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1000,
+          },
+        ]}>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
           <View style={styles.navIconContainerInactive}>
             <Icon name="home" size={24} color="#666" />
           </View>
-          <Text style={styles.navText}>Home</Text>
+          <Text style={styles.navText}>Beranda</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import PushNotification from 'react-native-push-notification';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 import SessionExpiredModal from './app/components/SessionExpiredModal';
 import AccountScreen from './app/screens/AccountScreen';
 import CashWithdrawalDetailScreen from './app/screens/CashWithdrawalDetailScreen';
@@ -366,73 +367,75 @@ export default function App() {
   console.log('Current screen:', currentScreen);
 
   return (
-    <NavigationContainer>
-      {!isLoggedIn ? (
-        <>
-          {currentScreen === 'ForgotPassword' ? (
-            <ForgotPasswordScreen
-              navigateToScreen={(screen, params) =>
-                navigateToScreen(screen, params)
+    <SafeAreaProvider>
+      <NavigationContainer>
+        {!isLoggedIn ? (
+          <>
+            {currentScreen === 'ForgotPassword' ? (
+              <ForgotPasswordScreen
+                navigateToScreen={(screen, params) =>
+                  navigateToScreen(screen, params)
+                }
+              />
+            ) : currentScreen === 'VerifyCode' ? (
+              <VerifyCodeScreen
+                navigateToScreen={navigateToScreen}
+                onLoginSuccess={handleLoginSuccess}
+                route={{params: {email: forgotPasswordEmail}}}
+              />
+            ) : currentScreen === 'ResetPassword' ? (
+              <ResetPasswordScreen
+                navigateToScreen={navigateToScreen}
+                route={{params: resetPasswordData}}
+              />
+            ) : (
+              <LoginScreen
+                onLoginSuccess={handleLoginSuccess}
+                navigateToScreen={navigateToScreen}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            {/* Render halaman aktif */}
+            {(() => {
+              switch (currentScreen) {
+                case 'Home':
+                  return <HomeScreen {...screenProps} />;
+                case 'Account':
+                  return <AccountScreen {...screenProps} />;
+                case 'Pay':
+                  return <PayScreen {...screenProps} />;
+                case 'Notification':
+                  return <NotificationScreen {...screenProps} />;
+                case 'PaymentSuccess':
+                  return <PaymentSuccessScreen navigateTo={navigateToScreen} />;
+                case 'CashWithdrawalDetail':
+                  return <CashWithdrawalDetailScreen {...screenProps} />;
+                case 'InvoiceDetail':
+                  return (
+                    <InvoiceDetailScreen
+                      navigateTo={navigateToScreen}
+                      onLogout={handleLogout}
+                    />
+                  );
+                case 'PaymentInstructions':
+                  return (
+                    <PaymentInstructionsScreen
+                      navigateTo={navigateToScreen}
+                      onLogout={handleLogout}
+                    />
+                  );
+                default:
+                  console.log('Default case triggered, showing Home');
+                  return <HomeScreen {...screenProps} />;
               }
-            />
-          ) : currentScreen === 'VerifyCode' ? (
-            <VerifyCodeScreen
-              navigateToScreen={navigateToScreen}
-              onLoginSuccess={handleLoginSuccess}
-              route={{params: {email: forgotPasswordEmail}}}
-            />
-          ) : currentScreen === 'ResetPassword' ? (
-            <ResetPasswordScreen
-              navigateToScreen={navigateToScreen}
-              route={{params: resetPasswordData}}
-            />
-          ) : (
-            <LoginScreen
-              onLoginSuccess={handleLoginSuccess}
-              navigateToScreen={navigateToScreen}
-            />
-          )}
-        </>
-      ) : (
-        <>
-          {/* Render halaman aktif */}
-          {(() => {
-            switch (currentScreen) {
-              case 'Home':
-                return <HomeScreen {...screenProps} />;
-              case 'Account':
-                return <AccountScreen {...screenProps} />;
-              case 'Pay':
-                return <PayScreen {...screenProps} />;
-              case 'Notification':
-                return <NotificationScreen {...screenProps} />;
-              case 'PaymentSuccess':
-                return <PaymentSuccessScreen navigateTo={navigateToScreen} />;
-              case 'CashWithdrawalDetail':
-                return <CashWithdrawalDetailScreen {...screenProps} />;
-              case 'InvoiceDetail':
-                return (
-                  <InvoiceDetailScreen
-                    navigateTo={navigateToScreen}
-                    onLogout={handleLogout}
-                  />
-                );
-              case 'PaymentInstructions':
-                return (
-                  <PaymentInstructionsScreen
-                    navigateTo={navigateToScreen}
-                    onLogout={handleLogout}
-                  />
-                );
-              default:
-                console.log('Default case triggered, showing Home');
-                return <HomeScreen {...screenProps} />;
-            }
-          })()}
-        </>
-      )}
-      {renderSessionExpiredModal()}
-    </NavigationContainer>
+            })()}
+          </>
+        )}
+        {renderSessionExpiredModal()}
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
 

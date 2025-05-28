@@ -209,15 +209,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.title}>Login Member Area</Text>
+            <Text style={styles.title}>Masukan Akun Relabs</Text>
             <Text style={styles.subtitle}>
-              Please insert your Email or Customer ID and Password to Login
+              Silakan masukkan Email atau ID Pelanggan dan Password untuk Masuk
             </Text>
 
             <Text style={styles.label}>Email / ID Pelanggan</Text>
             <TextInput
               style={styles.input}
-              placeholder="Email or Customer ID"
+              placeholder="Email atau ID Pelanggan"
               placeholderTextColor="#b0c4de"
               value={identifier}
               onChangeText={setIdentifier}
@@ -248,7 +248,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 
             <TouchableOpacity
               onPress={() => navigateToScreen('ForgotPassword')}>
-              <Text style={styles.forgot}>Forgot Password?</Text>
+              <Text style={styles.forgot}>Lupa Password?</Text>
             </TouchableOpacity>
 
             <View style={styles.rememberRow}>
@@ -259,7 +259,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                 tintColors={{true: '#fd7e14', false: '#888888'}}
                 boxType="square"
               />
-              <Text style={styles.rememberText}>Remember Me</Text>
+              <Text style={styles.rememberText}>Ingat Saya</Text>
             </View>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -271,7 +271,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.loginButtonText}>Login</Text>
+                <Text style={styles.loginButtonText}>Masuk</Text>
               )}
             </TouchableOpacity>
 
@@ -287,7 +287,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             <View style={styles.testingSection}>
               <Text style={styles.testingSectionTitle2}>
                 PT Relabs Net DayaCipta © {new Date().getFullYear()}, {'\n'}{' '}
-                Relabs is a Member of{'\n'}PT Qwords Company International Group
+                Relabs adalah anggota dari{'\n'}PT Qwords Company
+                International Group
               </Text>
               {/* <ClientDropdown /> */}
             </View>

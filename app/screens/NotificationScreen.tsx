@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import PushNotification from 'react-native-push-notification';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {getNotifications} from '../../src/services/api';
 
 // Komponen TabItem dipindahkan ke luar NotificationScreen
@@ -76,6 +77,7 @@ const NotificationScreen = ({
 }: {
   navigateTo: (screen: string, params?: any) => void;
 }) => {
+  const insets = useSafeAreaInsets();
   // State untuk tab yang aktif
   const [activeTab, setActiveTab] = useState('Tagihan');
   const [readNotifications, setReadNotifications] = useState<number[]>([]);
@@ -308,7 +310,7 @@ const NotificationScreen = ({
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => navigateTo('Home')}>
-          <Text style={styles.logoutButtonText}>Home</Text>
+          <Text style={styles.logoutButtonText}>Beranda</Text>
         </TouchableOpacity>
       </View>
 
@@ -330,7 +332,11 @@ const NotificationScreen = ({
 
       {/* Daftar Notifikasi atau Tagihan */}
       {activeTab === 'Notifikasi' ? (
-        <ScrollView style={styles.notificationsList}>
+        <ScrollView
+          style={[
+            styles.notificationsList,
+            {paddingBottom: 80 + insets.bottom},
+          ]}>
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#fd7e14" />
@@ -370,9 +376,14 @@ const NotificationScreen = ({
               </TouchableOpacity>
             ))
           )}
+          <View style={{height: 100 + insets.bottom}} />
         </ScrollView>
       ) : (
-        <ScrollView style={styles.notificationsList}>
+        <ScrollView
+          style={[
+            styles.notificationsList,
+            {paddingBottom: 80 + insets.bottom},
+          ]}>
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#fd7e14" />
@@ -418,6 +429,7 @@ const NotificationScreen = ({
                 </TouchableOpacity>
               ))
           )}
+          <View style={{height: 100 + insets.bottom}} />
         </ScrollView>
       )}
 
@@ -453,6 +465,14 @@ const NotificationScreen = ({
           </View>
         </View>
       )}
+      <View
+        style={[
+          styles.bottomNav,
+          styles.bottomNavFixed,
+          {paddingBottom: insets.bottom},
+        ]}>
+        {/* ...icon nav... */}
+      </View>
     </SafeAreaView>
   );
 };
@@ -789,6 +809,24 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    paddingTop: 5,
+    paddingBottom: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  bottomNavFixed: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  scrollView: {
+    flex: 1,
   },
 });
 
