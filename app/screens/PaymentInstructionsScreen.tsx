@@ -604,6 +604,20 @@ const PaymentInstructionsScreen = ({
     // Hapus semua tag HTML dari instruksi
     instructions = instructions.replace(/<\/?[^>]+(>|$)/g, '');
 
+    // Jika metode pembayaran adalah Bank Transfer
+    if (selectedGateway?.name?.toLowerCase().includes('bank transfer')) {
+      return (
+        <View>
+          <Text style={styles.instructionsText}>
+            Silahkan konfirmasi bukti pembayaran ke{' '}
+          </Text>
+          <Text style={[styles.instructionsText, styles.boldText]}>
+            0819 9277 1888
+          </Text>
+        </View>
+      );
+    }
+
     // Jika metode pembayaran adalah ATM Bersama, tampilkan instruksi khusus
     if (
       selectedGateway?.name
@@ -638,21 +652,56 @@ const PaymentInstructionsScreen = ({
 
   // Handle pembayaran selesai
   const handlePaymentComplete = () => {
-    Alert.alert(
-      'Konfirmasi Pembayaran',
-      'Apakah Anda sudah melakukan pembayaran?',
-      [
-        {
-          text: 'Belum',
-          style: 'cancel',
-        },
-        {
-          text: 'Sudah',
-          // onPress: () => navigateTo('PaymentSuccess'),
-          onPress: () => navigateTo('Pay'),
-        },
-      ],
-    );
+    // Cek apakah metode pembayaran adalah VA
+    const isVA =
+      selectedGateway?.name?.toLowerCase().includes('va') &&
+      !selectedGateway?.name
+        ?.toLowerCase()
+        .replace(/\s+/g, '')
+        .includes('atmbersama');
+
+    if (selectedGateway?.name?.toLowerCase().includes('bank transfer')) {
+      Alert.alert(
+        'Konfirmasi Pembayaran',
+        'Silahkan konfirmasi bukti pembayaran ke  0819 9277 1888',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigateTo('Pay'),
+            style: 'default',
+          },
+        ],
+        {cancelable: false},
+      );
+    } else if (isVA) {
+      Alert.alert(
+        'Konfirmasi Pembayaran',
+        'Silakan menunggu sekitar 5-10 menit untuk status berubah menjadi Sudah Dibayar',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigateTo('Pay'),
+            style: 'default',
+          },
+        ],
+        {cancelable: false},
+      );
+    } else {
+      Alert.alert(
+        'Konfirmasi Pembayaran',
+        'Apakah Anda sudah melakukan pembayaran?',
+        [
+          {
+            text: 'Belum',
+            style: 'cancel',
+          },
+          {
+            text: 'Sudah',
+            onPress: () => navigateTo('Pay'),
+          },
+        ],
+      );
+    }
   };
 
   // Fungsi untuk handle klik Pay Now
@@ -1507,6 +1556,9 @@ const styles = StyleSheet.create({
   payNowButtonText: {
     color: 'white',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  boldText: {
     fontWeight: 'bold',
   },
 });
