@@ -223,12 +223,18 @@ const PaymentInstructionsScreen = ({
               if (selectedGatewayName.includes('bca bank transfer')) {
                 // Langsung update payment method ke BCA Bank Transfer
                 try {
+                  console.log(
+                    'Processing BCA Bank Transfer for Invoice ID:',
+                    invoice.id,
+                  );
                   const updateRes = await updatePaymentMethod(
                     invoice.id,
                     'banktransfer',
                   );
                   console.log(
-                    'Update Payment Method Response for BCA Bank Transfer:',
+                    'Update Payment Method Response for BCA Bank Transfer (Invoice ID:',
+                    invoice.id,
+                    '):',
                     updateRes,
                   );
 
@@ -239,7 +245,11 @@ const PaymentInstructionsScreen = ({
                     );
                   }
                 } catch (err) {
-                  console.error('Error updating BCA Bank Transfer:', err);
+                  console.error(
+                    'Error updating BCA Bank Transfer for Invoice ID:',
+                    invoice.id,
+                    err,
+                  );
                 }
               } else if (selectedGatewayName.includes('bni')) {
                 vaType = 'bnivaxendit';
@@ -1001,6 +1011,32 @@ const PaymentInstructionsScreen = ({
               </Text>
             </View>
 
+            {/* Invoice ID Card */}
+            <View style={styles.invoiceIdCard}>
+              <View style={styles.invoiceIdHeader}>
+                <Icon name="receipt" size={20} color="#666" />
+                <Text style={styles.invoiceIdLabel}>ID Invoice</Text>
+              </View>
+              <View style={styles.invoiceIdContent}>
+                <Text style={styles.invoiceIdValue}>
+                  {_invoiceData?.id || '-'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.copyButton}
+                  onPress={() => {
+                    if (_invoiceData?.id) {
+                      Clipboard.setString(_invoiceData.id);
+                      Alert.alert(
+                        'Berhasil',
+                        'ID Invoice disalin ke clipboard',
+                      );
+                    }
+                  }}>
+                  <Icon name="content-copy" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
             {/* Debug logs */}
             {console.log('Selected Gateway:', selectedGateway?.name)}
             {console.log(
@@ -1711,6 +1747,41 @@ const styles = StyleSheet.create({
   bankInfoValue: {
     color: '#333',
     marginLeft: 4,
+  },
+  invoiceIdCard: {
+    marginTop: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  invoiceIdHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  invoiceIdLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  invoiceIdContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  invoiceIdValue: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });
 
