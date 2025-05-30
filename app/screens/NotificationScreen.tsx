@@ -117,24 +117,24 @@ const NotificationScreen = ({
     if (!html) {
       return '';
     }
-    // Ambil isi <p>
-    const pMatches = html.match(/<p[^>]*>(.*?)<\/p>/gis) || [];
-    // Ambil isi <li>
-    const liMatches = html.match(/<li[^>]*>(.*?)<\/li>/gis) || [];
-    // Ambil isi <h6>
-    const h6Matches = html.match(/<h6[^>]*>(.*?)<\/h6>/gis) || [];
-    // Gabungkan semua hasil
-    const all = [...h6Matches, ...pMatches, ...liMatches].map(str =>
-      str
-        .replace(/<br\s*\/?>/gi, '\n') // ubah <br> jadi newline
-        .replace(/<[^>]+>/g, '') // hapus tag html
+
+    // Hapus semua tag HTML kecuali konten di dalam bodyContent
+    const bodyContentMatch = html.match(
+      /<td[^>]*class="bodyContent"[^>]*>([\s\S]*?)<\/td>/i,
+    );
+    if (bodyContentMatch && bodyContentMatch[1]) {
+      const content = bodyContentMatch[1]
+        .replace(/<!-- message header end -->/g, '')
+        .replace(/<!-- message footer start -->/g, '')
+        .replace(/<[^>]+>/g, '')
         .replace(/&nbsp;/g, ' ')
         .replace(/&amp;/g, '&')
         .replace(/\\n/g, '\n')
-        .trim(),
-    );
-    // Gabungkan dengan newline antar paragraf
-    return all.join('\n\n');
+        .trim();
+      return content;
+    }
+
+    return '';
   };
 
   // Fungsi untuk delay
@@ -710,6 +710,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     minHeight: 60,
     maxHeight: 350,
+    backgroundColor: '#fff',
   },
   qwordsModalBodyContent: {
     paddingBottom: 18,
@@ -717,6 +718,7 @@ const styles = StyleSheet.create({
   qwordsText: {
     color: '#23242a',
     fontSize: 15,
+    lineHeight: 22,
     marginBottom: 6,
   },
   qwordsBold: {

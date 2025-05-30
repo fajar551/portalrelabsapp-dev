@@ -376,8 +376,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    color: '#999',
-    fontWeight: 'bold',
+    color: '#22325a',
+    fontWeight: '600',
     marginBottom: 10,
   },
   infoCard: {
@@ -399,6 +399,7 @@ const styles = StyleSheet.create({
   infoLabel: {
     width: 100,
     fontSize: 14,
+    fontWeight: '500',
     color: '#666',
   },
   infoValue: {
@@ -429,6 +430,7 @@ const styles = StyleSheet.create({
   },
   activeAccountText2: {
     color: '#666',
+    fontWeight: '500',
     fontSize: 14,
   },
   checkIcon: {

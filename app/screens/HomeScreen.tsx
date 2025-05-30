@@ -479,11 +479,11 @@ const HomeScreen = ({
 
   return (
     <SafeAreaView style={styles.root}>
-      <StatusBar backgroundColor="#fd7e14" barStyle="light-content" />
+      <StatusBar backgroundColor="#F26522" barStyle="light-content" />
 
       {/* Header */}
       <LinearGradient
-        colors={['#ffb347', '#fd7e14']}
+        colors={['#F36F2D', '#F26522']}
         start={{x: 0, y: 0}}
         end={{x: 0, y: 1}}
         style={styles.header}>
@@ -529,13 +529,13 @@ const HomeScreen = ({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#fd7e14', '#0033a0']}
-            tintColor="#fd7e14"
+            colors={['#F26522', '#0033a0']}
+            tintColor="#F26522"
           />
         }>
         {/* Profile Section */}
         <LinearGradient
-          colors={['#fd7e14', '#ffb347']}
+          colors={['#F26522', '#F36F2D']}
           start={{x: 0, y: 0}}
           end={{x: 0, y: 1}}
           style={styles.profileSection}>
@@ -868,7 +868,7 @@ const HomeScreen = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f6f9ff',
   },
   blueText: {
     zIndex: 1000,
@@ -1094,8 +1094,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#999',
+    // fontWeight: 'bold',
+    // color: '#999',
+    color: '#22325a',
+    fontWeight: '600',
     marginLeft: 3,
   },
   promoScrollContent: {
@@ -1183,7 +1185,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 2,
-    color: '#999',
+    color: '#22325a',
+    // fontWeight: '600',
     marginLeft: 10,
   },
   offersSubtitle: {
