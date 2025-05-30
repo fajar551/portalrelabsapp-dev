@@ -1038,7 +1038,7 @@ const PaymentInstructionsScreen = ({
                   style={styles.copyButton}
                   onPress={() => {
                     if (_invoiceData?.id) {
-                      Clipboard.setString(_invoiceData.id);
+                      Clipboard.setString(String(_invoiceData.id));
                       Alert.alert(
                         'Berhasil',
                         'ID Invoice disalin ke clipboard',
@@ -1063,7 +1063,7 @@ const PaymentInstructionsScreen = ({
                   <TouchableOpacity
                     style={styles.copyButton}
                     onPress={() => {
-                      Clipboard.setString(virtualAccountNumber);
+                      Clipboard.setString(String(virtualAccountNumber));
                       Alert.alert('Berhasil', 'Nomor VA disalin ke clipboard');
                     }}>
                     <Text style={styles.copyButtonText}>Salin</Text>
