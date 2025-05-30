@@ -381,8 +381,8 @@ const PayScreen = ({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#fd7e14', '#0033a0']}
-            tintColor="#fd7e14"
+            colors={['#F26522', '#E4571B']}
+            tintColor="#F26522"
           />
         }>
         {/* Due Date Period - hanya tampilkan jika ada tagihan yang belum dibayar */}

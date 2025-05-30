@@ -156,7 +156,7 @@ const InvoiceDetailScreen = ({
   if (loading) {
     return (
       <SafeAreaView style={[styles.root, styles.centerContainer]}>
-        <ActivityIndicator size="large" color="#0033a0" />
+        <ActivityIndicator size="large" color="#fd7e14" />
         <Text style={styles.loadingText}>Memuat data invoice...</Text>
       </SafeAreaView>
     );
@@ -245,8 +245,8 @@ const InvoiceDetailScreen = ({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#fd7e14', '#0033a0']}
-            tintColor="#fd7e14"
+            colors={['#F26522', '#E4571B']}
+            tintColor="#F26522"
           />
         }>
         {/* Invoice List Selector */}

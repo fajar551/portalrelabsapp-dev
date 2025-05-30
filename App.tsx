@@ -344,7 +344,7 @@ export default function App() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0033a0" />
+        <ActivityIndicator size="large" color="#fd7e14" />
       </View>
     );
   }

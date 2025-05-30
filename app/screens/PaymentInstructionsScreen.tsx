@@ -950,8 +950,8 @@ const PaymentInstructionsScreen = ({
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.header}>
-        <TouchableOpacity style={styles.backButtonHeader} onPress={handleBack}>
-          <Text style={styles.backIcon}>‹</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
+          <Icon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Instruksi Pembayaran</Text>
       </LinearGradient>
@@ -962,8 +962,8 @@ const PaymentInstructionsScreen = ({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#fd7e14', '#0033a0']}
-            tintColor="#fd7e14"
+            colors={['#F26522', '#E4571B']}
+            tintColor="#F26522"
           />
         }>
         <View style={styles.content}>
@@ -1406,13 +1406,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     alignItems: 'center',
   },
-  backButtonHeader: {
-    marginRight: 10,
-  },
-  backIcon: {
-    fontSize: 28,
-    color: 'white',
-    fontWeight: 'bold',
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     color: '#f0f0f0',
@@ -1513,7 +1511,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   confirmButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',

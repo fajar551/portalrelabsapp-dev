@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
-import {useFocusEffect} from '@react-navigation/native';
-import React, {useCallback, useEffect, useState} from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -13,8 +13,8 @@ import {
   View,
 } from 'react-native';
 import PushNotification from 'react-native-push-notification';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {getNotifications} from '../../src/services/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getNotifications } from '../../src/services/api';
 
 // Komponen TabItem dipindahkan ke luar NotificationScreen
 interface TabItemProps {
@@ -118,23 +118,58 @@ const NotificationScreen = ({
       return '';
     }
 
-    // Hapus semua tag HTML kecuali konten di dalam bodyContent
+    // Cek jika ada <td class="bodyContent">...</td>
     const bodyContentMatch = html.match(
-      /<td[^>]*class="bodyContent"[^>]*>([\s\S]*?)<\/td>/i,
+      /<td[^>]*class=["']bodyContent["'][^>]*>([\s\S]*?)<\/td>/i,
     );
     if (bodyContentMatch && bodyContentMatch[1]) {
-      const content = bodyContentMatch[1]
-        .replace(/<!-- message header end -->/g, '')
-        .replace(/<!-- message footer start -->/g, '')
+      const bodyHtml = bodyContentMatch[1];
+      // Ambil isi <p>, <li>, <h6> di dalam bodyContent
+      const pMatches = bodyHtml.match(/<p[^>]*>(.*?)<\/p>/gis) || [];
+      const liMatches = bodyHtml.match(/<li[^>]*>(.*?)<\/li>/gis) || [];
+      const h6Matches = bodyHtml.match(/<h6[^>]*>(.*?)<\/h6>/gis) || [];
+      const all = [...h6Matches, ...pMatches, ...liMatches].map(str =>
+        str
+          .replace(/<br\s*\/?/gi, '\n')
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/\\n/g, '\n')
+          .trim(),
+      );
+      // Jika tidak ada tag <p>, <li>, <h6>, fallback ke isi mentah
+      if (all.length === 0) {
+        return bodyHtml
+          .replace(/<!--.*?-->/gs, '')
+          .replace(/<br\s*\/?/gi, '\n')
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/\\n/g, '\n')
+          .trim();
+      }
+      return all.join('\n\n');
+    }
+
+    // Ambil isi <p>
+    const pMatches = html.match(/<p[^>]*>(.*?)<\/p>/gis) || [];
+    // Ambil isi <li>
+    const liMatches = html.match(/<li[^>]*>(.*?)<\/li>/gis) || [];
+    // Ambil isi <h6>
+    const h6Matches = html.match(/<h6[^>]*>(.*?)<\/h6>/gis) || [];
+
+    // Gabungkan semua hasil
+    const all = [...h6Matches, ...pMatches, ...liMatches].map(str =>
+      str
+        .replace(/<br\s*\/?/gi, '\n')
         .replace(/<[^>]+>/g, '')
         .replace(/&nbsp;/g, ' ')
         .replace(/&amp;/g, '&')
         .replace(/\\n/g, '\n')
-        .trim();
-      return content;
-    }
-
-    return '';
+        .trim(),
+    );
+    // Gabungkan dengan newline antar paragraf
+    return all.join('\n\n');
   };
 
   // Fungsi untuk delay
@@ -446,7 +481,11 @@ const NotificationScreen = ({
               style={styles.qwordsModalBody}
               contentContainerStyle={styles.qwordsModalBodyContent}>
               <Text style={styles.qwordsText}>
-                {extractTextFromHtml(selectedNotification.message)}
+                {extractTextFromHtml(selectedNotification.message)
+                  .split('\n')
+                  .map(line => line.replace(/^>/, '').trim())
+                  .join('\n')
+                  .replace(/\n{3,}/g, '\n\n')}
               </Text>
             </ScrollView>
             {/* Footer */}

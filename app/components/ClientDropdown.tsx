@@ -131,7 +131,7 @@ const ClientDropdown = () => {
 
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#2e7ce4" />
+                <ActivityIndicator size="large" color="#fd7e14" />
                 <Text style={styles.modalLoadingText}>Memuat data...</Text>
               </View>
             ) : (

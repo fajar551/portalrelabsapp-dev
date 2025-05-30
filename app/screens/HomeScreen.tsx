@@ -529,7 +529,7 @@ const HomeScreen = ({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#F26522', '#0033a0']}
+            colors={['#F26522', '#E4571B']}
             tintColor="#F26522"
           />
         }>

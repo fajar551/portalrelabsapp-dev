@@ -58,7 +58,7 @@ const AccountScreen = ({
   if (loading) {
     return (
       <View style={[styles.root, styles.centeredContainer]}>
-        <ActivityIndicator size="large" color="#0033a0" />
+        <ActivityIndicator size="large" color="#fd7e14" />
         <Text style={styles.loadingText}>Memuat profil...</Text>
       </View>
     );

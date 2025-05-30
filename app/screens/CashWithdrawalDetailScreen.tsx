@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const CashWithdrawalDetailScreen = ({
   navigateTo,
@@ -19,8 +20,8 @@ const CashWithdrawalDetailScreen = ({
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigateTo('Notification')}
-          style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
+          style={styles.backBtn}>
+          <Icon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detail Notifikasi</Text>
       </View>
@@ -89,16 +90,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  backButton: {
-    width: 30,
-    height: 30,
+  backBtn: {
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
-  },
-  backButtonText: {
-    fontSize: 24,
-    color: '#333',
   },
   headerTitle: {
     fontSize: 16,
