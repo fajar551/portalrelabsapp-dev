@@ -655,9 +655,9 @@ const PayScreen = ({
                       }}>
                       <View style={styles.gatewayInfo}>
                         <Text style={styles.gatewayName}>{item.name}</Text>
-                        <Text style={styles.gatewayDescription}>
+                        {/* <Text style={styles.gatewayDescription}>
                           {item.description}
-                        </Text>
+                        </Text> */}
                       </View>
                       <Text style={styles.arrowIcon}>›</Text>
                     </TouchableOpacity>
@@ -907,7 +907,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#f6f9ff',
-
   },
   centerContainer: {
     flex: 1,
@@ -1378,9 +1377,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: 'white',
-    padding: 15,
+    padding: 5,
     borderRadius: 10,
-    marginBottom: 10,
+    marginBottom: 5,
   },
   gatewayInfo: {
     flex: 1,
@@ -1389,7 +1388,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 5,
+    padding: 10,
   },
   gatewayDescription: {
     fontSize: 14,

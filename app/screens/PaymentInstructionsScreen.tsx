@@ -220,7 +220,28 @@ const PaymentInstructionsScreen = ({
               let vaType = '';
 
               // Tentukan VA type berdasarkan gateway yang dipilih
-              if (selectedGatewayName.includes('bni')) {
+              if (selectedGatewayName.includes('bca bank transfer')) {
+                // Langsung update payment method ke BCA Bank Transfer
+                try {
+                  const updateRes = await updatePaymentMethod(
+                    invoice.id,
+                    'banktransfer',
+                  );
+                  console.log(
+                    'Update Payment Method Response for BCA Bank Transfer:',
+                    updateRes,
+                  );
+
+                  // Set VA number dari response
+                  if (invoiceDetails.payment_info.va_number) {
+                    setVirtualAccountNumber(
+                      invoiceDetails.payment_info.va_number,
+                    );
+                  }
+                } catch (err) {
+                  console.error('Error updating BCA Bank Transfer:', err);
+                }
+              } else if (selectedGatewayName.includes('bni')) {
                 vaType = 'bnivaxendit';
               } else if (selectedGatewayName.includes('sampoerna')) {
                 vaType = 'sampoernavaxendit';
@@ -610,16 +631,16 @@ const PaymentInstructionsScreen = ({
     instructions = instructions.replace(/<\/?[^>]+(>|$)/g, '');
 
     // Jika metode pembayaran adalah Bank Transfer
-    if (selectedGateway?.name?.toLowerCase().includes('bank transfer')) {
+    if (selectedGateway?.name?.toLowerCase().includes('bca bank transfer')) {
       return (
-        <View>
-          <Text style={styles.instructionsText}>
-            Silahkan konfirmasi bukti pembayaran ke{' '}
-          </Text>
-          <Text style={[styles.instructionsText, styles.boldText]}>
-            0819 9277 1888
-          </Text>
-        </View>
+        <Text style={styles.instructionsText}>
+          <Text>Bank: BCA{'\n'}</Text>
+          <Text>Nomor Rekening: 037-8770800{'\n'}</Text>
+          <Text>Nama Rekening: RELABS NET DAYACIPTA PT{'\n'}</Text>
+          {'\n'}
+          <Text>Silahkan konfirmasi bukti pembayaran ke{'\n'}</Text>
+          <Text style={{fontWeight: 'bold'}}>0819 9277 1888</Text>
+        </Text>
       );
     }
 
@@ -1025,9 +1046,7 @@ const PaymentInstructionsScreen = ({
           <View style={styles.instructionsCard}>
             <Text style={styles.instructionsTitle}>Cara Pembayaran</Text>
             <View style={styles.instructionsContainer}>
-              <Text style={styles.instructionsText}>
-                {formatInstructions(paymentInstructions)}
-              </Text>
+              {formatInstructions(paymentInstructions)}
             </View>
           </View>
 
@@ -1684,6 +1703,14 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  bankInfoLabel: {
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  bankInfoValue: {
+    color: '#333',
+    marginLeft: 4,
   },
 });
 

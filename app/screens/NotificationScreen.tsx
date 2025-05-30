@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
-import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import {useFocusEffect} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -13,8 +13,9 @@ import {
   View,
 } from 'react-native';
 import PushNotification from 'react-native-push-notification';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getNotifications } from '../../src/services/api';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {getNotifications} from '../../src/services/api';
 
 // Komponen TabItem dipindahkan ke luar NotificationScreen
 interface TabItemProps {
@@ -311,12 +312,12 @@ const NotificationScreen = ({
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigateTo('Home')}>
-          <Text style={styles.backButtonText}>←</Text>
+          <Icon name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Pesan</Text>
-        <TouchableOpacity style={styles.soundButton}>
-          {/* <Text style={styles.soundButtonText}>🔊</Text> */}
-        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Notifikasi</Text>
+        </View>
+        <View style={styles.backButton} />
       </View>
 
       {/* Tab Navigation */}
@@ -524,22 +525,22 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#fff',
     flexDirection: 'row',
+    paddingVertical: 20,
+    paddingHorizontal: 15,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   backButton: {
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 40,
   },
-  backButtonText: {
-    fontSize: 24,
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerTitle: {
     color: '#333',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   fwBold: {
     fontWeight: 'bold',
@@ -585,11 +586,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
   },
   soundButton: {
     width: 30,

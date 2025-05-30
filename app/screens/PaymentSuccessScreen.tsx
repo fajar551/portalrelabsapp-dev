@@ -149,7 +149,7 @@ const PaymentSuccessScreen = ({
 
       {/* Tombol navigasi ke home di bagian bawah sebagai fallback */}
       <TouchableOpacity style={styles.homeButton} onPress={handleGoHome}>
-        <Text style={styles.homeButtonText}>Kembali ke Beranda</Text>xt>
+        <Text style={styles.homeButtonText}>Kembali ke Beranda</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
