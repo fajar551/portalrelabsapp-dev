@@ -367,7 +367,8 @@ const PayScreen = ({
       <StatusBar backgroundColor="#00008B" barStyle="light-content" />
 
       <LinearGradient
-        colors={['#ffb347', '#fd7e14']}
+        // colors={['#ffb347', '#fd7e14']}
+        colors={['#E4571B', '#F26522']}
         start={{x: 0, y: 0}}
         end={{x: 0, y: 1}}
         style={styles.header}>
@@ -570,7 +571,8 @@ const PayScreen = ({
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
           <LinearGradient
-            colors={['#ffb347', '#fd7e14']}
+            // colors={['#ffb347', '#fd7e14']}
+            colors={['#E4571B', '#F26522']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.navIconContainer}>
@@ -904,7 +906,8 @@ const PayScreen = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f6f9ff',
+
   },
   centerContainer: {
     flex: 1,
@@ -1005,7 +1008,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   paymentStatusText: {
-    color: '#333',
+    color: '#22325a',
+    fontWeight: '500',
     fontSize: 16,
   },
   lastPaymentContainer: {
@@ -1018,8 +1022,8 @@ const styles = StyleSheet.create({
   },
   lastPaymentTitle: {
     fontSize: 18,
-    color: '#999',
-    fontWeight: 'bold',
+    color: '#22325a',
+    fontWeight: '600',
     marginBottom: 15,
   },
   paymentItem: {
@@ -1273,7 +1277,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   detailInvoiceButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -1291,7 +1295,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
@@ -1340,7 +1344,8 @@ const styles = StyleSheet.create({
   },
   noPaymentHistoryText: {
     fontSize: 14,
-    color: '#999',
+    color: '#22325a',
+    fontWeight: '400',
     textAlign: 'center',
   },
   // Payment Gateway Modal styles
@@ -1500,14 +1505,15 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
-    color: '#666',
+    color: '#22325a',
+    fontWeight: '400',
     marginTop: 5,
   },
   dueCardFooter: {
     alignItems: 'center',
   },
   duePayButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,

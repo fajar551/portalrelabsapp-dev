@@ -483,7 +483,7 @@ const HomeScreen = ({
 
       {/* Header */}
       <LinearGradient
-        colors={['#F36F2D', '#F26522']}
+        colors={['#E4571B', '#F26522']}
         start={{x: 0, y: 0}}
         end={{x: 0, y: 1}}
         style={styles.header}>
@@ -535,7 +535,7 @@ const HomeScreen = ({
         }>
         {/* Profile Section */}
         <LinearGradient
-          colors={['#F26522', '#F36F2D']}
+          colors={['#F26522', '#E4571B']}
           start={{x: 0, y: 0}}
           end={{x: 0, y: 1}}
           style={styles.profileSection}>
@@ -829,7 +829,8 @@ const HomeScreen = ({
         ]}>
         <TouchableOpacity style={styles.navItem}>
           <LinearGradient
-            colors={['#ffb347', '#fd7e14']}
+            // colors={['#ffb347', '#fd7e14']}
+            colors={['#E4571B', '#F26522']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.navIconContainer}>
@@ -1037,7 +1038,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   accountLabel: {
-    color: '#666',
+    color: '#22325a',
+    fontWeight: '400',
     fontSize: 12,
     marginBottom: 5,
   },
@@ -1192,6 +1194,7 @@ const styles = StyleSheet.create({
   offersSubtitle: {
     fontSize: 12,
     color: '#666',
+    fontWeight: '500',
     marginLeft: 10,
   },
   voucherCardsContainer: {
@@ -1414,7 +1417,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   duePayButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -1465,7 +1468,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,

@@ -21,7 +21,7 @@ const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
     <View style={styles.modalOverlay}>
       <View style={styles.modalContainer}>
         <LinearGradient
-          colors={['#ffb347', '#fd7e14']}
+          colors={['#E4571B', '#F26522']}
           start={{x: 0, y: 0}}
           end={{x: 0, y: 1}}
           style={styles.modalHeader}>

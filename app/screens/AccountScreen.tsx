@@ -108,7 +108,8 @@ const AccountScreen = ({
 
       {/* Header */}
       <LinearGradient
-        colors={['#ffb347', '#fd7e14']}
+        // colors={['#ffb347', '#fd7e14']}
+        colors={['#E4571B', '#F26522']}
         start={{x: 0, y: 0}}
         end={{x: 0, y: 1}}
         style={styles.header}>
@@ -121,7 +122,8 @@ const AccountScreen = ({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#fd7e14', '#0033a0']}
+            // colors={['#fd7e14', '#0033a0']}
+            colors={['#F26522', '#E4571B']}
             tintColor="#fd7e14"
           />
         }>
@@ -132,7 +134,7 @@ const AccountScreen = ({
 
         {/* Main Profile */}
         <LinearGradient
-          colors={['#fd7e14', '#ffb347']}
+          colors={['#F26522', '#E4571B']}
           start={{x: 0, y: 0}}
           end={{x: 0, y: 1}}
           style={styles.mainProfile}>
@@ -249,7 +251,8 @@ const AccountScreen = ({
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
           <LinearGradient
-            colors={['#ffb347', '#fd7e14']}
+            // colors={['#ffb347', '#fd7e14']}
+            colors={['#E4571B', '#F26522']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.navIconContainer}>
@@ -274,7 +277,8 @@ const AccountScreen = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f6f9ff',
+
   },
   centeredContainer: {
     justifyContent: 'center',
@@ -496,7 +500,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   retryButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
@@ -511,7 +515,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   logoutButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 8,

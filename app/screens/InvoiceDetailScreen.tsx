@@ -225,7 +225,8 @@ const InvoiceDetailScreen = ({
 
       {/* Header */}
       <LinearGradient
-        colors={['#ffb347', '#fd7e14']}
+        // colors={['#ffb347', '#fd7e14']}
+        colors={['#E4571B', '#F26522']}
         start={{x: 0, y: 0}}
         end={{x: 0, y: 1}}
         style={styles.header}>
@@ -421,7 +422,8 @@ const InvoiceDetailScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
           <LinearGradient
-            colors={['#ffb347', '#fd7e14']}
+            // colors={['#ffb347', '#fd7e14']}
+            colors={['#E4571B', '#F26522']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.navIconContainer}>
@@ -502,7 +504,7 @@ const InvoiceDetailScreen = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f6f9ff',
   },
   centerContainer: {
     justifyContent: 'center',
@@ -565,7 +567,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
@@ -580,7 +582,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
@@ -781,7 +783,7 @@ const styles = StyleSheet.create({
     color: 'red',
   },
   payButton: {
-    backgroundColor: '#fd7e14',
+    backgroundColor: '#F26522',
     paddingVertical: 15,
     alignItems: 'center',
     borderRadius: 8,

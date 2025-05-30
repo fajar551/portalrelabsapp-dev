@@ -945,12 +945,16 @@ const PaymentInstructionsScreen = ({
       <StatusBar backgroundColor="#00008B" barStyle="light-content" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['#E4571B', '#F26522']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.header}>
         <TouchableOpacity style={styles.backButtonHeader} onPress={handleBack}>
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Instruksi Pembayaran</Text>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}
@@ -1276,7 +1280,8 @@ const PaymentInstructionsScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
           <LinearGradient
-            colors={['#ffb347', '#fd7e14']}
+            colors={['#E4571B', '#F26522']}
+            // colors={['#ffb347', '#fd7e14']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.navIconContainer}>
@@ -1355,7 +1360,7 @@ const PaymentInstructionsScreen = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f6f9ff',
   },
   container: {
     flex: 1,
