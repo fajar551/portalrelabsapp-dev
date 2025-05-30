@@ -634,13 +634,16 @@ const PaymentInstructionsScreen = ({
   // Format instruksi dengan nomor VA
   const formatInstructions = (instructions: string) => {
     if (!instructions) {
-      return 'Tidak ada instruksi tersedia.';
+      return (
+        <Text style={styles.instructionsText}>
+          Tidak ada instruksi tersedia.
+        </Text>
+      );
     }
 
     // Hapus semua tag HTML dari instruksi
     instructions = instructions.replace(/<\/?[^>]+(>|$)/g, '');
 
-    // Jika metode pembayaran adalah Bank Transfer
     if (selectedGateway?.name?.toLowerCase().includes('bca bank transfer')) {
       return (
         <Text style={styles.instructionsText}>
@@ -649,12 +652,11 @@ const PaymentInstructionsScreen = ({
           <Text>Nama Rekening: RELABS NET DAYACIPTA PT{'\n'}</Text>
           {'\n'}
           <Text>Silahkan konfirmasi bukti pembayaran ke{'\n'}</Text>
-          <Text style={{fontWeight: 'bold'}}>0819 9277 1888</Text>
+          <Text style={styles.fwBold}>0819 9277 1888</Text>
         </Text>
       );
     }
 
-    // Jika metode pembayaran adalah ATM Bersama, tampilkan instruksi khusus
     if (
       selectedGateway?.name
         ?.toLowerCase()
@@ -662,10 +664,14 @@ const PaymentInstructionsScreen = ({
         .includes('atmbersama') &&
       virtualAccountNumber
     ) {
-      return 'Silahkan melakukan pembayaran ke ATM Bersama dengan menekan tombol Bayar Sekarang dibawah';
+      return (
+        <Text style={styles.instructionsText}>
+          Silahkan melakukan pembayaran ke ATM Bersama dengan menekan tombol
+          Bayar Sekarang dibawah
+        </Text>
+      );
     }
 
-    // Jika metode pembayaran adalah VA (selain ATM Bersama), tampilkan instruksi dengan nomor VA
     if (
       selectedGateway?.name?.toLowerCase().includes('va') &&
       !selectedGateway?.name
@@ -674,11 +680,18 @@ const PaymentInstructionsScreen = ({
         .includes('atmbersama') &&
       virtualAccountNumber
     ) {
-      return `Silahkan melakukan pembayaran ke nomor Virtual Account Anda berikut:\n\n${virtualAccountNumber}`;
+      return (
+        <Text style={styles.instructionsText}>
+          {`Silahkan melakukan pembayaran ke nomor Virtual Account Anda berikut:\n\n${virtualAccountNumber}`}
+        </Text>
+      );
     }
 
-    // Jika bukan VA atau ATM Bersama, tampilkan instruksi untuk Pay Now
-    return 'Silahkan menekan tombol Pay Now di bawah, untuk melakukan pembayaran';
+    return (
+      <Text style={styles.instructionsText}>
+        Silahkan menekan tombol Pay Now di bawah, untuk melakukan pembayaran
+      </Text>
+    );
   };
 
   // Handle kembali ke halaman Pay
@@ -1036,25 +1049,6 @@ const PaymentInstructionsScreen = ({
                 </TouchableOpacity>
               </View>
             </View>
-
-            {/* Debug logs */}
-            {console.log('Selected Gateway:', selectedGateway?.name)}
-            {console.log(
-              'Selected Gateway Lowercase:',
-              selectedGateway?.name?.toLowerCase(),
-            )}
-            {console.log(
-              'Selected Gateway No Space:',
-              selectedGateway?.name?.toLowerCase().replace(/\s+/g, ''),
-            )}
-            {console.log('Virtual Account Number:', virtualAccountNumber)}
-            {console.log(
-              'Is ATM Bersama:',
-              selectedGateway?.name
-                ?.toLowerCase()
-                .replace(/\s+/g, '')
-                .includes('atmbersama'),
-            )}
 
             {/* Tampilkan VA untuk metode pembayaran VA lainnya */}
             {selectedGateway?.name?.toLowerCase().includes('va') &&
@@ -1431,6 +1425,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+  },
+  fwBold: {
+    fontWeight: 'bold',
   },
   errorContainer: {
     flex: 1,

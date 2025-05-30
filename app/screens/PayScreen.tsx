@@ -1009,7 +1009,7 @@ const styles = StyleSheet.create({
   paymentStatusText: {
     color: '#22325a',
     fontWeight: '500',
-    fontSize: 16,
+    fontSize: 15,
   },
   lastPaymentContainer: {
     // backgroundColor: '#ddd',
