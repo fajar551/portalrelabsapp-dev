@@ -1017,25 +1017,15 @@ const PaymentInstructionsScreen = ({
               {selectedGateway?.name || 'Metode Pembayaran'}
             </Text>
 
+            {/* ID Invoice - tampilkan seperti label dan value, tanpa card khusus */}
             <View style={styles.invoiceDetails}>
-              <Text style={styles.invoiceLabel}>Total Tagihan</Text>
-              <Text style={styles.invoiceAmount}>
-                Rp {totalAmount.toLocaleString('id-ID')}
-              </Text>
-            </View>
-
-            {/* Invoice ID Card */}
-            <View style={styles.invoiceIdCard}>
-              <View style={styles.invoiceIdHeader}>
-                <Icon name="receipt" size={20} color="#666" />
-                <Text style={styles.invoiceIdLabel}>ID Invoice</Text>
-              </View>
-              <View style={styles.invoiceIdContent}>
-                <Text style={styles.invoiceIdValue}>
+              <Text style={styles.invoiceLabel}>ID Invoice</Text>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Text style={styles.invoiceAmount}>
                   {_invoiceData?.id || '-'}
                 </Text>
                 <TouchableOpacity
-                  style={styles.copyButton}
+                  style={[styles.copyButton, {marginLeft: 16}]}
                   onPress={() => {
                     if (_invoiceData?.id) {
                       Clipboard.setString(String(_invoiceData.id));
@@ -1046,6 +1036,35 @@ const PaymentInstructionsScreen = ({
                     }
                   }}>
                   <Icon name="content-copy" size={16} color="#fff" />
+                  <Text style={styles.copyButtonText}> Salin</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Total Tagihan Card - seperti Invoice ID Card, diletakkan di atas */}
+            <View style={styles.invoiceIdCard}>
+              <View style={styles.invoiceIdHeader}>
+                <Icon name="payments" size={20} color="#666" />
+                <Text style={styles.invoiceIdLabel}>Total Tagihan</Text>
+              </View>
+              <View style={styles.invoiceIdContent}>
+                <Text style={styles.invoiceIdValue}>
+                  Rp. {totalAmount.toLocaleString('id-ID')}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.copyButton, {marginLeft: 16}]}
+                  onPress={() => {
+                    const totalStr = `Rp ${totalAmount.toLocaleString(
+                      'id-ID',
+                    )}`;
+                    Clipboard.setString(totalStr);
+                    Alert.alert(
+                      'Berhasil',
+                      'Total tagihan disalin ke clipboard',
+                    );
+                  }}>
+                  <Icon name="content-copy" size={16} color="#fff" />
+                  <Text style={styles.copyButtonText}> Salin</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1061,12 +1080,13 @@ const PaymentInstructionsScreen = ({
                   <Text style={styles.vaLabel}>Nomor Virtual Account</Text>
                   <Text style={styles.vaNumber}>{virtualAccountNumber}</Text>
                   <TouchableOpacity
-                    style={styles.copyButton}
+                    style={[styles.copyButton, styles.copyButtonFullWidth]}
                     onPress={() => {
                       Clipboard.setString(String(virtualAccountNumber));
                       Alert.alert('Berhasil', 'Nomor VA disalin ke clipboard');
                     }}>
-                    <Text style={styles.copyButtonText}>Salin</Text>
+                    <Icon name="content-copy" size={16} color="#fff" />
+                    <Text style={styles.copyButtonText}> Salin</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -1487,7 +1507,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   gatewayName: {
-    fontSize: 18,
+    fontSize: 23,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
@@ -1496,11 +1516,13 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   invoiceLabel: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#666',
+    fontWeight: '500',
+    marginBottom: 8,
   },
   invoiceAmount: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fd7e14',
     marginTop: 5,
@@ -1516,6 +1538,7 @@ const styles = StyleSheet.create({
   vaLabel: {
     fontSize: 14,
     color: '#666',
+    fontWeight: '500',
     marginBottom: 5,
   },
   vaNumber: {
@@ -1525,15 +1548,20 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   copyButton: {
-    alignSelf: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fd7e14',
-    padding: 6,
-    borderRadius: 4,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    minHeight: 15,
+    minWidth: 35,
   },
   copyButtonText: {
     color: 'white',
-    fontSize: 12,
     fontWeight: 'bold',
+    fontSize: 13,
+    marginLeft: 6,
   },
   instructionsCard: {
     backgroundColor: 'white',
@@ -1761,8 +1789,8 @@ const styles = StyleSheet.create({
   invoiceIdLabel: {
     fontSize: 14,
     color: '#666',
-    marginLeft: 8,
     fontWeight: '500',
+    marginLeft: 8,
   },
   invoiceIdContent: {
     flexDirection: 'row',
@@ -1775,10 +1803,15 @@ const styles = StyleSheet.create({
     borderColor: '#dee2e6',
   },
   invoiceIdValue: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 20,
+    color: '#F26522',
     fontWeight: '600',
     letterSpacing: 0.5,
+  },
+  copyButtonFullWidth: {
+    width: '100%',
+    justifyContent: 'center',
+    marginTop: 8,
   },
 });
 
