@@ -45,6 +45,10 @@ const PaymentInstructionsScreen = ({
   const ensureVACreated = useCallback(
     async (invoiceId: string | number, vaType: string) => {
       try {
+        // Khusus untuk Sampoerna VA, gunakan format yang berbeda
+        const paymentMethod =
+          vaType === 'sahabat_sampoerna' ? 'sahabat_sampoerna' : vaType;
+
         // Hit endpoint untuk membuat VA
         const response = await fetch(
           'https://portal.relabs.id/billinginfo/updatepayment',
@@ -53,7 +57,7 @@ const PaymentInstructionsScreen = ({
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
               id: invoiceId,
-              paymentmethod: vaType,
+              paymentmethod: paymentMethod,
             }),
           },
         );
@@ -61,8 +65,62 @@ const PaymentInstructionsScreen = ({
         const data = await response.json();
         console.log('VA Creation Response:', data);
 
-        // Tunggu 2 detik untuk memastikan VA sudah dibuat di server
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Tunggu 3 detik untuk memastikan VA sudah dibuat di server
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // Ambil detail invoice untuk memastikan VA sudah dibuat
+        const invoiceDetails = await getInvoiceById(invoiceId);
+        console.log(
+          'Invoice Details after VA creation:',
+          JSON.stringify(invoiceDetails),
+        );
+
+        // Cek VA di payment_info
+        if (invoiceDetails?.payment_info) {
+          // Khusus untuk Sampoerna VA
+          if (vaType === 'sahabat_sampoerna') {
+            // Cek di available_payment_methods untuk Sampoerna VA
+            if (invoiceDetails.payment_info.available_payment_methods) {
+              const sampoernaMethod =
+                invoiceDetails.payment_info.available_payment_methods.find(
+                  (method: any) => {
+                    const methodGateway = method.gateway?.toLowerCase() || '';
+                    return (
+                      methodGateway.includes('sahabat_sampoerna') ||
+                      methodGateway.includes('sampoerna')
+                    );
+                  },
+                );
+
+              if (sampoernaMethod?.va_number) {
+                setVirtualAccountNumber(sampoernaMethod.va_number);
+                return data;
+              }
+            }
+
+            // Jika tidak ditemukan di available_payment_methods, cek di payment_info utama
+            const vaNumber =
+              invoiceDetails.payment_info.va_number ||
+              invoiceDetails.payment_info.virtual_account_number ||
+              invoiceDetails.payment_info.account_number;
+
+            if (vaNumber) {
+              setVirtualAccountNumber(vaNumber);
+              return data;
+            }
+          } else {
+            // Untuk VA lainnya
+            const vaNumber =
+              invoiceDetails.payment_info.va_number ||
+              invoiceDetails.payment_info.virtual_account_number ||
+              invoiceDetails.payment_info.account_number;
+
+            if (vaNumber) {
+              setVirtualAccountNumber(vaNumber);
+              return data;
+            }
+          }
+        }
 
         return data;
       } catch (err) {
@@ -77,11 +135,26 @@ const PaymentInstructionsScreen = ({
     async (invoiceId: string | number, paymentMethod: string) => {
       try {
         // Pastikan VA dibuat terlebih dahulu
-        await ensureVACreated(invoiceId, paymentMethod);
+        const vaCreationResult = await ensureVACreated(
+          invoiceId,
+          paymentMethod,
+        );
+        console.log('VA Creation Result:', vaCreationResult);
+
+        // Jika VA sudah berhasil dibuat, tidak perlu update payment method lagi
+        if (virtualAccountNumber) {
+          return vaCreationResult;
+        }
+
+        // Khusus untuk Sampoerna VA, gunakan format yang berbeda
+        const finalPaymentMethod =
+          paymentMethod === 'sahabat_sampoerna'
+            ? 'sahabat_sampoerna'
+            : paymentMethod;
 
         const payload = {
           id: invoiceId,
-          paymentmethod: paymentMethod,
+          paymentmethod: finalPaymentMethod,
         };
 
         const response = await fetch(
@@ -107,8 +180,8 @@ const PaymentInstructionsScreen = ({
           data === paymentMethod.toLowerCase() ||
           (typeof data === 'object' && data.result === 'success')
         ) {
-          // Tunggu 2 detik untuk memastikan data sudah diupdate di server
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Tunggu 3 detik untuk memastikan data sudah diupdate di server
+          await new Promise(resolve => setTimeout(resolve, 3000));
 
           // Ambil detail invoice terbaru
           const invoiceDetails = await getInvoiceById(invoiceId);
@@ -119,30 +192,46 @@ const PaymentInstructionsScreen = ({
 
           // Cek VA di payment_info
           if (invoiceDetails?.payment_info) {
-            const vaNumber =
-              invoiceDetails.payment_info.va_number ||
-              invoiceDetails.payment_info.virtual_account_number ||
-              invoiceDetails.payment_info.account_number;
+            // Khusus untuk Sampoerna VA
+            if (paymentMethod === 'sahabat_sampoerna') {
+              // Cek di available_payment_methods untuk Sampoerna VA
+              if (invoiceDetails.payment_info.available_payment_methods) {
+                const sampoernaMethod =
+                  invoiceDetails.payment_info.available_payment_methods.find(
+                    (method: any) => {
+                      const methodGateway = method.gateway?.toLowerCase() || '';
+                      return (
+                        methodGateway.includes('sahabat_sampoerna') ||
+                        methodGateway.includes('sampoerna')
+                      );
+                    },
+                  );
 
-            if (vaNumber) {
-              setVirtualAccountNumber(vaNumber);
-              return data;
-            }
+                if (sampoernaMethod?.va_number) {
+                  setVirtualAccountNumber(sampoernaMethod.va_number);
+                  return data;
+                }
+              }
 
-            // Jika VA belum ada di payment_info, cek di available_payment_methods
-            if (invoiceDetails.payment_info.available_payment_methods) {
-              const matchingMethod =
-                invoiceDetails.payment_info.available_payment_methods.find(
-                  (method: any) => {
-                    const methodGateway = method.gateway?.toLowerCase() || '';
-                    return methodGateway.includes(
-                      paymentMethod.toLowerCase().replace('xendit', ''),
-                    );
-                  },
-                );
+              // Jika tidak ditemukan di available_payment_methods, cek di payment_info utama
+              const vaNumber =
+                invoiceDetails.payment_info.va_number ||
+                invoiceDetails.payment_info.virtual_account_number ||
+                invoiceDetails.payment_info.account_number;
 
-              if (matchingMethod?.va_number) {
-                setVirtualAccountNumber(matchingMethod.va_number);
+              if (vaNumber) {
+                setVirtualAccountNumber(vaNumber);
+                return data;
+              }
+            } else {
+              // Untuk VA lainnya
+              const vaNumber =
+                invoiceDetails.payment_info.va_number ||
+                invoiceDetails.payment_info.virtual_account_number ||
+                invoiceDetails.payment_info.account_number;
+
+              if (vaNumber) {
+                setVirtualAccountNumber(vaNumber);
                 return data;
               }
             }
@@ -155,7 +244,7 @@ const PaymentInstructionsScreen = ({
         throw err;
       }
     },
-    [ensureVACreated],
+    [ensureVACreated, virtualAccountNumber],
   );
 
   const redirectToWebInvoice = useCallback(
@@ -220,88 +309,26 @@ const PaymentInstructionsScreen = ({
               let vaType = '';
 
               // Tentukan VA type berdasarkan gateway yang dipilih
-              if (selectedGatewayName.includes('bca bank transfer')) {
-                // Langsung update payment method ke BCA Bank Transfer
-                try {
-                  console.log(
-                    'Processing BCA Bank Transfer for Invoice ID:',
-                    invoice.id,
-                  );
-                  const updateRes = await updatePaymentMethod(
-                    invoice.id,
-                    'banktransfer',
-                  );
-                  console.log(
-                    'Update Payment Method Response for BCA Bank Transfer (Invoice ID:',
-                    invoice.id,
-                    '):',
-                    updateRes,
-                  );
-
-                  // Set VA number dari response
-                  if (invoiceDetails.payment_info.va_number) {
-                    setVirtualAccountNumber(
-                      invoiceDetails.payment_info.va_number,
-                    );
-                  }
-                } catch (err) {
-                  console.error(
-                    'Error updating BCA Bank Transfer for Invoice ID:',
-                    invoice.id,
-                    err,
-                  );
-                }
+              if (selectedGatewayName.includes('bca')) {
+                vaType = 'bcavaxendit';
               } else if (selectedGatewayName.includes('bni')) {
                 vaType = 'bnivaxendit';
               } else if (selectedGatewayName.includes('sampoerna')) {
-                vaType = 'sampoernavaxendit';
+                vaType = 'sahabat_sampoerna'; // Ubah format untuk Sampoerna
               } else if (selectedGatewayName.includes('bri')) {
                 vaType = 'brivaxendit';
               } else if (selectedGatewayName.includes('mandiri')) {
                 vaType = 'mandirivaxendit';
-              } else if (selectedGatewayName.includes('bca')) {
-                vaType = 'bcavaxendit';
               } else if (selectedGatewayName.includes('cimb')) {
                 vaType = 'cimbvaxendit';
               } else if (selectedGatewayName.includes('permatabank')) {
                 vaType = 'permatabankvaxendit';
-              } else if (
-                selectedGatewayName
-                  .toLowerCase()
-                  .replace(/\s+/g, '')
-                  .includes('atmbersama')
-              ) {
-                vaType = 'atmbersamaxendit';
-                console.log('ATM Bersama detected, vaType set to:', vaType);
-              } else if (
-                selectedGatewayName.toLowerCase().includes('alfamart')
-              ) {
-                vaType = 'alfamartxendit';
-                console.log('Alfamart detected, vaType set to:', vaType);
-              } else if (
-                selectedGatewayName.toLowerCase().includes('cash payment')
-              ) {
-                vaType = 'cashpayment';
-                console.log('Cash Payment detected, vaType set to:', vaType);
-              } else if (
-                selectedGatewayName.toLowerCase().includes('credit card') ||
-                selectedGatewayName.toLowerCase().includes('ccmidtrans') ||
-                selectedGatewayName.toLowerCase().includes('visa') ||
-                selectedGatewayName.toLowerCase().includes('mastercard') ||
-                selectedGatewayName.toLowerCase().includes('jbc') ||
-                selectedGatewayName.toLowerCase().includes('american express')
-              ) {
-                vaType = 'ccmidtrans';
-                console.log('Credit Card detected, vaType set to:', vaType);
               }
 
-              // Jika gateway adalah VA, lakukan POST request ke updatepayment
+              // Jika gateway adalah VA, langsung lakukan update payment method
               if (vaType) {
                 console.log('Processing VA type:', vaType);
                 try {
-                  // Pastikan VA dibuat terlebih dahulu
-                  await ensureVACreated(invoice.id, vaType);
-
                   // Update payment method
                   const methodUpdateRes = await updatePaymentMethod(
                     invoice.id,
@@ -312,8 +339,8 @@ const PaymentInstructionsScreen = ({
                     methodUpdateRes,
                   );
 
-                  // Tunggu 2 detik untuk memastikan VA sudah diupdate di server
-                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  // Tunggu 3 detik untuk memastikan VA sudah diupdate di server
+                  await new Promise(resolve => setTimeout(resolve, 3000));
 
                   // Setelah update berhasil, ambil detail invoice lagi untuk mendapatkan VA yang baru
                   const updatedInvoiceDetails = await getInvoiceById(
@@ -354,11 +381,13 @@ const PaymentInstructionsScreen = ({
                               'against vaType:',
                               vaType,
                             );
-                            // Cek untuk BNI VA khusus
-                            if (vaType.toLowerCase().includes('bni')) {
-                              return methodGateway.includes('bniva');
+                            // Khusus untuk Sampoerna VA
+                            if (vaType === 'sahabat_sampoerna') {
+                              return (
+                                methodGateway.includes('sahabat_sampoerna') ||
+                                methodGateway.includes('sampoerna')
+                              );
                             }
-                            // Cek untuk VA lainnya
                             return methodGateway.includes(
                               vaType.toLowerCase().replace('xendit', ''),
                             );
@@ -404,7 +433,7 @@ const PaymentInstructionsScreen = ({
                         'Nomor VA sedang diproses. Silakan tunggu...',
                       );
 
-                      // Fungsi untuk retry mengambil VA
+                      // Fungsi untuk retry mengambil VA dengan maksimal 3 kali percobaan
                       const retryGetVA = async (retryCount = 0) => {
                         try {
                           // Panggil updatePaymentMethod lagi untuk memastikan VA dibuat
@@ -438,8 +467,13 @@ const PaymentInstructionsScreen = ({
                                 (method: any) => {
                                   const methodGateway =
                                     method.gateway?.toLowerCase() || '';
-                                  if (vaType.toLowerCase().includes('bni')) {
-                                    return methodGateway.includes('bniva');
+                                  // Khusus untuk Sampoerna VA
+                                  if (vaType === 'sahabat_sampoerna') {
+                                    return (
+                                      methodGateway.includes(
+                                        'sahabat_sampoerna',
+                                      ) || methodGateway.includes('sampoerna')
+                                    );
                                   }
                                   return methodGateway.includes(
                                     vaType.toLowerCase().replace('xendit', ''),
@@ -467,121 +501,37 @@ const PaymentInstructionsScreen = ({
                             return;
                           }
 
-                          // Jika masih belum ada VA dan belum mencapai maksimal retry
-                          if (retryCount < 5) {
+                          // Jika masih belum ada VA dan belum mencapai maksimal retry (3 kali)
+                          if (retryCount < 2) {
                             // Tunggu 3 detik sebelum retry berikutnya
                             setTimeout(() => retryGetVA(retryCount + 1), 3000);
                           } else {
-                            // Jika sudah mencapai maksimal retry dan masih belum ada VA
-                            if (vaType.toLowerCase().includes('bni')) {
-                              Alert.alert(
-                                'VA BNI Belum Tersedia',
-                                'Nomor VA BNI belum tersedia. Apakah Anda ingin mencoba metode pembayaran lain atau membuka halaman invoice di website?',
-                                [
-                                  {
-                                    text: 'Tidak',
-                                    style: 'cancel',
-                                    onPress: () => {
-                                      setVirtualAccountNumber(
-                                        'Nomor VA belum tersedia. Silakan coba beberapa saat lagi.',
-                                      );
-                                    },
+                            // Jika sudah mencapai maksimal retry (3 kali) dan masih belum ada VA
+                            Alert.alert(
+                              'VA Belum Tersedia',
+                              'Nomor VA belum tersedia setelah 3 kali percobaan. Apakah Anda ingin membuka halaman invoice di website?',
+                              [
+                                {
+                                  text: 'Tidak',
+                                  style: 'cancel',
+                                  onPress: () => {
+                                    setVirtualAccountNumber(
+                                      'Nomor VA belum tersedia. Silakan coba beberapa saat lagi.',
+                                    );
                                   },
-                                  {
-                                    text: 'Buka di Website',
-                                    onPress: () => {
-                                      redirectToWebInvoice(invoice.id, vaType);
-                                    },
+                                },
+                                {
+                                  text: 'Buka di Website',
+                                  onPress: () => {
+                                    redirectToWebInvoice(invoice.id, vaType);
                                   },
-                                  {
-                                    text: 'Coba Metode Lain',
-                                    onPress: () => {
-                                      // Tampilkan opsi metode pembayaran lain yang tersedia
-                                      const availableMethods =
-                                        retryInvoiceDetails?.payment_info
-                                          ?.available_payment_methods || [];
-                                      if (availableMethods.length > 0) {
-                                        const methodOptions =
-                                          availableMethods.map(
-                                            (method: any) => ({
-                                              text: method.gateway_name,
-                                              onPress: async () => {
-                                                try {
-                                                  const newVaType =
-                                                    method.gateway
-                                                      .toLowerCase()
-                                                      .replace(
-                                                        'conventionalpayment',
-                                                        'xendit',
-                                                      );
-                                                  const switchMethodRes =
-                                                    await updatePaymentMethod(
-                                                      invoice.id,
-                                                      newVaType,
-                                                    );
-                                                  if (switchMethodRes) {
-                                                    setVirtualAccountNumber(
-                                                      method.va_number,
-                                                    );
-                                                    setSelectedGateway({
-                                                      name: method.gateway_name,
-                                                    });
-                                                  }
-                                                } catch (err) {
-                                                  console.error(
-                                                    'Error switching payment method:',
-                                                    err,
-                                                  );
-                                                  Alert.alert(
-                                                    'Error',
-                                                    'Gagal mengubah metode pembayaran',
-                                                  );
-                                                }
-                                              },
-                                            }),
-                                          );
-
-                                        Alert.alert(
-                                          'Pilih Metode Pembayaran',
-                                          'Silakan pilih metode pembayaran lain:',
-                                          methodOptions,
-                                        );
-                                      } else {
-                                        setVirtualAccountNumber(
-                                          'Nomor VA belum tersedia. Silakan coba beberapa saat lagi.',
-                                        );
-                                      }
-                                    },
-                                  },
-                                ],
-                              );
-                            } else {
-                              Alert.alert(
-                                'VA Belum Tersedia',
-                                'Nomor VA belum tersedia. Apakah Anda ingin membuka halaman invoice di website?',
-                                [
-                                  {
-                                    text: 'Tidak',
-                                    style: 'cancel',
-                                    onPress: () => {
-                                      setVirtualAccountNumber(
-                                        'Nomor VA belum tersedia. Silakan coba beberapa saat lagi.',
-                                      );
-                                    },
-                                  },
-                                  {
-                                    text: 'Buka di Website',
-                                    onPress: () => {
-                                      redirectToWebInvoice(invoice.id, vaType);
-                                    },
-                                  },
-                                ],
-                              );
-                            }
+                                },
+                              ],
+                            );
                           }
                         } catch (err) {
                           console.error('Error retrying VA fetch:', err);
-                          if (retryCount < 5) {
+                          if (retryCount < 2) {
                             setTimeout(() => retryGetVA(retryCount + 1), 3000);
                           }
                         }
@@ -597,17 +547,6 @@ const PaymentInstructionsScreen = ({
                     'Gagal memperbarui metode pembayaran. Silakan coba lagi.',
                   );
                 }
-              } else {
-                // Jika bukan VA, gunakan VA number dari invoice details awal
-                const vaNumber =
-                  invoiceDetails.payment_info.va_number ||
-                  invoiceDetails.payment_info.virtual_account_number ||
-                  invoiceDetails.payment_info.account_number ||
-                  '';
-
-                if (vaNumber) {
-                  setVirtualAccountNumber(vaNumber);
-                }
               }
             }
           }
@@ -620,7 +559,7 @@ const PaymentInstructionsScreen = ({
       setIsLoading(false);
       setRefreshing(false);
     }
-  }, [updatePaymentMethod, ensureVACreated, redirectToWebInvoice]);
+  }, [updatePaymentMethod, redirectToWebInvoice]);
 
   useEffect(() => {
     loadData();
@@ -1054,9 +993,7 @@ const PaymentInstructionsScreen = ({
                 <TouchableOpacity
                   style={[styles.copyButton, {marginLeft: 16}]}
                   onPress={() => {
-                    const totalStr = `Rp ${totalAmount.toLocaleString(
-                      'id-ID',
-                    )}`;
+                    const totalStr = totalAmount.toLocaleString('id-ID');
                     Clipboard.setString(totalStr);
                     Alert.alert(
                       'Berhasil',

@@ -320,7 +320,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                   ],
                 },
               ]}>
-              Versi 1.2
+              Versi 1.3
             </Animated.Text>
           </View>
         </View>

@@ -409,12 +409,12 @@ const HomeScreen = ({
             const isRead = readArr.includes(notificationId);
             const isNotTagihan = n.subject && !n.subject.includes('[Tagihan]');
 
-            console.log('Checking notification:', {
-              id: notificationId,
-              isRead,
-              isNotTagihan,
-              subject: n.subject,
-            });
+            // console.log('Checking notification:', {
+            //   id: notificationId,
+            //   isRead,
+            //   isNotTagihan,
+            //   subject: n.subject,
+            // });
 
             return !isRead && isNotTagihan;
           });
