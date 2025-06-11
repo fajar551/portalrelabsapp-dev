@@ -87,7 +87,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
       duration: 1000,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   // Menyimpan atau menghapus kredensial berdasarkan status "Remember Me"
   const saveCredentials = async (

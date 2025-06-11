@@ -829,7 +829,6 @@ const HomeScreen = ({
         ]}>
         <TouchableOpacity style={styles.navItem}>
           <LinearGradient
-            // colors={['#ffb347', '#fd7e14']}
             colors={['#E4571B', '#F26522']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
@@ -845,6 +844,14 @@ const HomeScreen = ({
             <Icon name="receipt" size={24} color="#666" />
           </View>
           <Text style={styles.navText}>Tagihan</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigateTo('Help')}>
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="help" size={24} color="#666" />
+          </View>
+          <Text style={styles.navText}>Bantuan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}

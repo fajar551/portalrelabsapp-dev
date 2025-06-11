@@ -96,30 +96,55 @@ export const isTokenExpired = async (): Promise<boolean> => {
   }
 };
 
+// Fungsi helper untuk retry request
+const retryFetch = async (url: string, options: any, retries = 3, delay = 1000): Promise<Response> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error: any) {
+      if (i === retries - 1) { throw error; }
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('Failed to fetch after retries');
+};
+
 // Fungsi untuk login
 export const loginUser = async (identifier: string, password: string, device_name: string = 'mobile_app') => {
   try {
     console.log('Login dengan API Laravel:', `${CONFIG.API_URL}/mobile/login`);
 
-    // Implementasi login sederhana
-    const response = await fetch(`${CONFIG.API_URL}/mobile/login`, {
+    // Implementasi login dengan timeout dan retry
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.FETCH_TIMEOUT);
+
+    const options = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
       },
       body: JSON.stringify({
         identifier,
         password,
         device_name,
       }),
-    });
+      signal: controller.signal,
+    };
 
-    const data = await response.json();
+    const response = await retryFetch(`${CONFIG.API_URL}/mobile/login`, options);
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(data.message || 'Gagal melakukan login');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
 
     // Jika login berhasil, simpan token dan expires_at di AsyncStorage
     if (data.status === 'success' && data.data?.token) {
@@ -138,8 +163,11 @@ export const loginUser = async (identifier: string, password: string, device_nam
     }
 
     return data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout - koneksi terlalu lama');
+    }
     throw error;
   }
 };
@@ -599,6 +627,123 @@ export const getDomainStatus = async (userid: string) => {
     return data.data;
   } catch (error) {
     console.error('Error fetching domain status:', error);
+    throw error;
+  }
+};
+
+export const openNewTicket = async (
+  departmentId: number,
+  subject: string,
+  message: string,
+  urgency: 'Low' | 'Medium' | 'High',
+  attachment?: { uri: string, name: string, type: string }
+) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) { throw new Error('Token tidak ditemukan'); }
+
+    const formData = new FormData();
+    formData.append('department_id', departmentId.toString());
+    formData.append('subject', subject);
+    formData.append('message', message);
+    formData.append('urgency', urgency);
+
+    if (attachment) {
+      formData.append('attachment', {
+        uri: attachment.uri,
+        name: attachment.name,
+        type: attachment.type,
+      } as any);
+    }
+
+    const response = await fetch(`${CONFIG.API_URL}/mobile/open-ticket`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        // Jangan set Content-Type, biarkan FormData yang handle boundary
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) { throw new Error(data.message || 'Gagal membuat tiket'); }
+
+    return data;
+  } catch (error) {
+    console.error('Error saat membuat tiket:', error);
+    throw error;
+  }
+};
+
+export const getTicketsByUserId = async (userId: number) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) { throw new Error('Token tidak ditemukan'); }
+
+    const response = await fetch(`${CONFIG.API_URL}/mobile/tickets/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) { throw new Error(data.message || 'Gagal mengambil daftar tiket'); }
+
+    return data;
+  } catch (error) {
+    console.error('Error saat mengambil daftar tiket:', error);
+    throw error;
+  }
+};
+
+export const getTicketDetailById = async (ticketId: number) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) throw new Error('Token tidak ditemukan');
+
+    const response = await fetch(`${CONFIG.API_URL}/mobile/ticket-detail/${ticketId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Gagal mengambil detail tiket lengkap');
+
+    return data;
+  } catch (error) {
+    console.error('Error saat mengambil detail tiket lengkap:', error);
+    throw error;
+  }
+};
+
+export const getTicketRepliesByTicketId = async (tid: number | string) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) throw new Error('Token tidak ditemukan');
+
+    const response = await fetch(`${CONFIG.API_URL}/mobile/ticket-replies/${tid}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Gagal mengambil detail tiket dan replies');
+
+    return data;
+  } catch (error) {
+    console.error('Error saat mengambil detail tiket dan replies:', error);
     throw error;
   }
 };

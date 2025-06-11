@@ -32,6 +32,7 @@ import {
   isTokenExpired,
   logoutUser,
 } from './src/services/api';
+import HelpScreen from './app/screens/HelpScreen';
 
 // Type untuk props yang diteruskan ke screens
 interface ScreenProps {
@@ -402,6 +403,8 @@ export default function App() {
               switch (currentScreen) {
                 case 'Home':
                   return <HomeScreen {...screenProps} />;
+                case 'Help':
+                  return <HelpScreen {...screenProps} />;
                 case 'Account':
                   return <AccountScreen {...screenProps} />;
                 case 'Pay':
