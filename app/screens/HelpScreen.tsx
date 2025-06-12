@@ -1,4 +1,5 @@
-import React from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {useEffect, useState} from 'react';
 import {
   Image,
   SafeAreaView,
@@ -12,27 +13,68 @@ import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {getTicketsByUserId} from '../../src/services/api';
 
-const HelpScreen = ({navigateTo}: {navigateTo: (screen: string) => void}) => {
+const HelpScreen = ({
+  navigateTo,
+}: {
+  navigateTo: (screen: string, params?: any) => void;
+}) => {
   const insets = useSafeAreaInsets();
+
+  // State untuk tiket
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loadingTickets, setLoadingTickets] = useState(true);
+  const [errorTickets, setErrorTickets] = useState('');
 
   const departments = [
     {
+      id: '1',
       title: 'Technical Support',
       subtitle: '',
       icon: {name: 'support-agent', type: 'MaterialIcons'},
     },
     {
+      id: '2',
       title: 'Billing Support',
       subtitle: '',
       icon: {name: 'receipt', type: 'MaterialIcons'},
     },
     {
+      id: '3',
       title: 'Finance & Tax',
       subtitle: 'Faktur Pajak & Bukti Potong',
       icon: {name: 'attach-money', type: 'MaterialIcons'},
     },
   ];
+
+  const handleDepartmentPress = (deptId: string) => {
+    navigateTo('OpenTicket', {departmentId: deptId});
+  };
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        const userDataStr = await AsyncStorage.getItem('userData');
+        if (!userDataStr) {
+          setErrorTickets('User belum login');
+          setLoadingTickets(false);
+          return;
+        }
+        const userData = JSON.parse(userDataStr);
+        const userId = userData.id;
+        const data = await getTicketsByUserId(userId);
+        console.log('Response tiket:', data);
+        const arr = Array.isArray(data?.data) ? data.data : [];
+        setTickets(arr);
+      } catch (err: any) {
+        setErrorTickets(err.message || 'Gagal memuat tiket');
+      } finally {
+        setLoadingTickets(false);
+      }
+    };
+    fetchTickets();
+  }, []);
 
   return (
     <SafeAreaView style={styles.root}>
@@ -51,7 +93,7 @@ const HelpScreen = ({navigateTo}: {navigateTo: (screen: string) => void}) => {
         style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}>
         <View style={styles.topCardContainer}>
           <View style={styles.topCard}>
-            <Text style={styles.topCardTitle}>Open New Ticket</Text>
+            <Text style={styles.topCardTitle}>Buat Tiket Baru</Text>
             <View style={styles.illustrationContainer}>
               <Image
                 source={{
@@ -61,39 +103,72 @@ const HelpScreen = ({navigateTo}: {navigateTo: (screen: string) => void}) => {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.topCardSubtitle}>Choose Department</Text>
             <Text style={styles.topCardSubtitle2}>
-              If you can't find a solution to your problems in our
-              knowledgebase, you can submit a ticket by selecting the
-              appropriate department below.
+              Jika Anda tidak dapat menemukan solusi untuk masalah Anda, Anda
+              dapat mengajukan tiket dengan memilih departemen yang sesuai di
+              bawah ini.
             </Text>
           </View>
         </View>
         {/* Department List di luar card */}
         <View style={styles.departmentList}>
+          <Text style={styles.settingTitle}>Pilih Departemen</Text>
           {departments.map((dept, idx) => (
-            <TouchableOpacity key={idx} style={styles.departmentCard}>
-              <View style={styles.departmentIconWrap}>
+            <TouchableOpacity
+              key={idx}
+              style={styles.settingMenuCard}
+              activeOpacity={0.7}
+              onPress={() => handleDepartmentPress(dept.id)}>
+              <View style={styles.settingIconWrap}>
                 {dept.icon.type === 'MaterialIcons' ? (
-                  <Icon name={dept.icon.name} size={24} color="#F26522" />
+                  <Icon name={dept.icon.name} size={26} color="#F26522" />
                 ) : (
-                  <Icon2 name={dept.icon.name} size={24} color="#F26522" />
+                  <Icon2 name={dept.icon.name} size={26} color="#F26522" />
                 )}
               </View>
-              <View style={styles.departmentTextWrap}>
-                <Text style={styles.departmentTitle}>{dept.title}</Text>
+              <View style={styles.settingTextWrap}>
+                <Text style={styles.settingMenuText}>{dept.title}</Text>
                 {!!dept.subtitle && (
-                  <Text style={styles.departmentSubtitle}>{dept.subtitle}</Text>
+                  <Text style={styles.settingMenuSubtitle}>
+                    {dept.subtitle}
+                  </Text>
                 )}
               </View>
               <Icon
                 name="chevron-right"
-                size={22}
+                size={24}
                 color="#F26522"
-                style={styles.chevronIcon}
+                style={styles.settingChevronIcon}
               />
             </TouchableOpacity>
           ))}
+        </View>
+        {/* List Ticket */}
+        <View style={styles.ticketSection}>
+          <Text style={styles.ticketTitle}>Daftar Tiket Anda</Text>
+          {loadingTickets ? (
+            <Text style={styles.ticketLoading}>Memuat tiket...</Text>
+          ) : errorTickets ? (
+            <Text style={styles.ticketError}>{errorTickets}</Text>
+          ) : tickets.length === 0 ? (
+            <View style={styles.ticketCard}>
+              <Text style={styles.ticketEmpty}>Belum ada tiket.</Text>
+            </View>
+          ) : (
+            tickets.map((ticket, idx) => (
+              <View key={idx} style={styles.ticketCard}>
+                <Text style={styles.ticketCardTitle}>
+                  {ticket.title || ticket.subject || 'Tiket'}
+                </Text>
+                <Text style={styles.ticketCardStatus}>
+                  Status: {ticket.status}
+                </Text>
+                <Text style={styles.ticketCardDate}>
+                  Tanggal: {ticket.date || ticket.created_at || '-'}
+                </Text>
+              </View>
+            ))
+          )}
         </View>
         <View style={{height: 100 + insets.bottom}} />
       </ScrollView>
@@ -183,10 +258,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 12,
+    marginBottom: 25,
+    marginTop: 4,
   },
   illustrationContainer: {
     alignItems: 'center',
+    marginBottom: 12,
   },
   illustrationImage: {
     width: 120,
@@ -286,65 +363,121 @@ const styles = StyleSheet.create({
     color: '#F26522',
     fontWeight: 'bold',
   },
-  topCardSubtitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#F26522',
-  },
   topCardSubtitle2: {
     fontSize: 14,
     color: '#22325a',
     fontWeight: '400',
     textAlign: 'justify',
-    marginTop: 15,
+    marginTop: 5,
+    marginBottom: 8,
+    lineHeight: 22,
   },
   departmentList: {
     paddingHorizontal: 16,
     marginTop: 10,
     marginBottom: 10,
   },
-  departmentCard: {
+  settingTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#22325a',
+    marginLeft: 8,
+    marginBottom: 10,
+    marginTop: 5,
+  },
+  settingMenuCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    borderRadius: 22,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 4,
   },
-  departmentIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  settingIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#fff4ec',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 18,
   },
-  departmentTextWrap: {
+  settingTextWrap: {
     flex: 1,
     justifyContent: 'center',
   },
-  departmentTitle: {
-    fontSize: 15,
+  settingMenuText: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#22325a',
     marginBottom: 2,
   },
-  departmentSubtitle: {
+  settingMenuSubtitle: {
     fontSize: 13,
     fontWeight: '500',
     color: '#666',
     marginTop: 2,
   },
-  chevronIcon: {
+  settingChevronIcon: {
     marginLeft: 8,
     alignSelf: 'center',
+  },
+  ticketSection: {
+    marginTop: 24,
+    marginBottom: 24,
+    paddingHorizontal: 18,
+  },
+  ticketTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#22325a',
+    marginBottom: 12,
+  },
+  ticketLoading: {
+    color: '#666',
+    fontStyle: 'italic',
+    marginBottom: 8,
+  },
+  ticketError: {
+    color: 'red',
+    marginBottom: 8,
+  },
+  ticketCard: {
+    backgroundColor: 'white',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  ticketCardTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#22325a',
+    marginBottom: 4,
+  },
+  ticketCardStatus: {
+    fontSize: 13,
+    color: '#F26522',
+    marginBottom: 2,
+  },
+  ticketCardDate: {
+    fontSize: 12,
+    color: '#666',
+  },
+  ticketEmpty: {
+    color: '#666',
+    fontStyle: 'italic',
+    marginBottom: 8,
   },
 });
 

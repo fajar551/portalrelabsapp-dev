@@ -16,10 +16,12 @@ import SessionExpiredModal from './app/components/SessionExpiredModal';
 import AccountScreen from './app/screens/AccountScreen';
 import CashWithdrawalDetailScreen from './app/screens/CashWithdrawalDetailScreen';
 import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
+import HelpScreen from './app/screens/HelpScreen';
 import HomeScreen from './app/screens/HomeScreen';
 import InvoiceDetailScreen from './app/screens/InvoiceDetailScreen';
 import LoginScreen from './app/screens/LoginScreen';
 import NotificationScreen from './app/screens/NotificationScreen';
+import OpenTicketScreen from './app/screens/OpenTicketScreen';
 import PayScreen from './app/screens/PayScreen';
 import PaymentInstructionsScreen from './app/screens/PaymentInstructionsScreen';
 import PaymentSuccessScreen from './app/screens/PaymentSuccessScreen';
@@ -32,7 +34,6 @@ import {
   isTokenExpired,
   logoutUser,
 } from './src/services/api';
-import HelpScreen from './app/screens/HelpScreen';
 
 // Type untuk props yang diteruskan ke screens
 interface ScreenProps {
@@ -107,6 +108,69 @@ const checkAndRequestNotificationPermission = async () => {
       }
     } catch (error) {
       console.log('Error checking/requesting notification permission:', error);
+    }
+  }
+};
+
+const checkAndRequestStoragePermission = async () => {
+  if (Platform.OS === 'android') {
+    try {
+      if (Platform.Version >= 33) {
+        // Android 13+ (API 33+)
+        const permissions = [
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+        ];
+
+        const results = await Promise.all(
+          permissions.map(permission =>
+            PermissionsAndroid.request(permission, {
+              title: 'Izin Akses File',
+              message: 'Aplikasi membutuhkan izin untuk mengakses file',
+              buttonNeutral: 'Tanya Nanti',
+              buttonNegative: 'Tolak',
+              buttonPositive: 'Izinkan',
+            }),
+          ),
+        );
+
+        const allGranted = results.every(
+          result => result === PermissionsAndroid.RESULTS.GRANTED,
+        );
+
+        if (!allGranted) {
+          Alert.alert(
+            'Izin Akses File',
+            'Aplikasi tidak dapat mengakses file tanpa izin. Silakan aktifkan izin di pengaturan.',
+          );
+        }
+      } else {
+        // Android 12 dan di bawahnya
+        const granted = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        );
+        if (!granted) {
+          const result = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            {
+              title: 'Izin Akses File',
+              message: 'Aplikasi membutuhkan izin untuk mengakses file',
+              buttonNeutral: 'Tanya Nanti',
+              buttonNegative: 'Tolak',
+              buttonPositive: 'Izinkan',
+            },
+          );
+          if (result !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert(
+              'Izin Akses File',
+              'Aplikasi tidak dapat mengakses file tanpa izin. Silakan aktifkan izin di pengaturan.',
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Error checking/requesting storage permission:', error);
     }
   }
 };
@@ -335,6 +399,7 @@ export default function App() {
 
   useEffect(() => {
     checkAndRequestNotificationPermission();
+    checkAndRequestStoragePermission();
   }, []);
 
   // Jika splash screen masih ditampilkan
@@ -405,6 +470,8 @@ export default function App() {
                   return <HomeScreen {...screenProps} />;
                 case 'Help':
                   return <HelpScreen {...screenProps} />;
+                case 'OpenTicket':
+                  return <OpenTicketScreen {...screenProps} />;
                 case 'Account':
                   return <AccountScreen {...screenProps} />;
                 case 'Pay':

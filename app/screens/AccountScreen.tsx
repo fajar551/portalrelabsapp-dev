@@ -278,7 +278,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#f6f9ff',
-
   },
   centeredContainer: {
     justifyContent: 'center',

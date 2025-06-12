@@ -7,8 +7,10 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from 'react-native';
 import {getAllClients} from '../../src/services/api';
+import FilePickerManager from 'react-native-file-picker';
 
 interface Client {
   id: number;
@@ -64,6 +66,32 @@ const ClientDropdown = () => {
   const handleSelectClient = (client: Client) => {
     setSelectedClient(client);
     setModalVisible(false);
+  };
+
+  const handlePickAttachment = async () => {
+    try {
+      const res = await FilePickerManager.showFilePicker(
+        { ... },
+        response => {
+          console.log('FilePicker response:', response);
+          if (response.didCancel) {
+            // User cancel
+            return;
+          } else if (response.error) {
+            Alert.alert('Gagal memilih file', String(response.error));
+          } else {
+            setAttachment(response);
+          }
+        }
+      );
+      setAttachment(res);
+    } catch (err) {
+      if (err instanceof Error) {
+        Alert.alert('Gagal memilih file', err.message);
+      } else {
+        Alert.alert('Gagal memilih file', 'Terjadi kesalahan saat memilih file');
+      }
+    }
   };
 
   return (
