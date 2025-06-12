@@ -1,0 +1,339 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {launchImageLibrary} from 'react-native-image-picker';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  getTicketAdminClientByTid,
+  sendTicketReply,
+} from '../../src/services/api';
+
+interface TicketDetailScreenProps {
+  navigateTo: (screen: string, params?: any) => void;
+  route?: {params?: {tid?: string}};
+}
+
+const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
+  const tid = route?.params?.tid;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [ticket, setTicket] = useState<any>(null);
+  const [conversation, setConversation] = useState<any[]>([]);
+  const [replyMsg, setReplyMsg] = useState('');
+  const [sending, setSending] = useState(false);
+  const [attachment, setAttachment] = useState<any>(null);
+  const [userName, setUserName] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const intervalRef = useRef<any>(null);
+
+  const fetchDetail = async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+    setError('');
+    try {
+      if (!tid) {
+        return;
+      }
+      const data = await getTicketAdminClientByTid(tid);
+      setTicket(data.ticket);
+      setConversation(data.conversation || []);
+    } catch (err: any) {
+      setError(err.message || 'Gagal memuat detail tiket');
+    } finally {
+      if (showLoading) {
+        setLoading(false);
+      }
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!tid) {
+      setError('ID tiket tidak ditemukan');
+      setLoading(false);
+      return;
+    }
+    fetchDetail(true);
+
+    // Ambil nama user dari AsyncStorage
+    const fetchUserName = async () => {
+      const userDataStr = await AsyncStorage.getItem('userData');
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        setUserName(userData.name || '');
+      }
+    };
+    fetchUserName();
+
+    // Auto-refresh setiap 1 detik TANPA loading
+    intervalRef.current = setInterval(() => {
+      fetchDetail(false);
+    }, 1000);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [tid]);
+
+  const handleSendReply = async () => {
+    if (!replyMsg.trim()) {
+      return;
+    }
+    setSending(true);
+    try {
+      if (!tid) {
+        return;
+      }
+      await sendTicketReply(tid, replyMsg, userName);
+      const data = await getTicketAdminClientByTid(tid);
+      setReplyMsg('');
+      setConversation(data.conversation || []);
+    } catch (err) {
+      // Tampilkan error jika perlu
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const pickImage = async () => {
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        selectionLimit: 1,
+      },
+      response => {
+        if (response.didCancel) {
+          return;
+        }
+        if (response.errorCode) {
+          return;
+        }
+        if (response.assets && response.assets.length > 0) {
+          setAttachment(response.assets[0]);
+        }
+      },
+    );
+  };
+
+  const renderBubble = (item: any, idx: number) => {
+    const isAdmin = item.is_admin === 1;
+    return (
+      <View
+        key={item.id + '-' + idx}
+        style={[
+          styles.bubbleWrap,
+          isAdmin ? styles.bubbleLeft : styles.bubbleRight,
+        ]}>
+        <View
+          style={[
+            styles.bubble,
+            isAdmin ? styles.bubbleAdmin : styles.bubbleUser,
+          ]}>
+          <Text style={styles.bubbleName}>
+            {item.name || (isAdmin ? 'Admin Relabs' : 'Admin')}
+          </Text>
+          <Text style={styles.bubbleMsg}>{item.message}</Text>
+          <Text style={styles.bubbleDate}>{item.date}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          onPress={() => navigateTo('Help')}
+          style={styles.backBtn}>
+          <Icon name="arrow-back" size={26} color="#22325a" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Detail Tiket</Text>
+        <View style={{width: 34}} />
+      </View>
+      {loading ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#F26522" />
+        </View>
+      ) : error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : (
+        <>
+          <View style={styles.ticketInfoCard}>
+            <Text style={styles.ticketTitle}>{ticket?.title}</Text>
+            <Text style={styles.ticketStatus}>Status: {ticket?.status}</Text>
+            <Text style={styles.ticketDate}>Tanggal: {ticket?.date}</Text>
+            <Text style={styles.ticketUrgency}>Urgency: {ticket?.urgency}</Text>
+          </View>
+          {attachment && (
+            <View
+              style={{
+                alignItems: 'flex-end',
+                marginRight: 16,
+                marginBottom: 4,
+              }}>
+              <Image
+                source={{uri: attachment.uri}}
+                style={{width: 60, height: 60, borderRadius: 8}}
+                resizeMode="cover"
+              />
+            </View>
+          )}
+          <KeyboardAvoidingView
+            style={{flex: 1}}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={80}>
+            <ScrollView
+              style={styles.chatWrap}
+              contentContainerStyle={{paddingBottom: 80}}
+              keyboardShouldPersistTaps="handled"
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={() => {
+                    setRefreshing(true);
+                    fetchDetail(true);
+                  }}
+                  colors={['#F26522']}
+                />
+              }>
+              {conversation.map(renderBubble)}
+            </ScrollView>
+            <View style={styles.replyBar}>
+              <TextInput
+                style={styles.replyInput}
+                placeholder="Tulis balasan..."
+                value={replyMsg}
+                onChangeText={setReplyMsg}
+                editable={!sending}
+                multiline
+              />
+              <TouchableOpacity onPress={pickImage} style={{marginLeft: 8}}>
+                <Icon name="image" size={28} color="#F26522" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSendReply}
+                disabled={sending || !replyMsg.trim()}
+                style={styles.replyButton}>
+                <Text style={{color: '#fff', fontWeight: 'bold'}}>
+                  {sending ? '...' : 'Kirim'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </>
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {flex: 1, backgroundColor: '#f6f9ff'},
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  backBtn: {
+    marginRight: 8,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#22325a',
+    textAlign: 'center',
+  },
+  loadingWrap: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  errorText: {color: 'red', textAlign: 'center', marginTop: 30},
+  ticketInfoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    margin: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  ticketTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#22325a',
+    marginBottom: 4,
+  },
+  ticketStatus: {fontSize: 14, color: '#F26522', marginBottom: 2},
+  ticketDate: {fontSize: 13, color: '#666', marginBottom: 2},
+  ticketUrgency: {fontSize: 13, color: '#666'},
+  chatWrap: {flex: 1, paddingHorizontal: 12},
+  bubbleWrap: {flexDirection: 'row', marginBottom: 12},
+  bubbleLeft: {justifyContent: 'flex-start'},
+  bubbleRight: {justifyContent: 'flex-end'},
+  bubble: {maxWidth: '80%', padding: 12, borderRadius: 14},
+  bubbleUser: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 0,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  bubbleAdmin: {backgroundColor: '#eee', borderTopRightRadius: 0},
+  bubbleName: {
+    fontWeight: 'bold',
+    fontSize: 13,
+    marginBottom: 2,
+    color: '#22325a',
+  },
+  bubbleMsg: {fontSize: 15, color: '#22325a', marginBottom: 4},
+  bubbleDate: {fontSize: 11, color: '#888', textAlign: 'right'},
+  replyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderColor: '#eee',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  replyInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#f6f9ff',
+  },
+  replyButton: {
+    marginLeft: 8,
+    backgroundColor: '#F26522',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 40,
+  },
+});
+
+export default TicketDetailScreen;

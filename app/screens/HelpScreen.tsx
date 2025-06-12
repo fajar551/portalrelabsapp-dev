@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect, useState} from 'react';
 import {
+  ActivityIndicator,
   Image,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -21,11 +23,14 @@ const HelpScreen = ({
   navigateTo: (screen: string, params?: any) => void;
 }) => {
   const insets = useSafeAreaInsets();
+  const scrollViewRef = React.useRef<ScrollView>(null);
 
   // State untuk tiket
   const [tickets, setTickets] = useState<any[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(true);
   const [errorTickets, setErrorTickets] = useState('');
+  const [scrollingToTickets, setScrollingToTickets] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const departments = [
     {
@@ -52,29 +57,45 @@ const HelpScreen = ({
     navigateTo('OpenTicket', {departmentId: deptId});
   };
 
-  useEffect(() => {
-    const fetchTickets = async () => {
-      try {
-        const userDataStr = await AsyncStorage.getItem('userData');
-        if (!userDataStr) {
-          setErrorTickets('User belum login');
-          setLoadingTickets(false);
-          return;
-        }
-        const userData = JSON.parse(userDataStr);
-        const userId = userData.id;
-        const data = await getTicketsByUserId(userId);
-        console.log('Response tiket:', data);
-        const arr = Array.isArray(data?.data) ? data.data : [];
-        setTickets(arr);
-      } catch (err: any) {
-        setErrorTickets(err.message || 'Gagal memuat tiket');
-      } finally {
+  const fetchTickets = async () => {
+    try {
+      setRefreshing(true);
+      setLoadingTickets(true);
+      setErrorTickets('');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      if (!userDataStr) {
+        setErrorTickets('User belum login');
         setLoadingTickets(false);
+        setRefreshing(false);
+        return;
       }
-    };
+      const userData = JSON.parse(userDataStr);
+      const userId = userData.id;
+      const data = await getTicketsByUserId(userId);
+      const arr = Array.isArray(data?.data) ? data.data : [];
+      setTickets(arr);
+    } catch (err: any) {
+      setErrorTickets(err.message || 'Gagal memuat tiket');
+    } finally {
+      setLoadingTickets(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchTickets();
   }, []);
+
+  // Fungsi untuk scroll ke daftar tiket
+  const scrollToTickets = () => {
+    setScrollingToTickets(true);
+    setTimeout(() => {
+      if (scrollViewRef.current) {
+        scrollViewRef.current.scrollTo({y: 600, animated: true});
+      }
+      setTimeout(() => setScrollingToTickets(false), 500); // spinner hilang setelah scroll
+    }, 100);
+  };
 
   return (
     <SafeAreaView style={styles.root}>
@@ -90,7 +111,16 @@ const HelpScreen = ({
       </LinearGradient>
 
       <ScrollView
-        style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}>
+        ref={scrollViewRef}
+        style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={fetchTickets}
+            colors={['#F26522']}
+            tintColor="#F26522"
+          />
+        }>
         <View style={styles.topCardContainer}>
           <View style={styles.topCard}>
             <Text style={styles.topCardTitle}>Buat Tiket Baru</Text>
@@ -110,6 +140,33 @@ const HelpScreen = ({
             </Text>
           </View>
         </View>
+        {/* Tombol Lihat Daftar Ticket Anda */}
+        {(tickets.length > 0 || loadingTickets) && (
+          <TouchableOpacity
+            style={styles.seeTicketsBtn}
+            onPress={scrollToTickets}
+            activeOpacity={0.7}
+            disabled={scrollingToTickets || loadingTickets}>
+            <Text style={styles.seeTicketsText}>
+              {loadingTickets ? 'Loading ...' : 'Lihat Daftar Ticket Anda'}
+            </Text>
+            {loadingTickets ? (
+              <ActivityIndicator
+                size="small"
+                color="#F26522"
+                style={{marginLeft: 6}}
+              />
+            ) : scrollingToTickets ? (
+              <ActivityIndicator
+                size="small"
+                color="#F26522"
+                style={{marginLeft: 6}}
+              />
+            ) : (
+              <Icon name="expand-more" size={22} color="#F26522" />
+            )}
+          </TouchableOpacity>
+        )}
         {/* Department List di luar card */}
         <View style={styles.departmentList}>
           <Text style={styles.settingTitle}>Pilih Departemen</Text>
@@ -147,7 +204,9 @@ const HelpScreen = ({
         <View style={styles.ticketSection}>
           <Text style={styles.ticketTitle}>Daftar Tiket Anda</Text>
           {loadingTickets ? (
-            <Text style={styles.ticketLoading}>Memuat tiket...</Text>
+            <View style={styles.ticketCard}>
+              <Text style={styles.ticketLoading}>Memuat tiket...</Text>
+            </View>
           ) : errorTickets ? (
             <Text style={styles.ticketError}>{errorTickets}</Text>
           ) : tickets.length === 0 ? (
@@ -157,15 +216,31 @@ const HelpScreen = ({
           ) : (
             tickets.map((ticket, idx) => (
               <View key={idx} style={styles.ticketCard}>
-                <Text style={styles.ticketCardTitle}>
-                  {ticket.title || ticket.subject || 'Tiket'}
-                </Text>
-                <Text style={styles.ticketCardStatus}>
-                  Status: {ticket.status}
-                </Text>
-                <Text style={styles.ticketCardDate}>
-                  Tanggal: {ticket.date || ticket.created_at || '-'}
-                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                  <View style={{flex: 1}}>
+                    <Text style={styles.ticketCardTitle}>
+                      {ticket.title || ticket.subject || 'Tiket'}
+                    </Text>
+                    <Text style={styles.ticketCardStatus}>
+                      Status: {ticket.status}
+                    </Text>
+                    <Text style={styles.ticketCardDate}>
+                      Tanggal: {ticket.date || ticket.created_at || '-'}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigateTo('TicketDetail', {tid: ticket.id})
+                    }
+                    style={{padding: 6}}>
+                    <Icon name="chevron-right" size={26} color="#F26522" />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))
           )}
@@ -480,6 +555,28 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
     marginBottom: 8,
+  },
+  seeTicketsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    marginBottom: 10,
+    marginTop: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  seeTicketsText: {
+    color: '#22325a',
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginRight: 6,
   },
 });
 

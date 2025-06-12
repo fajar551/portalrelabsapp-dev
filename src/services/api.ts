@@ -668,7 +668,6 @@ export const openNewTicket = async (
 
     const data = await response.json();
     if (!response.ok) { throw new Error(data.message || 'Gagal membuat tiket'); }
-
     return data;
   } catch (error) {
     console.error('Error saat membuat tiket:', error);
@@ -703,7 +702,7 @@ export const getTicketsByUserId = async (userId: number) => {
 export const getTicketDetailById = async (ticketId: number) => {
   try {
     const token = await SessionManager.getToken();
-    if (!token) throw new Error('Token tidak ditemukan');
+    if (!token) { throw new Error('Token tidak ditemukan'); }
 
     const response = await fetch(`${CONFIG.API_URL}/mobile/ticket-detail/${ticketId}`, {
       method: 'GET',
@@ -715,7 +714,7 @@ export const getTicketDetailById = async (ticketId: number) => {
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Gagal mengambil detail tiket lengkap');
+    if (!response.ok) { throw new Error(data.message || 'Gagal mengambil detail tiket lengkap'); }
 
     return data;
   } catch (error) {
@@ -727,7 +726,7 @@ export const getTicketDetailById = async (ticketId: number) => {
 export const getTicketRepliesByTicketId = async (tid: number | string) => {
   try {
     const token = await SessionManager.getToken();
-    if (!token) throw new Error('Token tidak ditemukan');
+    if (!token) { throw new Error('Token tidak ditemukan'); }
 
     const response = await fetch(`${CONFIG.API_URL}/mobile/ticket-replies/${tid}`, {
       method: 'GET',
@@ -739,11 +738,61 @@ export const getTicketRepliesByTicketId = async (tid: number | string) => {
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Gagal mengambil detail tiket dan replies');
+    if (!response.ok) { throw new Error(data.message || 'Gagal mengambil detail tiket dan replies'); }
 
     return data;
   } catch (error) {
     console.error('Error saat mengambil detail tiket dan replies:', error);
+    throw error;
+  }
+};
+
+export const getTicketAdminClientByTid = async (tid: string | number) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) { throw new Error('Token tidak ditemukan'); }
+
+    const response = await fetch(`${CONFIG.API_URL}/mobile/getTicketAdminClientByTid/${tid}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) { throw new Error(data.message || 'Gagal mengambil detail tiket'); }
+    return data.data;
+  } catch (error) {
+    console.error('Error getTicketAdminClientByTid:', error);
+    throw error;
+  }
+};
+
+export const sendTicketReply = async (tid: number | string, message: string, name: string) => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) { throw new Error('Token tidak ditemukan'); }
+
+    const response = await fetch(`${CONFIG.API_URL}/mobile/ticket-reply`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        tid,
+        message,
+        name,
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) { throw new Error(data.message || 'Gagal mengirim balasan'); }
+    return data;
+  } catch (error) {
+    console.error('Error sendTicketReply:', error);
     throw error;
   }
 };

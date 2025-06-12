@@ -1,10 +1,12 @@
 // import * as DocumentPicker from 'expo-document-picker';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   PermissionsAndroid,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,6 +17,7 @@ import {
 import {launchImageLibrary} from 'react-native-image-picker';
 // import IntentLauncher from 'react-native-intent-launcher';
 // import * as DocumentPicker from 'expo-document-picker';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {openNewTicket} from '../../src/services/api';
 
 interface OpenTicketScreenProps {
@@ -34,6 +37,9 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
   const [urgency, setUrgency] = useState<'Low' | 'Medium' | 'High'>('Low');
   const [attachment, setAttachment] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
 
   useEffect(() => {
     console.log(
@@ -143,7 +149,13 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
           return;
         }
         if (response.assets && response.assets.length > 0) {
-          setAttachment(response.assets[0]);
+          const file = response.assets[0];
+          // CEK UKURAN FILE (dalam byte, 5 MB = 5 * 1024 * 1024)
+          if (file.fileSize && file.fileSize > 5 * 1024 * 1024) {
+            Alert.alert('Ukuran file terlalu besar', 'Maksimal 5 MB');
+            return;
+          }
+          setAttachment(file);
         }
       },
     );
@@ -170,35 +182,93 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
     }
   };
 
+  // Cek apakah perlu tampilkan panah
+  const handleContentSizeChange = (contentWidth: number) => {
+    const windowWidth = Dimensions.get('window').width - 40; // padding
+    setShowRightArrow(contentWidth > windowWidth);
+  };
+
+  const handleScroll = (event: any) => {
+    const {contentOffset, layoutMeasurement, contentSize} = event.nativeEvent;
+    setShowLeftArrow(contentOffset.x > 5);
+    setShowRightArrow(
+      contentOffset.x + layoutMeasurement.width < contentSize.width - 5,
+    );
+  };
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({x: 0, animated: true});
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollToEnd({animated: true});
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Buat Tiket Baru</Text>
+      <View
+        style={{flexDirection: 'row', alignItems: 'center', marginBottom: 18}}>
+        <TouchableOpacity
+          onPress={() => navigateTo('Help')}
+          style={styles.backBtn}>
+          <Icon name="arrow-back" size={26} color="#22325a" />
+        </TouchableOpacity>
+        <View style={{flex: 1, alignItems: 'center'}}>
+          <Text style={styles.title}>Buat Tiket Baru</Text>
+        </View>
+        <View style={{width: 34}} />
+      </View>
       <Text style={styles.label}>Departemen</Text>
-      <View style={styles.selectWrap}>
-        {departments.map(dep => {
-          console.log('Render dep.id:', dep.id, 'departmentId:', departmentId);
-          return (
-            <TouchableOpacity
-              key={dep.id}
-              style={[
-                styles.selectItem,
-                departmentId === dep.id && styles.selectedItem,
-              ]}
-              onPress={() => {
-                console.log('User pilih departemen:', dep.id);
-                setDepartmentId(dep.id);
-              }}>
-              <Text
-                style={
-                  departmentId === dep.id
-                    ? styles.selectedText
-                    : styles.selectText
-                }>
-                {dep.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      <View
+        style={{flexDirection: 'row', alignItems: 'center', marginBottom: 8}}>
+        {showLeftArrow && (
+          <TouchableOpacity onPress={scrollLeft} style={styles.arrowBtn}>
+            <Icon name="chevron-left" size={28} color="#F26522" />
+          </TouchableOpacity>
+        )}
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          onContentSizeChange={handleContentSizeChange}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          style={{flex: 1}}
+          contentContainerStyle={{paddingHorizontal: 4}}>
+          {departments.map(dep => {
+            // console.log('Render dep.id:', dep.id, 'departmentId:', departmentId);
+            return (
+              <TouchableOpacity
+                key={dep.id}
+                style={[
+                  styles.selectItem,
+                  departmentId === dep.id && styles.selectedItem,
+                ]}
+                onPress={() => {
+                  // console.log('User pilih departemen:', dep.id);
+                  setDepartmentId(dep.id);
+                }}>
+                <Text
+                  style={
+                    departmentId === dep.id
+                      ? styles.selectedText
+                      : styles.selectText
+                  }>
+                  {dep.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+        {showRightArrow && (
+          <TouchableOpacity onPress={scrollRight} style={styles.arrowBtn}>
+            <Icon name="chevron-right" size={28} color="#F26522" />
+          </TouchableOpacity>
+        )}
       </View>
       <Text style={styles.label}>Subject</Text>
       <TextInput
@@ -214,6 +284,7 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
         onChangeText={setMessage}
         placeholder="Tulis pesan Anda"
         multiline
+        textAlignVertical="top"
       />
       <Text style={styles.label}>Urgency</Text>
       <View style={styles.selectWrap}>
@@ -238,12 +309,11 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
         <Text style={styles.attachmentBtnText}>
           {attachment
             ? attachment.fileName || attachment.uri
-            : 'Pilih Attachment (Gambar/Video)'}
+            : 'Pilih File (Gambar/Video)'}
         </Text>
       </TouchableOpacity>
       <Text style={{color: 'red', fontSize: 12, marginTop: 4}}>
-        Untuk saat ini hanya gambar/video yang didukung. Jika ingin mengirim
-        file lain (PDF, DOC, dll), silakan email ke support@namaperusahaan.com
+        *Silahkan Pilih Gambar Untuk di Upload (Maksimal 5 MB)
       </Text>
       <TouchableOpacity
         style={styles.submitBtn}
@@ -269,7 +339,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#22325a',
-    marginBottom: 18,
     textAlign: 'center',
   },
   label: {
@@ -338,6 +407,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  arrowBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backBtn: {
+    marginRight: 8,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

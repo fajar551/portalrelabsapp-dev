@@ -27,6 +27,7 @@ import PaymentInstructionsScreen from './app/screens/PaymentInstructionsScreen';
 import PaymentSuccessScreen from './app/screens/PaymentSuccessScreen';
 import ResetPasswordScreen from './app/screens/ResetPasswordScreen';
 import SplashScreen from './app/screens/SplashScreen';
+import TicketDetailScreen from './app/screens/TicketDetailScreen';
 import VerifyCodeScreen from './app/screens/VerifyCodeScreen';
 import {
   checkLoginStatus,
@@ -174,8 +175,6 @@ const checkAndRequestStoragePermission = async () => {
     }
   }
 };
-
-
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -474,11 +473,16 @@ export default function App() {
                   return <HomeScreen {...screenProps} />;
                 case 'Help':
                   return <HelpScreen {...screenProps} />;
-                // case 'OpenTicket':
-                //   return <OpenTicketScreen {...screenProps} />;
                 case 'OpenTicket':
                   return (
                     <OpenTicketScreen
+                      {...screenProps}
+                      route={{params: currentParams}}
+                    />
+                  );
+                case 'TicketDetail':
+                  return (
+                    <TicketDetailScreen
                       {...screenProps}
                       route={{params: currentParams}}
                     />
