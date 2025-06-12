@@ -472,9 +472,11 @@ const styles = StyleSheet.create({
   },
   ticketCardDate: {
     fontSize: 12,
+    fontWeight: '500',
     color: '#666',
   },
   ticketEmpty: {
+    fontWeight: '500',
     color: '#666',
     fontStyle: 'italic',
     marginBottom: 8,

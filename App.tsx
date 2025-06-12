@@ -175,12 +175,15 @@ const checkAndRequestStoragePermission = async () => {
   }
 };
 
+
+
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('Home');
   const [sessionExpired, setSessionExpired] = useState(false);
   const [showSplash, setShowSplash] = useState(true); // State untuk menampilkan splash screen
+  const [currentParams, setCurrentParams] = useState({});
   const [resetPasswordData, setResetPasswordData] = useState<{
     token: string;
     email: string;
@@ -318,6 +321,7 @@ export default function App() {
   const navigateToScreen = (screen: string, params?: any) => {
     console.log('Navigating to:', screen, params);
     setCurrentScreen(screen);
+    setCurrentParams(params || {});
 
     // Jika navigasi ke ForgotPassword, reset email
     if (screen === 'ForgotPassword') {
@@ -470,8 +474,15 @@ export default function App() {
                   return <HomeScreen {...screenProps} />;
                 case 'Help':
                   return <HelpScreen {...screenProps} />;
+                // case 'OpenTicket':
+                //   return <OpenTicketScreen {...screenProps} />;
                 case 'OpenTicket':
-                  return <OpenTicketScreen {...screenProps} />;
+                  return (
+                    <OpenTicketScreen
+                      {...screenProps}
+                      route={{params: currentParams}}
+                    />
+                  );
                 case 'Account':
                   return <AccountScreen {...screenProps} />;
                 case 'Pay':

@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 // import {check, PERMISSIONS, request, RESULTS} from 'react-native-permissions';
 import {launchImageLibrary} from 'react-native-image-picker';
+// import IntentLauncher from 'react-native-intent-launcher';
+// import * as DocumentPicker from 'expo-document-picker';
 import {openNewTicket} from '../../src/services/api';
 
 interface OpenTicketScreenProps {
@@ -21,7 +23,12 @@ interface OpenTicketScreenProps {
 }
 
 const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
-  const [departmentId, setDepartmentId] = useState<number>(1);
+  console.log('--- Render OpenTicketScreen ---');
+  console.log('route?.params:', route?.params);
+  const [departmentId, setDepartmentId] = useState<number>(
+    route?.params?.departmentId ? Number(route.params.departmentId) : 1,
+  );
+  console.log('departmentId state:', departmentId);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [urgency, setUrgency] = useState<'Low' | 'Medium' | 'High'>('Low');
@@ -29,13 +36,16 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    console.log(
+      'useEffect jalan, route?.params?.departmentId:',
+      route?.params?.departmentId,
+    );
     if (route?.params?.departmentId) {
-      const deptMap: {[key: string]: number} = {
-        technical: 1,
-        billing: 2,
-        finance: 3,
-      };
-      setDepartmentId(deptMap[route.params.departmentId] || 1);
+      setDepartmentId(Number(route.params.departmentId));
+      console.log(
+        'Set departmentId dari param:',
+        Number(route.params.departmentId),
+      );
     }
   }, [route?.params?.departmentId]);
 
@@ -113,7 +123,7 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
     return true;
   };
 
-  const pickFileOrImage = async () => {
+  const pickImage = async () => {
     const hasPermission = await requestGalleryPermission();
     if (!hasPermission) {
       Alert.alert('Izin galeri ditolak');
@@ -165,24 +175,30 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
       <Text style={styles.title}>Buat Tiket Baru</Text>
       <Text style={styles.label}>Departemen</Text>
       <View style={styles.selectWrap}>
-        {departments.map(dep => (
-          <TouchableOpacity
-            key={dep.id}
-            style={[
-              styles.selectItem,
-              departmentId === dep.id && styles.selectedItem,
-            ]}
-            onPress={() => setDepartmentId(dep.id)}>
-            <Text
-              style={
-                departmentId === dep.id
-                  ? styles.selectedText
-                  : styles.selectText
-              }>
-              {dep.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {departments.map(dep => {
+          console.log('Render dep.id:', dep.id, 'departmentId:', departmentId);
+          return (
+            <TouchableOpacity
+              key={dep.id}
+              style={[
+                styles.selectItem,
+                departmentId === dep.id && styles.selectedItem,
+              ]}
+              onPress={() => {
+                console.log('User pilih departemen:', dep.id);
+                setDepartmentId(dep.id);
+              }}>
+              <Text
+                style={
+                  departmentId === dep.id
+                    ? styles.selectedText
+                    : styles.selectText
+                }>
+                {dep.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
       <Text style={styles.label}>Subject</Text>
       <TextInput
@@ -218,12 +234,17 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
           </TouchableOpacity>
         ))}
       </View>
-      {/* <TouchableOpacity style={styles.attachmentBtn} onPress={pickFile}> */}
-      <TouchableOpacity style={styles.attachmentBtn} onPress={pickFileOrImage}>
+      <TouchableOpacity style={styles.attachmentBtn} onPress={pickImage}>
         <Text style={styles.attachmentBtnText}>
-          {attachment ? attachment.name : 'Pilih Attachment (Gambar/File)'}
+          {attachment
+            ? attachment.fileName || attachment.uri
+            : 'Pilih Attachment (Gambar/Video)'}
         </Text>
       </TouchableOpacity>
+      <Text style={{color: 'red', fontSize: 12, marginTop: 4}}>
+        Untuk saat ini hanya gambar/video yang didukung. Jika ingin mengirim
+        file lain (PDF, DOC, dll), silakan email ke support@namaperusahaan.com
+      </Text>
       <TouchableOpacity
         style={styles.submitBtn}
         onPress={handleSubmit}
