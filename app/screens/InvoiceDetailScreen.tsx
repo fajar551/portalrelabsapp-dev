@@ -433,6 +433,14 @@ const InvoiceDetailScreen = ({
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
+          onPress={() => navigateTo('Help')}>
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="help" size={24} color="#666" />
+          </View>
+          <Text style={styles.navText}>Bantuan</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.navItem}
           onPress={() => navigateTo('Account')}>
           <View style={styles.navIconContainerInactive}>
             <Icon2 name="person" size={24} color="#666" />
@@ -478,9 +486,6 @@ const InvoiceDetailScreen = ({
                       onPress={() => handlePaymentMethodSelect(item)}>
                       <View style={styles.gatewayInfo}>
                         <Text style={styles.gatewayName}>{item.name}</Text>
-                        <Text style={styles.gatewayDescription}>
-                          {item.description}
-                        </Text>
                       </View>
                       <Text style={styles.arrowIcon}>›</Text>
                     </TouchableOpacity>
@@ -879,9 +884,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 10,
+    padding: 5,
     marginBottom: 10,
+    borderRadius: 10,
   },
   gatewayInfo: {
     flex: 1,
@@ -891,11 +896,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
+    padding: 5,
+    // marginTop: 5,
   },
-  gatewayDescription: {
-    fontSize: 14,
-    color: '#666',
-  },
+  // gatewayDescription: {
+  //   fontSize: 14,
+  //   color: '#666',
+  // },
   modalCloseButton: {
     padding: 5,
   },

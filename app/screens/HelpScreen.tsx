@@ -36,13 +36,13 @@ const HelpScreen = ({
     {
       id: '1',
       title: 'Technical Support',
-      subtitle: '',
+      subtitle: 'Bantuan untuk permasalahan teknis',
       icon: {name: 'support-agent', type: 'MaterialIcons'},
     },
     {
       id: '2',
       title: 'Billing Support',
-      subtitle: '',
+      subtitle: 'Bantuan untuk permasalahan billing',
       icon: {name: 'receipt', type: 'MaterialIcons'},
     },
     {
@@ -57,9 +57,11 @@ const HelpScreen = ({
     navigateTo('OpenTicket', {departmentId: deptId});
   };
 
-  const fetchTickets = async () => {
+  const fetchTickets = async (isPullRefresh = false) => {
     try {
-      setRefreshing(true);
+      if (isPullRefresh) {
+        setRefreshing(true);
+      }
       setLoadingTickets(true);
       setErrorTickets('');
       const userDataStr = await AsyncStorage.getItem('userData');
@@ -83,7 +85,7 @@ const HelpScreen = ({
   };
 
   useEffect(() => {
-    fetchTickets();
+    fetchTickets(false);
   }, []);
 
   // Fungsi untuk scroll ke daftar tiket
@@ -116,7 +118,7 @@ const HelpScreen = ({
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={fetchTickets}
+            onRefresh={() => fetchTickets(true)}
             colors={['#F26522']}
             tintColor="#F26522"
           />
@@ -234,9 +236,7 @@ const HelpScreen = ({
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() =>
-                      navigateTo('TicketDetail', {tid: ticket.id})
-                    }
+                    onPress={() => navigateTo('TicketDetail', {tid: ticket.id})}
                     style={{padding: 6}}>
                     <Icon name="chevron-right" size={26} color="#F26522" />
                   </TouchableOpacity>

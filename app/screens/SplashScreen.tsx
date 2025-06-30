@@ -121,7 +121,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({onAnimationComplete}) => {
             ],
           },
         ]}>
-        Versi 1.3
+        Versi 1.4
       </Animated.Text>
 
       {/* Animated circles decoration */}

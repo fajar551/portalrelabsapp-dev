@@ -93,16 +93,16 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.title}>Recover my password</Text>
+            <Text style={styles.title}>Mengubah Password</Text>
             <Text style={styles.subtitle}>
-              Please enter your email address below to receive instructions for
-              resetting password.
+              Silahkan masukkan email Anda untuk menerima instruksi untuk
+              mereset password.
             </Text>
 
             <Text style={styles.label}>Email Address</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your email"
+              placeholder="Masukkan email Anda"
               placeholderTextColor="#b0c4de"
               keyboardType="email-address"
               autoCapitalize="none"

@@ -582,6 +582,14 @@ const PayScreen = ({
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
+          onPress={() => navigateTo('Help')}>
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="help" size={24} color="#666" />
+          </View>
+          <Text style={styles.navText}>Bantuan</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.navItem}
           onPress={() => navigateTo('Account')}>
           <View style={styles.navIconContainerInactive}>
             <Icon2 name="person" size={24} color="#666" />

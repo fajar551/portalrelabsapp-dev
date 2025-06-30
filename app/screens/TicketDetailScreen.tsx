@@ -5,7 +5,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import {launchImageLibrary} from 'react-native-image-picker';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
   getTicketAdminClientByTid,
@@ -35,7 +35,6 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
   const [sending, setSending] = useState(false);
   const [attachment, setAttachment] = useState<any>(null);
   const [userName, setUserName] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
   const intervalRef = useRef<any>(null);
 
   const fetchDetail = async (showLoading = true) => {
@@ -56,7 +55,6 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
       if (showLoading) {
         setLoading(false);
       }
-      setRefreshing(false);
     }
   };
 
@@ -155,7 +153,7 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient colors={['#e0e7ff', '#fff']} style={styles.container}>
       <View style={styles.headerRow}>
         <TouchableOpacity
           onPress={() => navigateTo('Help')}
@@ -168,17 +166,28 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
       {loading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color="#F26522" />
+          <Text style={styles.loadingText}>Memuat Detail Tiket</Text>
         </View>
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : (
         <>
-          <View style={styles.ticketInfoCard}>
-            <Text style={styles.ticketTitle}>{ticket?.title}</Text>
+          <LinearGradient
+            colors={['#e0e7ff', '#fff']}
+            style={styles.ticketInfoCard}>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Icon
+                name="info"
+                size={24}
+                color="#4F8EF7"
+                style={{marginRight: 8}}
+              />
+              <Text style={styles.ticketTitle}>{ticket?.title}</Text>
+            </View>
             <Text style={styles.ticketStatus}>Status: {ticket?.status}</Text>
             <Text style={styles.ticketDate}>Tanggal: {ticket?.date}</Text>
             <Text style={styles.ticketUrgency}>Urgency: {ticket?.urgency}</Text>
-          </View>
+          </LinearGradient>
           {attachment && (
             <View
               style={{
@@ -188,7 +197,13 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
               }}>
               <Image
                 source={{uri: attachment.uri}}
-                style={{width: 60, height: 60, borderRadius: 8}}
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 8,
+                  borderWidth: 2,
+                  borderColor: '#F26522',
+                }}
                 resizeMode="cover"
               />
             </View>
@@ -200,17 +215,7 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
             <ScrollView
               style={styles.chatWrap}
               contentContainerStyle={{paddingBottom: 80}}
-              keyboardShouldPersistTaps="handled"
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={() => {
-                    setRefreshing(true);
-                    fetchDetail(true);
-                  }}
-                  colors={['#F26522']}
-                />
-              }>
+              keyboardShouldPersistTaps="handled">
               {conversation.map(renderBubble)}
             </ScrollView>
             <View style={styles.replyBar}>
@@ -222,27 +227,25 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
                 editable={!sending}
                 multiline
               />
-              <TouchableOpacity onPress={pickImage} style={{marginLeft: 8}}>
-                <Icon name="image" size={28} color="#F26522" />
+              <TouchableOpacity onPress={pickImage} style={styles.imageBtn}>
+                <Icon name="image" size={32} color="#F26522" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSendReply}
                 disabled={sending || !replyMsg.trim()}
                 style={styles.replyButton}>
-                <Text style={{color: '#fff', fontWeight: 'bold'}}>
-                  {sending ? '...' : 'Kirim'}
-                </Text>
+                <Icon name="send" size={22} color="#fff" />
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
         </>
       )}
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#f6f9ff'},
+  container: {flex: 1},
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -264,47 +267,75 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loadingWrap: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#22325a',
+    fontWeight: '500',
+  },
   errorText: {color: 'red', textAlign: 'center', marginTop: 30},
   ticketInfoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 20,
     margin: 16,
-    padding: 16,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  ticketTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#22325a',
+    marginBottom: 4,
+  },
+  ticketStatus: {
+    fontSize: 14,
+    color: '#F26522',
+    marginBottom: 2,
+    fontWeight: 'bold',
+  },
+  ticketDate: {fontSize: 13, color: '#666', fontWeight: '500', marginBottom: 2},
+  ticketUrgency: {fontSize: 13, color: '#666', fontWeight: '500'},
+  chatWrap: {flex: 1, paddingHorizontal: 12},
+  bubbleWrap: {flexDirection: 'row', marginBottom: 16},
+  bubbleLeft: {justifyContent: 'flex-start'},
+  bubbleRight: {justifyContent: 'flex-end'},
+  bubble: {
+    maxWidth: '80%',
+    padding: 14,
+    borderRadius: 18,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
   },
-  ticketTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#22325a',
-    marginBottom: 4,
-  },
-  ticketStatus: {fontSize: 14, color: '#F26522', marginBottom: 2},
-  ticketDate: {fontSize: 13, color: '#666', marginBottom: 2},
-  ticketUrgency: {fontSize: 13, color: '#666'},
-  chatWrap: {flex: 1, paddingHorizontal: 12},
-  bubbleWrap: {flexDirection: 'row', marginBottom: 12},
-  bubbleLeft: {justifyContent: 'flex-start'},
-  bubbleRight: {justifyContent: 'flex-end'},
-  bubble: {maxWidth: '80%', padding: 12, borderRadius: 14},
   bubbleUser: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 0,
     borderWidth: 1,
     borderColor: '#eee',
   },
-  bubbleAdmin: {backgroundColor: '#eee', borderTopRightRadius: 0},
+  bubbleAdmin: {
+    backgroundColor: '#f5f3f2',
+    borderTopRightRadius: 0,
+    borderWidth: 0,
+  },
   bubbleName: {
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 2,
-    color: '#22325a',
+    color: '#F26522',
   },
   bubbleMsg: {fontSize: 15, color: '#22325a', marginBottom: 4},
-  bubbleDate: {fontSize: 11, color: '#888', textAlign: 'right'},
+  bubbleDate: {
+    fontSize: 11,
+    color: '#666',
+    fontWeight: '500',
+    textAlign: 'right',
+  },
   replyBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -316,23 +347,51 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   replyInput: {
     flex: 1,
     borderWidth: 1,
     borderColor: '#eee',
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    borderRadius: 12,
+    paddingHorizontal: 12,
     backgroundColor: '#f6f9ff',
+    fontSize: 15,
+    minHeight: 40,
+    maxHeight: 120,
+  },
+  imageBtn: {
+    marginLeft: 8,
+    backgroundColor: '#f6f9ff',
+    borderRadius: 8,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
   },
   replyButton: {
     marginLeft: 8,
     backgroundColor: '#F26522',
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
     justifyContent: 'center',
     alignItems: 'center',
     height: 40,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
 

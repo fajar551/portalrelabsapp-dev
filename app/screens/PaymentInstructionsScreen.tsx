@@ -1293,7 +1293,15 @@ const PaymentInstructionsScreen = ({
             style={styles.navIconContainer}>
             <Icon name="receipt" size={24} color="#fff" />
           </LinearGradient>
-          <Text style={[styles.navText, styles.activeNavText]}>Pay</Text>
+          <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigateTo('Help')}>
+          <View style={styles.navIconContainerInactive}>
+            <Icon name="help" size={24} color="#666" />
+          </View>
+          <Text style={styles.navText}>Bantuan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -1301,7 +1309,7 @@ const PaymentInstructionsScreen = ({
           <View style={styles.navIconContainerInactive}>
             <Icon2 name="person" size={24} color="#666" />
           </View>
-          <Text style={styles.navText}>Account</Text>
+          <Text style={styles.navText}>Akun</Text>
         </TouchableOpacity>
       </View>
 

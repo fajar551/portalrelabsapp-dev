@@ -276,6 +276,7 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
         value={subject}
         onChangeText={setSubject}
         placeholder="Masukkan subject"
+        placeholderTextColor="#dedbd5"
       />
       <Text style={styles.label}>Pesan</Text>
       <TextInput
@@ -283,6 +284,7 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
         value={message}
         onChangeText={setMessage}
         placeholder="Tulis pesan Anda"
+        placeholderTextColor="#dedbd5"
         multiline
         textAlignVertical="top"
       />
@@ -354,6 +356,9 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 14,
     marginBottom: 6,
+    color: '#666',
+    // color: '#b0c4de',
+    fontWeight: '500',
     borderWidth: 1,
     borderColor: '#eee',
   },
