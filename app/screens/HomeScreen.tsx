@@ -30,10 +30,21 @@ import {
 } from '../../src/services/api';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 
-// Mendapatkan lebar layar untuk kalkulasi
+// --- DEKLARASI KONSTANTA DI PALING ATAS ---
 const {width} = Dimensions.get('window');
+const BANNER_MARGIN = 10;
+const BANNER_WIDTH = width - 1.16 * BANNER_MARGIN;
 const MENU_ITEM_WIDTH = 100; // Lebar setiap menu item
 // const PEEK_WIDTH = 35; // Lebar ikon yang terlihat sebagian (peek)
+
+// Tambahkan di luar StyleSheet, sebelum komponen HomeScreen
+function getBannerItemStyle(index: number, total: number) {
+  return [
+    styles.bannerItem,
+    index === 0 ? {marginLeft: BANNER_MARGIN} : null,
+    index === total - 1 ? {marginRight: BANNER_MARGIN} : {marginRight: 8},
+  ];
+}
 
 const HomeScreen = ({
   navigateTo,
@@ -438,9 +449,6 @@ const HomeScreen = ({
     onLogout();
   };
 
-  const BANNER_MARGIN = 10;
-  const BANNER_WIDTH = width - 1.16 * BANNER_MARGIN;
-
   // Jika terjadi error, tampilkan pesan dan tombol retry
   if (error) {
     // Cek apakah error terkait dengan token atau autentikasi
@@ -577,13 +585,7 @@ const HomeScreen = ({
           </View>
 
           {/* Promo Carousel */}
-          <View
-            style={{
-              width: width,
-              height: 180,
-              overflow: 'hidden',
-              alignSelf: 'center',
-            }}>
+          <View style={styles.bannerContainer}>
             <ScrollView
               ref={scrollViewRef}
               horizontal
@@ -602,17 +604,11 @@ const HomeScreen = ({
               removeClippedSubviews={false}>
               {visibleBanners.map((promo, index) => (
                 <View
-                  key={index}
-                  style={{
-                    width: BANNER_WIDTH,
-                    height: 180,
-                    marginLeft: index === 0 ? BANNER_MARGIN : 0,
-                    marginRight:
-                      index === visibleBanners.length - 1 ? BANNER_MARGIN : 8, // 8 agar antar banner tidak terlalu rapat, bisa 0 jika ingin rapat
-                  }}>
+                  style={getBannerItemStyle(index, visibleBanners.length)}
+                  key={index}>
                   <Image
                     source={{uri: promo.imageUrl}}
-                    style={{width: '100%', height: '100%', borderRadius: 15}}
+                    style={styles.bannerImage}
                     resizeMode="cover"
                     onError={() => handleImageError(index)}
                   />
@@ -620,41 +616,6 @@ const HomeScreen = ({
               ))}
             </ScrollView>
           </View>
-
-          {/* <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            onScroll={handlePromoScroll}
-            scrollEventThrottle={16}
-            decelerationRate={0.9}
-            snapToInterval={width - 40}
-            snapToAlignment="start"
-            contentOffset={{x: 0, y: 0}}
-            contentContainerStyle={styles.promoScrollContent}>
-            {promoItems.map((promo, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.promoCard2,
-                  index > 0 ? styles.promoCardMargin : undefined,
-                ]}>
-                <View style={styles.promoLogoContainer}>
-                  <Image
-                    source={require('../assets/guarantee.webp')}
-                    style={styles.promoLogo}
-                    resizeMode="contain"
-                  />
-                </View>
-                <View style={styles.promoContent}>
-                  <Text style={styles.promoTitle}>{promo.title}</Text>
-                  <Text style={styles.promoSubtitle}>{promo.subtitle}</Text>
-                  <View style={styles.voucherTag}>
-                    <Text style={styles.voucherText}>{promo.tag}</Text>
-                  </View>
-                </View>
-              </View>
-            ))}
-          </ScrollView> */}
 
           {/* Carousel Indicators */}
           <View style={styles.carouselIndicator}>
@@ -817,7 +778,7 @@ const HomeScreen = ({
         )}
 
         {/* Spacer agar tombol tidak tertutup bottom nav */}
-        <View style={{height: 100 + insets.bottom}} />
+        <View style={[styles.spacerBottom, {height: 100 + insets.bottom}]} />
       </ScrollView>
 
       {/* Bottom Navigation */}
@@ -1520,6 +1481,24 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  bannerContainer: {
+    width: width,
+    height: 180,
+    overflow: 'hidden',
+    alignSelf: 'center',
+  },
+  bannerItem: {
+    width: BANNER_WIDTH,
+    height: 180,
+  },
+  bannerImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 15,
+  },
+  spacerBottom: {
+    // height akan di-set dinamis di JSX
   },
 });
 
