@@ -42,6 +42,49 @@ const PaymentInstructionsScreen = ({
   const [modalMessage, setModalMessage] = useState('');
   const [modalType, setModalType] = useState<'va' | 'bank' | 'other'>('other');
 
+  // Helper functions untuk style dinamis
+  const getScrollViewStyle = () => {
+    return [styles.scrollView, {paddingBottom: 80 + insets.bottom}];
+  };
+
+  const getInvoiceRowStyle = () => {
+    return {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+    };
+  };
+
+  const getCopyButtonWithMarginStyle = () => {
+    return [styles.copyButton, {marginLeft: 16}];
+  };
+
+  const getSpacerStyle = () => {
+    return {height: 100 + insets.bottom};
+  };
+
+  const getBottomNavStyle = () => {
+    return [
+      styles.bottomNav,
+      styles.bottomNavFixed,
+      {paddingBottom: insets.bottom},
+    ];
+  };
+
+  const getActiveNavTextStyle = () => {
+    return [styles.navText, styles.activeNavText];
+  };
+
+  const getModalButtonStyle = (isCancel: boolean) => {
+    return [
+      styles.modalButton,
+      isCancel ? styles.modalButtonCancel : styles.modalButtonConfirm,
+    ];
+  };
+
+  const getCopyButtonFullWidthStyle = () => {
+    return [styles.copyButton, styles.copyButtonFullWidth];
+  };
+
   const ensureVACreated = useCallback(
     async (invoiceId: string | number, vaType: string) => {
       try {
@@ -940,7 +983,7 @@ const PaymentInstructionsScreen = ({
       </LinearGradient>
 
       <ScrollView
-        style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}
+        style={getScrollViewStyle()}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -959,12 +1002,12 @@ const PaymentInstructionsScreen = ({
             {/* ID Invoice - tampilkan seperti label dan value, tanpa card khusus */}
             <View style={styles.invoiceDetails}>
               <Text style={styles.invoiceLabel}>ID Invoice</Text>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={getInvoiceRowStyle()}>
                 <Text style={styles.invoiceAmount}>
                   {_invoiceData?.id || '-'}
                 </Text>
                 <TouchableOpacity
-                  style={[styles.copyButton, {marginLeft: 16}]}
+                  style={getCopyButtonWithMarginStyle()}
                   onPress={() => {
                     if (_invoiceData?.id) {
                       Clipboard.setString(String(_invoiceData.id));
@@ -991,7 +1034,7 @@ const PaymentInstructionsScreen = ({
                   Rp. {totalAmount.toLocaleString('id-ID')}
                 </Text>
                 <TouchableOpacity
-                  style={[styles.copyButton, {marginLeft: 16}]}
+                  style={getCopyButtonWithMarginStyle()}
                   onPress={() => {
                     const totalStr = totalAmount.toLocaleString('id-ID');
                     Clipboard.setString(totalStr);
@@ -1017,7 +1060,7 @@ const PaymentInstructionsScreen = ({
                   <Text style={styles.vaLabel}>Nomor Virtual Account</Text>
                   <Text style={styles.vaNumber}>{virtualAccountNumber}</Text>
                   <TouchableOpacity
-                    style={[styles.copyButton, styles.copyButtonFullWidth]}
+                    style={getCopyButtonFullWidthStyle()}
                     onPress={() => {
                       Clipboard.setString(String(virtualAccountNumber));
                       Alert.alert('Berhasil', 'Nomor VA disalin ke clipboard');
@@ -1264,16 +1307,11 @@ const PaymentInstructionsScreen = ({
               </TouchableOpacity>
             ) : null)}
         </View>
-        <View style={{height: 100 + insets.bottom}} />
+        <View style={getSpacerStyle()} />
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View
-        style={[
-          styles.bottomNav,
-          styles.bottomNavFixed,
-          {paddingBottom: insets.bottom},
-        ]}>
+      <View style={getBottomNavStyle()}>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
@@ -1293,7 +1331,7 @@ const PaymentInstructionsScreen = ({
             style={styles.navIconContainer}>
             <Icon name="receipt" size={24} color="#fff" />
           </LinearGradient>
-          <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
+          <Text style={getActiveNavTextStyle()}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -1346,19 +1384,19 @@ const PaymentInstructionsScreen = ({
               {modalType === 'other' ? (
                 <>
                   <TouchableOpacity
-                    style={[styles.modalButton, styles.modalButtonCancel]}
+                    style={getModalButtonStyle(true)}
                     onPress={handleModalCancel}>
                     <Text style={styles.modalButtonTextCancel}>Belum</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.modalButton, styles.modalButtonConfirm]}
+                    style={getModalButtonStyle(false)}
                     onPress={handleModalClose}>
                     <Text style={styles.modalButtonText}>Sudah</Text>
                   </TouchableOpacity>
                 </>
               ) : (
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  style={getModalButtonStyle(false)}
                   onPress={handleModalClose}>
                   <Text style={styles.modalButtonText}>OK</Text>
                 </TouchableOpacity>

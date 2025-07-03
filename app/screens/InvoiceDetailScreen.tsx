@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,7 +15,7 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
@@ -41,6 +41,67 @@ const InvoiceDetailScreen = ({
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [isGatewaysLoading, setIsGatewaysLoading] = useState(false);
   const insets = useSafeAreaInsets();
+
+  // Helper function untuk style dinamis
+  const getScrollViewStyle = () => {
+    return [styles.scrollView, {paddingBottom: 80 + insets.bottom}];
+  };
+
+  const getBottomNavStyle = () => {
+    return [
+      styles.bottomNav,
+      {
+        paddingBottom: insets.bottom,
+        position: 'absolute' as const,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1000,
+      },
+    ];
+  };
+
+  const getInvoiceTabStyle = (invoiceId: number) => {
+    return [
+      styles.invoiceTab,
+      selectedInvoiceId === invoiceId && styles.activeInvoiceTab,
+    ];
+  };
+
+  const getInvoiceTabTextStyle = (invoiceId: number) => {
+    return [
+      styles.invoiceTabText,
+      selectedInvoiceId === invoiceId && styles.activeInvoiceTabText,
+    ];
+  };
+
+  const getStatusBadgeStyle = (status: string) => {
+    return [
+      styles.statusBadge,
+      status === 'Unpaid'
+        ? styles.unpaidBadge
+        : status === 'Paid'
+        ? styles.paidBadge
+        : styles.otherStatusBadge,
+    ];
+  };
+
+  const getHostingStatusStyle = (status: string) => {
+    return [
+      styles.hostingStatus,
+      status === 'Active' && styles.activeStatus,
+      status === 'Pending' && styles.pendingStatus,
+      status === 'Suspended' && styles.suspendedStatus,
+    ];
+  };
+
+  const getNavTextStyle = (isActive: boolean) => {
+    return [styles.navText, isActive && styles.activeNavText];
+  };
+
+  const getSpacerStyle = () => {
+    return {height: 100 + insets.bottom};
+  };
 
   useEffect(() => {
     fetchInvoiceDetails();
@@ -240,7 +301,7 @@ const InvoiceDetailScreen = ({
       </LinearGradient>
 
       <ScrollView
-        style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}
+        style={getScrollViewStyle()}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -259,17 +320,9 @@ const InvoiceDetailScreen = ({
             {invoiceData.invoices.map((invoice: any) => (
               <TouchableOpacity
                 key={invoice.id}
-                style={[
-                  styles.invoiceTab,
-                  selectedInvoiceId === invoice.id && styles.activeInvoiceTab,
-                ]}
+                style={getInvoiceTabStyle(invoice.id)}
                 onPress={() => setSelectedInvoiceId(invoice.id)}>
-                <Text
-                  style={[
-                    styles.invoiceTabText,
-                    selectedInvoiceId === invoice.id &&
-                      styles.activeInvoiceTabText,
-                  ]}>
+                <Text style={getInvoiceTabTextStyle(invoice.id)}>
                   {invoice.invoicenum
                     ? `#${invoice.invoicenum}`
                     : `INV-${invoice.id}`}
@@ -287,15 +340,7 @@ const InvoiceDetailScreen = ({
                 ? `Invoice #${selectedInvoice.invoicenum}`
                 : `Invoice #${selectedInvoice.id}`}
             </Text>
-            <View
-              style={[
-                styles.statusBadge,
-                selectedInvoice.status === 'Unpaid'
-                  ? styles.unpaidBadge
-                  : selectedInvoice.status === 'Paid'
-                  ? styles.paidBadge
-                  : styles.otherStatusBadge,
-              ]}>
+            <View style={getStatusBadgeStyle(selectedInvoice.status)}>
               <Text style={styles.statusText}>
                 {selectedInvoice.status_text || selectedInvoice.status}
               </Text>
@@ -366,15 +411,7 @@ const InvoiceDetailScreen = ({
               <View style={styles.hostingDetails}>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Status:</Text>
-                  <Text
-                    style={[
-                      styles.hostingStatus,
-                      service.domainstatus === 'Active' && styles.activeStatus,
-                      service.domainstatus === 'Pending' &&
-                        styles.pendingStatus,
-                      service.domainstatus === 'Suspended' &&
-                        styles.suspendedStatus,
-                    ]}>
+                  <Text style={getHostingStatusStyle(service.domainstatus)}>
                     {service.domainstatus}
                   </Text>
                 </View>
@@ -395,28 +432,17 @@ const InvoiceDetailScreen = ({
             <Text style={styles.payButtonText}>Bayar Sekarang</Text>
           </TouchableOpacity>
         )}
-        <View style={{height: 100 + insets.bottom}} />
+        <View style={getSpacerStyle()} />
       </ScrollView>
 
-      <View
-        style={[
-          styles.bottomNav,
-          {
-            paddingBottom: insets.bottom,
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 1000,
-          },
-        ]}>
+      <View style={getBottomNavStyle()}>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
           <View style={styles.navIconContainerInactive}>
             <Icon name="home" size={24} color="#666" />
           </View>
-          <Text style={styles.navText}>Beranda</Text>
+          <Text style={getNavTextStyle(false)}>Beranda</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -429,7 +455,7 @@ const InvoiceDetailScreen = ({
             style={styles.navIconContainer}>
             <Icon name="receipt" size={24} color="#fff" />
           </LinearGradient>
-          <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
+          <Text style={getNavTextStyle(true)}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -437,7 +463,7 @@ const InvoiceDetailScreen = ({
           <View style={styles.navIconContainerInactive}>
             <Icon name="help" size={24} color="#666" />
           </View>
-          <Text style={styles.navText}>Bantuan</Text>
+          <Text style={getNavTextStyle(false)}>Bantuan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -445,7 +471,7 @@ const InvoiceDetailScreen = ({
           <View style={styles.navIconContainerInactive}>
             <Icon2 name="person" size={24} color="#666" />
           </View>
-          <Text style={styles.navText}>Akun</Text>
+          <Text style={getNavTextStyle(false)}>Akun</Text>
         </TouchableOpacity>
       </View>
 

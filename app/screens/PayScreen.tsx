@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
   },
   paymentPeriod: {
     fontSize: 16,
-    color: '#999',
+    color: '#22325a',
     fontWeight: 'bold',
     marginBottom: 8,
   },
@@ -1069,13 +1069,15 @@ const styles = StyleSheet.create({
   },
   paymentAmountText: {
     fontSize: 16,
-    color: '#999',
-    fontWeight: 'bold',
-    marginRight: 5,
+    color: '#666',
+    fontWeight: '500',
+    marginRight: 7,
   },
   arrowIcon: {
     fontSize: 24,
-    color: '#999',
+    marginTop: -5,
+    fontWeight: '500',
+    color: '#fd7e14',
   },
   bottomNav: {
     flexDirection: 'row',

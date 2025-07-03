@@ -14,7 +14,6 @@ import PushNotification from 'react-native-push-notification';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import SessionExpiredModal from './app/components/SessionExpiredModal';
 import AccountScreen from './app/screens/AccountScreen';
-import CashWithdrawalDetailScreen from './app/screens/CashWithdrawalDetailScreen';
 import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
 import HelpScreen from './app/screens/HelpScreen';
 import HomeScreen from './app/screens/HomeScreen';
@@ -121,7 +120,6 @@ const checkAndRequestStoragePermission = async () => {
         const permissions = [
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
-          PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
         ];
 
         const results = await Promise.all(
@@ -495,8 +493,6 @@ export default function App() {
                   return <NotificationScreen {...screenProps} />;
                 case 'PaymentSuccess':
                   return <PaymentSuccessScreen navigateTo={navigateToScreen} />;
-                case 'CashWithdrawalDetail':
-                  return <CashWithdrawalDetailScreen {...screenProps} />;
                 case 'InvoiceDetail':
                   return (
                     <InvoiceDetailScreen

@@ -220,12 +220,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.title}>Masukan Akun Relabs</Text>
+            <Text style={styles.title}>Masukkan Akun Relabs</Text>
             <Text style={styles.subtitle}>
               Silakan masukkan Email atau ID Pelanggan dan Password untuk Masuk
             </Text>
 
-            <Text style={styles.label}>Email / ID Pelanggan</Text>
+            <Text style={styles.label}>Email/ID Pelanggan</Text>
             <TextInput
               style={styles.input}
               placeholder="Email atau ID Pelanggan"
@@ -250,7 +250,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}>
                 <Icon
-                  name={showPassword ? 'visibility-off' : 'visibility'}
+                  name={showPassword ? 'visibility' : 'visibility-off'}
                   size={24}
                   color="#ffb444"
                 />
@@ -382,9 +382,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 70,
-    height: 70,
-    marginBottom: 18,
+    width: 90,
+    height: 90,
+    marginBottom: 10,
   },
   title: {
     fontSize: 22,
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   forgot: {
-    color: '#b0c4de',
+    color: '#ffb444',
     alignSelf: 'flex-end',
     marginBottom: 10,
     marginTop: 2,

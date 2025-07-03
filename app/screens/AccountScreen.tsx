@@ -37,8 +37,8 @@ const AccountScreen = ({
       const profileData = await getClientProfile();
       setClientData(profileData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal memuat profil');
-      console.error('Error loading profile:', err);
+      setError(err instanceof Error ? err.message : 'Gagal memuat akun');
+      console.error('Error loading akun:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -59,7 +59,7 @@ const AccountScreen = ({
     return (
       <View style={[styles.root, styles.centeredContainer]}>
         <ActivityIndicator size="large" color="#fd7e14" />
-        <Text style={styles.loadingText}>Memuat profil...</Text>
+        <Text style={styles.loadingText}>Memuat akun...</Text>
       </View>
     );
   }
@@ -68,7 +68,7 @@ const AccountScreen = ({
     // Cek apakah error terkait dengan token atau autentikasi
     const isAuthError =
       error.includes('Token tidak ditemukan') ||
-      error.includes('Gagal mengambil data profil') ||
+      error.includes('Gagal mengambil data akun') ||
       error.includes('token expired') ||
       error.includes('token invalid') ||
       error.includes('unauthorized') ||
@@ -113,7 +113,7 @@ const AccountScreen = ({
         start={{x: 0, y: 0}}
         end={{x: 0, y: 1}}
         style={styles.header}>
-        <Text style={styles.headerTitle}>Profil</Text>
+        <Text style={styles.headerTitle}>Akun</Text>
       </LinearGradient>
 
       <ScrollView

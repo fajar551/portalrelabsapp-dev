@@ -658,7 +658,7 @@ const HomeScreen = ({
             <View style={styles.offerHeader}>
               <Text style={styles.offersTitle}>Informasi Tagihan Anda 💫</Text>
               <Text style={styles.offersSubtitle}>
-                Silahkan cek informasi tagihan Anda ...
+                Silakan cek informasi tagihan Anda ...
               </Text>
             </View>
           </View>
@@ -1469,9 +1469,9 @@ const styles = StyleSheet.create({
     top: 10,
     right: 2,
     backgroundColor: '#fd7e14',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    borderRadius: 7,
+    minWidth: 14,
+    height: 14,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,

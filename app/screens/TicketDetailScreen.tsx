@@ -2,8 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -103,6 +105,20 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
       if (!tid) {
         return;
       }
+      // LOG ATTACHMENT YANG DIKIRIM
+      console.log('DEBUG KIRIM ATTACHMENT:', attachment);
+      if (
+        attachment &&
+        attachment.uri &&
+        attachment.type &&
+        attachment.fileName
+      ) {
+        console.log('DEBUG KIRIM ATTACHMENT DETAIL:', {
+          uri: attachment.uri,
+          type: attachment.type,
+          fileName: attachment.fileName,
+        });
+      }
       await sendTicketReply(tid, replyMsg, userName, attachment);
       const data = await getTicketAdminClientByTid(tid);
       setReplyMsg('');
@@ -135,8 +151,45 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
     );
   };
 
+  const openFile = async (fileUrl: string) => {
+    try {
+      const supported = await Linking.canOpenURL(fileUrl);
+      if (supported) {
+        await Linking.openURL(fileUrl);
+      } else {
+        console.log('Cannot open URL:', fileUrl);
+        // Fallback: buka di browser
+        await Linking.openURL(fileUrl);
+      }
+    } catch (err) {
+      console.error('Error opening file:', err);
+      Alert.alert(
+        'Error',
+        'Tidak dapat membuka file. Silakan coba lagi atau hubungi admin.',
+        [{text: 'OK'}],
+      );
+    }
+  };
+
   const renderBubble = (item: any, idx: number) => {
     const isAdmin = item.is_admin === 1;
+
+    // Fungsi untuk mendeteksi tipe file
+    const getFileType = (filename: string) => {
+      if (!filename) {
+        return '';
+      }
+      const ext = filename.toLowerCase().split('.').pop();
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext || '')) {
+        return 'image';
+      }
+      // selain itu return ''
+      return '';
+    };
+
+    const fileType = getFileType(item.attachment);
+    const attachmentUrl = `${CONFIG.API_URL}/attachments/mobilerelabs/${item.attachment}`;
+
     return (
       <View
         key={item.id + '-' + idx}
@@ -155,13 +208,44 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
           <Text style={styles.bubbleMsg}>{item.message}</Text>
           {item.attachment && (
             <View style={styles.attachmentContainer}>
-              <Image
-                source={{
-                  uri: `${CONFIG.API_URL}/attachments/mobilerelabs/${item.attachment}`,
-                }}
-                style={styles.attachmentImage}
-                resizeMode="cover"
-              />
+              {fileType === 'image' ? (
+                (() => {
+                  console.log('DEBUG IMAGE ATTACHMENT:', item.attachment);
+                  console.log(
+                    'DEBUG IMAGE URL:',
+                    item.attachment && item.attachment.uri
+                      ? item.attachment.uri
+                      : attachmentUrl,
+                  );
+                  return (
+                    <Image
+                      source={{
+                        uri:
+                          item.attachment && item.attachment.uri
+                            ? item.attachment.uri
+                            : attachmentUrl,
+                      }}
+                      style={styles.attachmentImage}
+                      resizeMode="cover"
+                      onError={() => {
+                        console.log('GAGAL LOAD GAMBAR:', item.attachment);
+                      }}
+                    />
+                  );
+                })()
+              ) : (
+                <TouchableOpacity
+                  style={styles.fileAttachmentContainer}
+                  onPress={() => openFile(attachmentUrl)}>
+                  <View style={styles.fileIconContainer}>
+                    <Icon name={'description'} size={32} color="#F26522" />
+                  </View>
+                  <View style={styles.fileInfoRow}>
+                    <Text style={styles.fileName}>{item.attachment}</Text>
+                  </View>
+                  <Text style={styles.fileTypeText}>File</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
           <Text style={styles.bubbleDate}>{item.date}</Text>
@@ -208,13 +292,52 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
             {ticket?.attachment && (
               <View style={styles.ticketAttachmentContainer}>
                 <Text style={styles.attachmentLabel}>Attachment:</Text>
-                <Image
-                  source={{
-                    uri: `${CONFIG.API_URL}/attachments/mobilerelabs/${ticket.attachment}`,
-                  }}
-                  style={styles.ticketAttachmentImage}
-                  resizeMode="cover"
-                />
+                {(() => {
+                  const getFileType = (filename: string) => {
+                    if (!filename) {
+                      return '';
+                    }
+                    const ext = filename.toLowerCase().split('.').pop();
+                    if (
+                      ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
+                        ext || '',
+                      )
+                    ) {
+                      return 'image';
+                    }
+                    return '';
+                  };
+
+                  const fileType = getFileType(ticket.attachment);
+                  const attachmentUrl = `${CONFIG.API_URL}/attachments/mobilerelabs/${ticket.attachment}`;
+
+                  return fileType === 'image' ? (
+                    <Image
+                      source={{
+                        uri:
+                          ticket.attachment && ticket.attachment.uri
+                            ? ticket.attachment.uri
+                            : attachmentUrl,
+                      }}
+                      style={styles.ticketAttachmentImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.ticketFileAttachmentContainer}
+                      onPress={() => openFile(attachmentUrl)}>
+                      <View style={styles.ticketFileIconContainer}>
+                        <Icon name={'description'} size={24} color="#F26522" />
+                      </View>
+                      <View style={styles.fileInfoRow}>
+                        <Text style={styles.ticketFileName}>
+                          {ticket.attachment}
+                        </Text>
+                      </View>
+                      {/* <Text style={styles.ticketFileTypeText}></Text> */}
+                    </TouchableOpacity>
+                  );
+                })()}
               </View>
             )}
           </LinearGradient>
@@ -439,6 +562,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignSelf: 'center',
     resizeMode: 'contain',
+    borderWidth: 1,
+    borderColor: '#eee',
   },
   ticketAttachmentContainer: {
     marginTop: 8,
@@ -494,6 +619,78 @@ const styles = StyleSheet.create({
   },
   scrollContentBottom: {
     paddingBottom: 80,
+  },
+  fileAttachmentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  fileIconContainer: {
+    marginRight: 12,
+    padding: 8,
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  fileInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    maxWidth: 180,
+  },
+  fileName: {
+    fontSize: 14,
+    color: '#22325a',
+    fontWeight: '500',
+    textAlign: 'left',
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: 180,
+  },
+  fileTypeText: {
+    fontSize: 12,
+    color: '#6c757d',
+    fontWeight: '400',
+  },
+  ticketFileAttachmentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    marginTop: 4,
+  },
+  ticketFileIconContainer: {
+    marginRight: 10,
+    padding: 6,
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  ticketFileName: {
+    fontSize: 13,
+    color: '#22325a',
+    fontWeight: '500',
+    textAlign: 'left',
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: 180,
+    marginBottom: 2,
+  },
+  ticketFileTypeText: {
+    fontSize: 11,
+    color: '#6c757d',
+    fontWeight: '400',
   },
 });
 

@@ -150,11 +150,20 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
         }
         if (response.assets && response.assets.length > 0) {
           const file = response.assets[0];
+          console.log('File yang dipilih:', file);
+
           // CEK UKURAN FILE (dalam byte, 5 MB = 5 * 1024 * 1024)
           if (file.fileSize && file.fileSize > 5 * 1024 * 1024) {
             Alert.alert('Ukuran file terlalu besar', 'Maksimal 5 MB');
             return;
           }
+
+          // Pastikan file memiliki properti yang diperlukan
+          if (!file.uri) {
+            Alert.alert('Error', 'File tidak valid');
+            return;
+          }
+
           setAttachment(file);
         }
       },
@@ -162,13 +171,53 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
   };
 
   const handleSubmit = async () => {
-    if (!subject.trim() || !message.trim()) {
-      Alert.alert('Lengkapi Data', 'Subject dan pesan harus diisi.');
+    // Validasi input
+    if (!subject.trim()) {
+      Alert.alert('Lengkapi Data', 'Subject harus diisi.');
       return;
     }
+
+    if (!message.trim()) {
+      Alert.alert('Lengkapi Data', 'Pesan harus diisi.');
+      return;
+    }
+
+    // Validasi departmentId
+    if (!departmentId || departmentId <= 0) {
+      Alert.alert('Error', 'Departemen harus dipilih.');
+      return;
+    }
+
+    // Validasi urgency
+    if (!urgency || !['Low', 'Medium', 'High'].includes(urgency)) {
+      Alert.alert('Error', 'Urgency harus dipilih.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await openNewTicket(departmentId, subject, message, urgency, attachment);
+      console.log('Mengirim data tiket:', {
+        departmentId,
+        subject: subject.trim(),
+        message: message.trim(),
+        urgency,
+        attachment: attachment
+          ? {
+              uri: attachment.uri,
+              fileName: attachment.fileName,
+              type: attachment.type,
+              fileSize: attachment.fileSize,
+            }
+          : null,
+      });
+
+      await openNewTicket(
+        departmentId,
+        subject.trim(),
+        message.trim(),
+        urgency,
+        attachment,
+      );
       Alert.alert('Sukses', 'Tiket berhasil dibuat!', [
         {text: 'OK', onPress: () => navigateTo('Help')},
       ]);
@@ -176,6 +225,7 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
       setMessage('');
       setAttachment(null);
     } catch (err: any) {
+      console.error('Error detail:', err);
       Alert.alert('Gagal', err.message || 'Gagal membuat tiket');
     } finally {
       setLoading(false);
@@ -210,21 +260,19 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
 
   return (
     <View style={styles.container}>
-      <View
-        style={{flexDirection: 'row', alignItems: 'center', marginBottom: 18}}>
+      <View style={styles.topRow}>
         <TouchableOpacity
           onPress={() => navigateTo('Help')}
           style={styles.backBtn}>
           <Icon name="arrow-back" size={26} color="#22325a" />
         </TouchableOpacity>
-        <View style={{flex: 1, alignItems: 'center'}}>
+        <View style={styles.centerTitle}>
           <Text style={styles.title}>Buat Tiket Baru</Text>
         </View>
-        <View style={{width: 34}} />
+        <View style={styles.headerSpacer} />
       </View>
       <Text style={styles.label}>Departemen</Text>
-      <View
-        style={{flexDirection: 'row', alignItems: 'center', marginBottom: 8}}>
+      <View style={styles.departmentRow}>
         {showLeftArrow && (
           <TouchableOpacity onPress={scrollLeft} style={styles.arrowBtn}>
             <Icon name="chevron-left" size={28} color="#F26522" />
@@ -237,8 +285,8 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
           onContentSizeChange={handleContentSizeChange}
           onScroll={handleScroll}
           scrollEventThrottle={16}
-          style={{flex: 1}}
-          contentContainerStyle={{paddingHorizontal: 4}}>
+          style={styles.scrollFlex}
+          contentContainerStyle={styles.scrollContent}>
           {departments.map(dep => {
             // console.log('Render dep.id:', dep.id, 'departmentId:', departmentId);
             return (
@@ -280,7 +328,7 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
       />
       <Text style={styles.label}>Pesan</Text>
       <TextInput
-        style={[styles.input, {height: 90}]}
+        style={[styles.input, styles.inputMessage]}
         value={message}
         onChangeText={setMessage}
         placeholder="Tulis pesan Anda"
@@ -310,12 +358,22 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
       <TouchableOpacity style={styles.attachmentBtn} onPress={pickImage}>
         <Text style={styles.attachmentBtnText}>
           {attachment
-            ? attachment.fileName || attachment.uri
+            ? attachment.fileName || attachment.name || 'File dipilih'
             : 'Pilih File (Gambar/Video)'}
         </Text>
       </TouchableOpacity>
-      <Text style={{color: 'red', fontSize: 12, marginTop: 4}}>
-        *Silahkan Pilih Gambar Untuk di Upload (Maksimal 5 MB)
+      {attachment && (
+        <TouchableOpacity
+          style={[styles.attachmentBtn, styles.attachmentBtnDanger]}
+          onPress={() => setAttachment(null)}>
+          <Text
+            style={[styles.attachmentBtnText, styles.attachmentBtnTextDanger]}>
+            Hapus File
+          </Text>
+        </TouchableOpacity>
+      )}
+      <Text style={styles.attachmentNote}>
+        *File attachment bersifat opsional. Maksimal 5 MB untuk gambar/video
       </Text>
       <TouchableOpacity
         style={styles.submitBtn}
@@ -356,7 +414,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 14,
     marginBottom: 6,
-    color: '#666',
+    color: '#000',
     // color: '#b0c4de',
     fontWeight: '500',
     borderWidth: 1,
@@ -423,6 +481,44 @@ const styles = StyleSheet.create({
     padding: 4,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  centerTitle: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerSpacer: {
+    width: 34,
+  },
+  departmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  scrollFlex: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 4,
+  },
+  inputMessage: {
+    height: 90,
+  },
+  attachmentBtnDanger: {
+    backgroundColor: '#ffebee',
+    marginTop: 8,
+  },
+  attachmentBtnTextDanger: {
+    color: '#d32f2f',
+  },
+  attachmentNote: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
 

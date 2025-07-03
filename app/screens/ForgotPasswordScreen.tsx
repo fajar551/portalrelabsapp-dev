@@ -95,7 +95,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
             />
             <Text style={styles.title}>Mengubah Password</Text>
             <Text style={styles.subtitle}>
-              Silahkan masukkan email Anda untuk menerima instruksi untuk
+              Silakan masukkan email Anda untuk menerima instruksi untuk
               mereset password.
             </Text>
 
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   backToLoginText: {
-    color: '#4d6ae4',
+    color: '#ffb444',
     fontSize: 16,
     fontWeight: '500',
   },

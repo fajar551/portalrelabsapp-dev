@@ -32,6 +32,47 @@ const HelpScreen = ({
   const [scrollingToTickets, setScrollingToTickets] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Helper function untuk style dinamis
+  const getScrollViewStyle = () => {
+    return [styles.scrollView, {paddingBottom: 80 + insets.bottom}];
+  };
+
+  const getSpacerStyle = () => {
+    return {height: 100 + insets.bottom};
+  };
+
+  const getBottomNavStyle = () => {
+    return [
+      styles.bottomNav,
+      styles.bottomNavFixed,
+      {paddingBottom: insets.bottom},
+    ];
+  };
+
+  const getNavTextStyle = (isActive: boolean) => {
+    return [styles.navText, isActive && styles.activeNavText];
+  };
+
+  const getTicketCardRowStyle = () => {
+    return {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'space-between' as const,
+    };
+  };
+
+  const getTicketCardContentStyle = () => {
+    return {flex: 1};
+  };
+
+  const getTicketCardButtonStyle = () => {
+    return {padding: 6};
+  };
+
+  const getActivityIndicatorStyle = () => {
+    return {marginLeft: 6};
+  };
+
   const departments = [
     {
       id: '1',
@@ -114,7 +155,7 @@ const HelpScreen = ({
 
       <ScrollView
         ref={scrollViewRef}
-        style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}
+        style={getScrollViewStyle()}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -156,13 +197,13 @@ const HelpScreen = ({
               <ActivityIndicator
                 size="small"
                 color="#F26522"
-                style={{marginLeft: 6}}
+                style={getActivityIndicatorStyle()}
               />
             ) : scrollingToTickets ? (
               <ActivityIndicator
                 size="small"
                 color="#F26522"
-                style={{marginLeft: 6}}
+                style={getActivityIndicatorStyle()}
               />
             ) : (
               <Icon name="expand-more" size={22} color="#F26522" />
@@ -218,13 +259,8 @@ const HelpScreen = ({
           ) : (
             tickets.map((ticket, idx) => (
               <View key={idx} style={styles.ticketCard}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                  <View style={{flex: 1}}>
+                <View style={getTicketCardRowStyle()}>
+                  <View style={getTicketCardContentStyle()}>
                     <Text style={styles.ticketCardTitle}>
                       {ticket.title || ticket.subject || 'Tiket'}
                     </Text>
@@ -237,7 +273,7 @@ const HelpScreen = ({
                   </View>
                   <TouchableOpacity
                     onPress={() => navigateTo('TicketDetail', {tid: ticket.id})}
-                    style={{padding: 6}}>
+                    style={getTicketCardButtonStyle()}>
                     <Icon name="chevron-right" size={26} color="#F26522" />
                   </TouchableOpacity>
                 </View>
@@ -245,23 +281,18 @@ const HelpScreen = ({
             ))
           )}
         </View>
-        <View style={{height: 100 + insets.bottom}} />
+        <View style={getSpacerStyle()} />
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View
-        style={[
-          styles.bottomNav,
-          styles.bottomNavFixed,
-          {paddingBottom: insets.bottom},
-        ]}>
+      <View style={getBottomNavStyle()}>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
           <View style={styles.navIconContainerInactive}>
             <Icon name="home" size={24} color="#666" />
           </View>
-          <Text style={styles.navText}>Beranda</Text>
+          <Text style={getNavTextStyle(false)}>Beranda</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -269,7 +300,7 @@ const HelpScreen = ({
           <View style={styles.navIconContainerInactive}>
             <Icon name="receipt" size={24} color="#666" />
           </View>
-          <Text style={styles.navText}>Tagihan</Text>
+          <Text style={getNavTextStyle(false)}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
           <LinearGradient
@@ -279,7 +310,7 @@ const HelpScreen = ({
             style={styles.navIconContainer}>
             <Icon name="help" size={24} color="#fff" />
           </LinearGradient>
-          <Text style={[styles.navText, styles.activeNavText]}>Bantuan</Text>
+          <Text style={getNavTextStyle(true)}>Bantuan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -287,7 +318,7 @@ const HelpScreen = ({
           <View style={styles.navIconContainerInactive}>
             <Icon2 name="person" size={24} color="#666" />
           </View>
-          <Text style={styles.navText}>Akun</Text>
+          <Text style={getNavTextStyle(false)}>Akun</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

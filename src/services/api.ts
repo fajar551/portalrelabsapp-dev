@@ -636,38 +636,85 @@ export const openNewTicket = async (
   subject: string,
   message: string,
   urgency: 'Low' | 'Medium' | 'High',
-  attachment?: { uri: string, name: string, type: string }
+  attachment?: any
 ) => {
   try {
     const token = await SessionManager.getToken();
     if (!token) { throw new Error('Token tidak ditemukan'); }
 
-    const formData = new FormData();
-    formData.append('department_id', departmentId.toString());
-    formData.append('subject', subject);
-    formData.append('message', message);
-    formData.append('urgency', urgency);
-
-    if (attachment) {
-      formData.append('attachment', {
-        uri: attachment.uri,
-        name: attachment.name,
-        type: attachment.type,
-      } as any);
-    }
-
-    const response = await fetch(`${CONFIG.API_URL}/mobile/open-ticket`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        // Jangan set Content-Type, biarkan FormData yang handle boundary
-      },
-      body: formData,
+    console.log('Data yang akan dikirim:', {
+      department_id: departmentId,
+      subject: subject.trim(),
+      message: message.trim(),
+      urgency: urgency,
+      hasAttachment: !!attachment,
     });
 
+    let response;
+
+    if (!attachment) {
+      // Jika tidak ada attachment, kirim sebagai JSON
+      const jsonData = {
+        department_id: departmentId,
+        subject: subject.trim(),
+        message: message.trim(),
+        urgency: urgency,
+      };
+
+      console.log('Mengirim sebagai JSON:', jsonData);
+
+      response = await fetch(`${CONFIG.API_URL}/mobile/open-ticket`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(jsonData),
+      });
+    } else {
+      // Jika ada attachment, gunakan FormData
+      const formData = new FormData();
+      formData.append('department_id', departmentId.toString());
+      formData.append('subject', subject.trim());
+      formData.append('message', message.trim());
+      formData.append('urgency', urgency);
+
+      // Handle attachment dari react-native-image-picker
+      const fileName = attachment.fileName || attachment.name || 'attachment';
+      const fileType = attachment.type || attachment.mimeType || 'image/jpeg';
+
+      console.log('Attachment data:', {
+        uri: attachment.uri,
+        name: fileName,
+        type: fileType,
+      });
+
+      formData.append('attachment', {
+        uri: attachment.uri,
+        name: fileName,
+        type: fileType,
+      } as any);
+
+      response = await fetch(`${CONFIG.API_URL}/mobile/open-ticket`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          // Jangan set Content-Type, biarkan FormData yang handle boundary
+        },
+        body: formData,
+      });
+    }
+
     const data = await response.json();
-    if (!response.ok) { throw new Error(data.message || 'Gagal membuat tiket'); }
+    console.log('Response dari server:', data);
+    console.log('Response status:', response.status);
+
+    if (!response.ok) {
+      console.error('Server error:', data);
+      throw new Error(data.message || 'Gagal membuat tiket');
+    }
     return data;
   } catch (error) {
     console.error('Error saat membuat tiket:', error);
@@ -769,24 +816,49 @@ export const getTicketAdminClientByTid = async (tid: string | number) => {
   }
 };
 
-export const sendTicketReply = async (tid: number | string, message: string, name: string) => {
+export const sendTicketReply = async (tid: number | string, message: string, name: string, attachment?: any) => {
   try {
     const token = await SessionManager.getToken();
     if (!token) { throw new Error('Token tidak ditemukan'); }
 
-    const response = await fetch(`${CONFIG.API_URL}/mobile/ticket-reply`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        tid,
-        message,
-        name,
-      }),
-    });
+    let response;
+    if (!attachment) {
+      // Kirim sebagai JSON jika tidak ada attachment
+      response = await fetch(`${CONFIG.API_URL}/mobile/ticket-reply`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          tid,
+          message,
+          name,
+        }),
+      });
+    } else {
+      // Kirim sebagai FormData jika ada attachment
+      const formData = new FormData();
+      formData.append('tid', tid.toString());
+      formData.append('message', message);
+      formData.append('name', name);
+      const fileName = attachment.fileName || attachment.name || 'attachment';
+      const fileType = attachment.type || attachment.mimeType || 'image/jpeg';
+      formData.append('attachment', {
+        uri: attachment.uri,
+        name: fileName,
+        type: fileType,
+      } as any);
+      response = await fetch(`${CONFIG.API_URL}/mobile/ticket-reply`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+        body: formData,
+      });
+    }
 
     const data = await response.json();
     if (!response.ok) { throw new Error(data.message || 'Gagal mengirim balasan'); }
