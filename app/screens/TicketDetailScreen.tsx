@@ -20,6 +20,11 @@ import {
   sendTicketReply,
 } from '../../src/services/api';
 
+// Konfigurasi API
+const CONFIG = {
+  API_URL: 'https://portal.relabs.id',
+};
+
 interface TicketDetailScreenProps {
   navigateTo: (screen: string, params?: any) => void;
   route?: {params?: {tid?: string}};
@@ -86,10 +91,11 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [tid]);
+  }, [tid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSendReply = async () => {
-    if (!replyMsg.trim()) {
+    // Validasi: harus ada pesan atau attachment
+    if (!replyMsg.trim() && !attachment) {
       return;
     }
     setSending(true);
@@ -97,9 +103,10 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
       if (!tid) {
         return;
       }
-      await sendTicketReply(tid, replyMsg, userName);
+      await sendTicketReply(tid, replyMsg, userName, attachment);
       const data = await getTicketAdminClientByTid(tid);
       setReplyMsg('');
+      setAttachment(null);
       setConversation(data.conversation || []);
     } catch (err) {
       // Tampilkan error jika perlu
@@ -146,6 +153,17 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
             {item.name || (isAdmin ? 'Admin Relabs' : 'Admin')}
           </Text>
           <Text style={styles.bubbleMsg}>{item.message}</Text>
+          {item.attachment && (
+            <View style={styles.attachmentContainer}>
+              <Image
+                source={{
+                  uri: `${CONFIG.API_URL}/attachments/mobilerelabs/${item.attachment}`,
+                }}
+                style={styles.attachmentImage}
+                resizeMode="cover"
+              />
+            </View>
+          )}
           <Text style={styles.bubbleDate}>{item.date}</Text>
         </View>
       </View>
@@ -161,7 +179,7 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
           <Icon name="arrow-back" size={26} color="#22325a" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detail Tiket</Text>
-        <View style={{width: 34}} />
+        <View style={styles.headerSpacer} />
       </View>
       {loading ? (
         <View style={styles.loadingWrap}>
@@ -175,53 +193,54 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
           <LinearGradient
             colors={['#e0e7ff', '#fff']}
             style={styles.ticketInfoCard}>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View style={styles.ticketInfoRow}>
               <Icon
                 name="info"
                 size={24}
                 color="#4F8EF7"
-                style={{marginRight: 8}}
+                style={styles.iconInfo}
               />
               <Text style={styles.ticketTitle}>{ticket?.title}</Text>
             </View>
             <Text style={styles.ticketStatus}>Status: {ticket?.status}</Text>
             <Text style={styles.ticketDate}>Tanggal: {ticket?.date}</Text>
             <Text style={styles.ticketUrgency}>Urgency: {ticket?.urgency}</Text>
+            {ticket?.attachment && (
+              <View style={styles.ticketAttachmentContainer}>
+                <Text style={styles.attachmentLabel}>Attachment:</Text>
+                <Image
+                  source={{
+                    uri: `${CONFIG.API_URL}/attachments/mobilerelabs/${ticket.attachment}`,
+                  }}
+                  style={styles.ticketAttachmentImage}
+                  resizeMode="cover"
+                />
+              </View>
+            )}
           </LinearGradient>
           {attachment && (
-            <View
-              style={{
-                alignItems: 'flex-end',
-                marginRight: 16,
-                marginBottom: 4,
-              }}>
+            <View style={styles.previewAttachment}>
               <Image
                 source={{uri: attachment.uri}}
-                style={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: 8,
-                  borderWidth: 2,
-                  borderColor: '#F26522',
-                }}
+                style={styles.previewImage}
                 resizeMode="cover"
               />
             </View>
           )}
           <KeyboardAvoidingView
-            style={{flex: 1}}
+            style={styles.flex1}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={80}>
             <ScrollView
               style={styles.chatWrap}
-              contentContainerStyle={{paddingBottom: 80}}
+              contentContainerStyle={styles.scrollContentBottom}
               keyboardShouldPersistTaps="handled">
               {conversation.map(renderBubble)}
             </ScrollView>
             <View style={styles.replyBar}>
               <TextInput
                 style={styles.replyInput}
-                placeholder="Tulis balasan..."
+                placeholder="Tulis balasan atau pilih gambar..."
                 value={replyMsg}
                 onChangeText={setReplyMsg}
                 editable={!sending}
@@ -230,9 +249,21 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
               <TouchableOpacity onPress={pickImage} style={styles.imageBtn}>
                 <Icon name="image" size={32} color="#F26522" />
               </TouchableOpacity>
+              {attachment && (
+                <View style={styles.previewAttachment}>
+                  <Image
+                    source={{uri: attachment.uri}}
+                    style={styles.previewImage}
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity onPress={() => setAttachment(null)}>
+                    <Text style={styles.previewDelete}>Hapus</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
               <TouchableOpacity
                 onPress={handleSendReply}
-                disabled={sending || !replyMsg.trim()}
+                disabled={sending || (!replyMsg.trim() && !attachment)}
                 style={styles.replyButton}>
                 <Icon name="send" size={22} color="#fff" />
               </TouchableOpacity>
@@ -364,6 +395,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     minHeight: 40,
     maxHeight: 120,
+    color: '#000',
   },
   imageBtn: {
     marginLeft: 8,
@@ -392,6 +424,76 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+  },
+  attachmentContainer: {
+    marginTop: 8,
+    marginBottom: 4,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  attachmentImage: {
+    width: 120,
+    height: 90,
+    borderRadius: 8,
+    alignSelf: 'center',
+    resizeMode: 'contain',
+  },
+  ticketAttachmentContainer: {
+    marginTop: 8,
+    marginBottom: 4,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  attachmentLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#22325a',
+    marginBottom: 4,
+  },
+  ticketAttachmentImage: {
+    width: '100%',
+    maxWidth: 200,
+    aspectRatio: 4 / 3,
+    maxHeight: 140,
+    borderRadius: 8,
+    alignSelf: 'center',
+    resizeMode: 'contain',
+  },
+  previewAttachment: {
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  previewImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+    resizeMode: 'cover',
+  },
+  previewDelete: {
+    color: '#d32f2f',
+    fontSize: 12,
+  },
+  headerSpacer: {
+    width: 34,
+  },
+  ticketInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconInfo: {
+    marginRight: 8,
+  },
+  flex1: {
+    flex: 1,
+  },
+  scrollContentBottom: {
+    paddingBottom: 80,
   },
 });
 
