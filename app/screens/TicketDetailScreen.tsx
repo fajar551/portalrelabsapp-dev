@@ -188,7 +188,7 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
     };
 
     const fileType = getFileType(item.attachment);
-    const attachmentUrl = `${CONFIG.API_URL}/attachments/mobilerelabs/${item.attachment}`;
+    const attachmentUrl = `${CONFIG.API_URL}/attachments/${item.attachment}`;
 
     return (
       <View
