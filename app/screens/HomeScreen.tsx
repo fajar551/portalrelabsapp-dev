@@ -3,6 +3,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Animated,
+  AppState,
   Dimensions,
   Image,
   NativeScrollEvent,
@@ -22,12 +23,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {
-  getClientInvoices,
-  getDomainStatus,
-  getNotifications,
-  getPaymentHistory,
-} from '../../src/services/api';
+import {getHomeData, getNotifications} from '../../src/services/api';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 
 // --- DEKLARASI KONSTANTA DI PALING ATAS ---
@@ -93,138 +89,408 @@ const HomeScreen = ({
 
   const insets = useSafeAreaInsets();
 
-  const fetchUserData = async () => {
+  // Fungsi untuk membersihkan cache lama
+  const clearOldCache = async () => {
     try {
-      console.log('Memulai fetch user data...');
-      // Coba ambil data dari AsyncStorage terlebih dahulu
-      const storedUserData = await AsyncStorage.getItem('userData');
+      const keys = await AsyncStorage.getAllKeys();
+      const homeKeys = keys.filter(key => key.startsWith('homeData'));
+      if (homeKeys.length > 1) {
+        // Hapus cache lama, sisakan yang terbaru
+        const timestamps = await Promise.all(
+          homeKeys.map(async key => {
+            const timestamp = await AsyncStorage.getItem(key);
+            return {key, timestamp: parseInt(timestamp || '0')};
+          }),
+        );
 
-      if (storedUserData) {
-        setUserData(JSON.parse(storedUserData));
-        console.log('User data loaded from AsyncStorage');
-      } else {
-        console.log('No user data found in AsyncStorage');
+        const sortedKeys = timestamps
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .slice(1) // Hapus yang terbaru, hapus yang lama
+          .map(item => item.key);
+
+        if (sortedKeys.length > 0) {
+          await AsyncStorage.multiRemove(sortedKeys);
+          console.log(`🗑️ Cleared ${sortedKeys.length} old cache entries`);
+        }
       }
-    } catch (err: any) {
-      console.error('Error fetching user data:', err);
-      throw err; // Re-throw error untuk ditangkap di fungsi pemanggil
+    } catch (error) {
+      console.log('Error clearing old cache:', error);
     }
   };
 
-  // Fungsi untuk mengambil data invoice
-  const fetchInvoiceData = async () => {
-    setError('');
-    setIsBillingLoading(true); // Set loading billing period saat mulai fetch
+  // Fungsi untuk memaksa refresh cache dengan data baru
+  const forceRefreshCache = async () => {
     try {
-      console.log('Memulai fetch invoice data...');
+      console.log('🔄 Force refreshing cache with optimized data...');
+      await AsyncStorage.removeItem('homeData');
+      await AsyncStorage.removeItem('homeDataTimestamp');
+      console.log('🗑️ Old cache cleared, will fetch fresh data');
+    } catch (error) {
+      console.log('Error force refreshing cache:', error);
+    }
+  };
 
-      // Mengambil data invoice untuk billing period sesuai implementasi PayScreen
-      const invoices = await getClientInvoices();
-      console.log('Data invoices diterima:', invoices?.length || 0);
-
-      // Filter untuk mendapatkan invoice yang belum dibayar (Unpaid)
-      const unpaidInvoices = invoices.filter(
-        (invoice: any) =>
-          invoice.status === 'Unpaid' || invoice.status === 'Belum Dibayar',
-      );
-      console.log('Unpaid invoices:', unpaidInvoices?.length || 0);
-
-      // Get most recent unpaid invoice
-      if (unpaidInvoices && unpaidInvoices.length > 0) {
-        const latestUnpaidInvoice = unpaidInvoices[0]; // Ambil yang paling baru
-        console.log(
-          'Latest unpaid invoice:',
-          latestUnpaidInvoice?.id || 'no-id',
-        );
-
-        // Extract date and duedate from the invoice
-        if (latestUnpaidInvoice.date && latestUnpaidInvoice.duedate) {
-          console.log(
-            'Setting billing period dengan total:',
-            latestUnpaidInvoice.total,
-          );
-          setBillingPeriod({
-            startDate: new Date(latestUnpaidInvoice.date),
-            dueDate: new Date(latestUnpaidInvoice.duedate),
-            amount: latestUnpaidInvoice.total || 0,
-          });
+  // Fungsi untuk mengoptimasi data sebelum disimpan ke cache
+  const optimizeDataForCache = (homeData: any) => {
+    // Hanya ambil data yang benar-benar diperlukan untuk UI
+    const minimalClient = homeData.client
+      ? {
+          id: homeData.client.id,
+          name: homeData.client.name,
         }
-      } else if (invoices && invoices.length > 0) {
-        // Jika tidak ada unpaid invoice, gunakan invoice paling baru sebagai fallback
-        // tetapi tandai bahwa tidak ada yang perlu dibayar
-        const latestInvoice = invoices[0];
-        console.log('No unpaid invoice, using latest invoice as fallback');
+      : null;
 
-        if (latestInvoice.date && latestInvoice.duedate) {
-          setBillingPeriod({
-            startDate: new Date(latestInvoice.date),
-            dueDate: new Date(latestInvoice.duedate),
-            amount: 0, // Tandai tidak ada yang perlu dibayar
+    // Hanya ambil invoice yang belum dibayar atau yang paling baru
+    const minimalInvoices =
+      homeData.invoices?.slice(0, 2).map((invoice: any) => ({
+        id: invoice.id,
+        status: invoice.status,
+        date: invoice.date,
+        duedate: invoice.duedate,
+        total: invoice.total,
+      })) || [];
+
+    return {
+      client: minimalClient,
+      domain_status: homeData.domain_status,
+      invoices: minimalInvoices,
+      // Hapus payment_history karena tidak digunakan di UI
+    };
+  };
+
+  // Fungsi untuk mengambil semua data HomeScreen dalam satu request
+  const fetchHomeData = async (forceRefresh = false, silent = false) => {
+    const startTime = Date.now();
+
+    if (!silent) {
+      setError('');
+    }
+
+    // Jika bukan force refresh, coba load dari cache dulu
+    if (!forceRefresh) {
+      try {
+        const cacheStartTime = Date.now();
+        // Gunakan multiGet untuk membaca data dan timestamp sekaligus
+        const [cachedData, cachedTimestamp] = await AsyncStorage.multiGet([
+          'homeData',
+          'homeDataTimestamp',
+        ]);
+        const cacheReadTime = Date.now() - cacheStartTime;
+
+        console.log(`📖 Cache read time: ${cacheReadTime}ms`);
+
+        if (cachedData[1] && cachedTimestamp[1]) {
+          const parseStartTime = Date.now();
+          const data = JSON.parse(cachedData[1]);
+          const parseTime = Date.now() - parseStartTime;
+
+          console.log(`🔍 JSON parse time: ${parseTime}ms`);
+          console.log(`📊 Cache data size: ${cachedData[1].length} characters`);
+          console.log('📊 Cache data structure:', {
+            hasClient: !!data.client,
+            clientFields: data.client ? Object.keys(data.client) : [],
+            hasInvoices: !!data.invoices,
+            invoiceCount: data.invoices?.length || 0,
+            hasPaymentHistory: !!data.payment_history,
+            paymentHistoryCount: data.payment_history?.length || 0,
           });
+
+          const timestamp = parseInt(cachedTimestamp[1]);
+          const now = Date.now();
+
+          // Cache valid selama 5 menit (300000 ms)
+          if (now - timestamp < 300000) {
+            const setStateStartTime = Date.now();
+
+            // Set data dari cache dengan setTimeout untuk menghindari blocking
+            setTimeout(() => {
+              if (data.client) {
+                setUserData(data.client);
+              }
+              setDomainStatus(data.domain_status || '-');
+
+              if (data.payment_history && data.payment_history.length > 0) {
+                _setPaymentHistory(data.payment_history);
+              } else {
+                _setPaymentHistory([]);
+              }
+
+              // Proses billing period dari cache
+              if (data.invoices && data.invoices.length > 0) {
+                const unpaidInvoices = data.invoices.filter(
+                  (invoice: any) =>
+                    invoice.status === 'Unpaid' ||
+                    invoice.status === 'Belum Dibayar',
+                );
+
+                if (unpaidInvoices && unpaidInvoices.length > 0) {
+                  const latestUnpaidInvoice = unpaidInvoices[0];
+                  if (latestUnpaidInvoice.date && latestUnpaidInvoice.duedate) {
+                    setBillingPeriod({
+                      startDate: new Date(latestUnpaidInvoice.date),
+                      dueDate: new Date(latestUnpaidInvoice.duedate),
+                      amount: latestUnpaidInvoice.total || 0,
+                    });
+                  }
+                } else if (data.invoices && data.invoices.length > 0) {
+                  const latestInvoice = data.invoices[0];
+                  if (latestInvoice.date && latestInvoice.duedate) {
+                    setBillingPeriod({
+                      startDate: new Date(latestInvoice.date),
+                      dueDate: new Date(latestInvoice.duedate),
+                      amount: 0,
+                    });
+                  }
+                }
+              } else {
+                setBillingPeriod({
+                  startDate: new Date(),
+                  dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+                  amount: 0,
+                });
+              }
+
+              if (!silent) {
+                setIsLoading(false);
+                setIsBillingLoading(false);
+              }
+            }, 0);
+
+            const setStateTime = Date.now() - setStateStartTime;
+            console.log(`⚡ State updates time: ${setStateTime}ms`);
+
+            const cacheLoadTime = Date.now() - startTime;
+            console.log(
+              `✅ Cache loading selesai dalam ${cacheLoadTime}ms (Read: ${cacheReadTime}ms, Parse: ${parseTime}ms, State: ${setStateTime}ms)`,
+            );
+            return; // Keluar dari fungsi karena sudah menggunakan cache
+          } else {
+            console.log('⏰ Cache expired, akan fetch dari API');
+          }
+        } else {
+          console.log('📭 Cache tidak ditemukan, akan fetch dari API');
+        }
+      } catch (error) {
+        console.log('❌ Error loading cache:', error);
+        // Lanjut ke fetch API jika cache error
+      }
+    }
+
+    // Jika force refresh atau cache tidak ada/expired, fetch dari API
+    if (!silent) {
+      setIsLoading(true);
+      setIsBillingLoading(true);
+    }
+
+    try {
+      console.log('🌐 Memulai fetch home data dari API...');
+      const apiStartTime = Date.now();
+
+      // Ambil semua data dalam satu request
+      const homeData = await getHomeData();
+      const apiLoadTime = Date.now() - apiStartTime;
+      console.log(`✅ API loading selesai dalam ${apiLoadTime}ms`);
+
+      // Simpan ke cache dengan timestamp
+      const cacheSaveStartTime = Date.now();
+      const optimizedData = optimizeDataForCache(homeData);
+
+      // Debug: Lihat ukuran data yang dioptimasi
+      const optimizedDataString = JSON.stringify(optimizedData);
+      console.log(
+        `📊 Optimized data size: ${optimizedDataString.length} characters`,
+      );
+      console.log(
+        `📊 Original data size: ${JSON.stringify(homeData).length} characters`,
+      );
+      console.log(
+        `📊 Size reduction: ${Math.round(
+          (1 - optimizedDataString.length / JSON.stringify(homeData).length) *
+            100,
+        )}%`,
+      );
+
+      // Bersihkan cache lama terlebih dahulu
+      await clearOldCache();
+
+      // Gunakan multiSet untuk menyimpan data dan timestamp sekaligus
+      await AsyncStorage.multiSet([
+        ['homeData', optimizedDataString],
+        ['homeDataTimestamp', Date.now().toString()],
+      ]);
+      const cacheSaveTime = Date.now() - cacheSaveStartTime;
+      console.log(`💾 Cache save time: ${cacheSaveTime}ms`);
+
+      // Set user data
+      if (homeData.client) {
+        setUserData(homeData.client);
+        // Simpan ke AsyncStorage untuk konsistensi
+        await AsyncStorage.setItem('userData', JSON.stringify(homeData.client));
+      }
+
+      // Set domain status
+      setDomainStatus(homeData.domain_status || '-');
+
+      // Set payment history
+      if (homeData.payment_history && homeData.payment_history.length > 0) {
+        _setPaymentHistory(homeData.payment_history);
+      } else {
+        _setPaymentHistory([]);
+      }
+
+      // Proses invoice data untuk billing period
+      if (homeData.invoices && homeData.invoices.length > 0) {
+        // Filter untuk mendapatkan invoice yang belum dibayar (Unpaid)
+        const unpaidInvoices = homeData.invoices.filter(
+          (invoice: any) =>
+            invoice.status === 'Unpaid' || invoice.status === 'Belum Dibayar',
+        );
+        console.log('Unpaid invoices:', unpaidInvoices?.length || 0);
+
+        // Get most recent unpaid invoice
+        if (unpaidInvoices && unpaidInvoices.length > 0) {
+          const latestUnpaidInvoice = unpaidInvoices[0]; // Ambil yang paling baru
+          console.log(
+            'Latest unpaid invoice:',
+            latestUnpaidInvoice?.id || 'no-id',
+          );
+
+          // Extract date and duedate from the invoice
+          if (latestUnpaidInvoice.date && latestUnpaidInvoice.duedate) {
+            console.log(
+              'Setting billing period dengan total:',
+              latestUnpaidInvoice.total,
+            );
+            setBillingPeriod({
+              startDate: new Date(latestUnpaidInvoice.date),
+              dueDate: new Date(latestUnpaidInvoice.duedate),
+              amount: latestUnpaidInvoice.total || 0,
+            });
+          }
+        } else if (homeData.invoices && homeData.invoices.length > 0) {
+          // Jika tidak ada unpaid invoice, gunakan invoice paling baru sebagai fallback
+          // tetapi tandai bahwa tidak ada yang perlu dibayar
+          const latestInvoice = homeData.invoices[0];
+          console.log('No unpaid invoice, using latest invoice as fallback');
+
+          if (latestInvoice.date && latestInvoice.duedate) {
+            setBillingPeriod({
+              startDate: new Date(latestInvoice.date),
+              dueDate: new Date(latestInvoice.duedate),
+              amount: 0, // Tandai tidak ada yang perlu dibayar
+            });
+          }
         }
       } else {
         // Tidak ada invoice sama sekali
         console.log('No invoices at all, setting default billing period');
         setBillingPeriod({
           startDate: new Date(),
-          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          dueDate: new Date(Date.now() + 14 * 60 * 60 * 1000),
           amount: 0,
         });
       }
 
-      // Mengambil data riwayat pembayaran
-      const payments = await getPaymentHistory();
-      if (payments && payments.length > 0) {
-        _setPaymentHistory(payments);
-      } else {
-        // Jangan gunakan fallback data, biarkan array kosong
-        _setPaymentHistory([]);
-      }
+      const totalTime = Date.now() - startTime;
+      console.log(
+        `🎉 Total loading time: ${totalTime}ms (API: ${apiLoadTime}ms, Cache Save: ${cacheSaveTime}ms, Processing: ${
+          totalTime - apiLoadTime - cacheSaveTime
+        }ms)`,
+      );
     } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err instanceof Error ? err.message : 'Gagal memuat data');
+      const errorTime = Date.now() - startTime;
+      console.error(`❌ Error fetching home data dalam ${errorTime}ms:`, err);
+      if (!silent) {
+        setError(err instanceof Error ? err.message : 'Gagal memuat data');
+      }
       // Jika error, set billing amount ke 0 untuk menunjukkan tidak ada tagihan
       setBillingPeriod(prev => ({...prev, amount: 0}));
       throw err; // Re-throw error untuk ditangkap di fungsi pemanggil
     } finally {
-      setIsBillingLoading(false); // Selesai loading billing period
+      if (!silent) {
+        setIsLoading(false);
+        setIsBillingLoading(false);
+      }
     }
   };
 
-  const fetchDomainStatus = useCallback(async () => {
-    try {
-      if (userData?.id) {
-        console.log('Fetching domain status for user ID:', userData.id);
-        const status = await getDomainStatus(userData.id.toString());
-        console.log('Domain status received:', status);
-        setDomainStatus(status);
-      }
-    } catch (err) {
-      console.error('Error fetching domain status:', err);
-      setDomainStatus('-');
-    }
-  }, [userData?.id]);
+  // Hapus fungsi fetchInvoiceData dan fetchDomainStatus karena sudah digabung
 
   useEffect(() => {
     // Fungsi untuk menangani fetch data saat pertama kali komponen load
     const fetchInitialData = async () => {
-      setIsLoading(true);
-      setIsBillingLoading(true); // Set loading billing period
+      const startTime = Date.now();
+      console.log('🚀 Initial load dimulai...');
+
       try {
-        await fetchUserData();
-        await fetchInvoiceData();
-        await fetchDomainStatus();
+        await fetchHomeData();
+        const loadTime = Date.now() - startTime;
+        console.log(`✅ Initial load selesai dalam ${loadTime}ms`);
       } catch (err: any) {
-        console.error('Error loading initial data:', err);
+        const errorTime = Date.now() - startTime;
+        console.error(
+          `❌ Error loading initial data dalam ${errorTime}ms:`,
+          err,
+        );
         setError(err instanceof Error ? err.message : 'Gagal memuat data');
-      } finally {
-        setIsLoading(false);
-        setIsBillingLoading(false); // Selesai loading billing period
       }
     };
 
     fetchInitialData();
-  }, [fetchDomainStatus]);
+  }, []);
+
+  // Auto refresh cache setiap 5 menit di background
+  useEffect(() => {
+    const autoRefreshInterval = setInterval(async () => {
+      try {
+        const startTime = Date.now();
+        console.log('🔄 Auto refresh cache di background...');
+        await fetchHomeData(true, true); // Force refresh dengan silent mode
+        const refreshTime = Date.now() - startTime;
+        console.log(`✅ Auto refresh selesai dalam ${refreshTime}ms`);
+      } catch (err) {
+        console.log('❌ Error auto refresh:', err);
+      }
+    }, 300000); // 5 menit
+
+    return () => clearInterval(autoRefreshInterval);
+  }, []);
+
+  // Refresh cache saat aplikasi kembali ke foreground
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        // Aplikasi kembali ke foreground, cek apakah cache perlu diperbarui
+        const checkAndRefreshCache = async () => {
+          try {
+            const cachedTimestamp = await AsyncStorage.getItem(
+              'homeDataTimestamp',
+            );
+            if (cachedTimestamp) {
+              const timestamp = parseInt(cachedTimestamp);
+              const now = Date.now();
+
+              // Jika cache lebih dari 5 menit, refresh di background
+              if (now - timestamp >= 300000) {
+                console.log('Cache expired, refreshing in background...');
+                await fetchHomeData(true, true);
+              }
+            }
+          } catch (error) {
+            console.log('Error checking cache on app state change:', error);
+          }
+        };
+
+        checkAndRefreshCache();
+      }
+    };
+
+    const subscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
+    return () => subscription?.remove();
+  }, []);
 
   // Format tanggal untuk tampilan
   const formatDate = (date: Date) => {
@@ -300,20 +566,19 @@ const HomeScreen = ({
   };
 
   const onRefresh = async () => {
+    const startTime = Date.now();
     setRefreshing(true);
-    setIsLoading(true);
-    setIsBillingLoading(true);
 
     try {
-      await fetchUserData();
-      await fetchInvoiceData();
-      await fetchDomainStatus();
+      console.log('🔄 Pull-to-refresh dimulai...');
+      await fetchHomeData(true); // Force refresh untuk mendapatkan data terbaru
+      const refreshTime = Date.now() - startTime;
+      console.log(`✅ Pull-to-refresh selesai dalam ${refreshTime}ms`);
     } catch (err: any) {
-      console.error('Error saat refresh:', err);
+      const errorTime = Date.now() - startTime;
+      console.error(`❌ Error saat refresh dalam ${errorTime}ms:`, err);
       setError(err instanceof Error ? err.message : 'Gagal memuat data');
     } finally {
-      setIsLoading(false);
-      setIsBillingLoading(false);
       setRefreshing(false);
     }
   };
@@ -444,7 +709,21 @@ const HomeScreen = ({
   // Tambahkan state untuk logout modal
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleLogout = () => {
+  // Fungsi untuk membersihkan cache
+  const clearCache = async () => {
+    try {
+      await AsyncStorage.removeItem('homeData');
+      await AsyncStorage.removeItem('homeDataTimestamp');
+      await AsyncStorage.removeItem('userData');
+      console.log('Cache berhasil dibersihkan');
+    } catch (error) {
+      console.log('Error clearing cache:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    // Bersihkan cache sebelum logout
+    await clearCache();
     // Implementasi log out
     onLogout();
   };
@@ -474,7 +753,7 @@ const HomeScreen = ({
               onLogout();
             } else {
               // Jika bukan error autentikasi, coba muat ulang data
-              fetchInvoiceData();
+              fetchHomeData();
             }
           }}>
           <Text style={styles.retryButtonText}>
