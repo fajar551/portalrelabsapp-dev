@@ -28,12 +28,7 @@ import ResetPasswordScreen from './app/screens/ResetPasswordScreen';
 import SplashScreen from './app/screens/SplashScreen';
 import TicketDetailScreen from './app/screens/TicketDetailScreen';
 import VerifyCodeScreen from './app/screens/VerifyCodeScreen';
-import {
-  checkLoginStatus,
-  getFCMToken,
-  isTokenExpired,
-  logoutUser,
-} from './src/services/api';
+import {checkLoginStatus, getFCMToken, logoutUser} from './src/services/api';
 
 // Type untuk props yang diteruskan ke screens
 interface ScreenProps {
@@ -192,9 +187,11 @@ export default function App() {
   // Periksa token expired setiap interval
   useEffect(() => {
     const checkSession = async () => {
+      // Token sekarang seumur hidup, tidak perlu cek expiry
+      // Hanya cek apakah user masih login
       if (isLoggedIn) {
-        const expired = await isTokenExpired();
-        if (expired) {
+        const loggedIn = await checkLoginStatus();
+        if (!loggedIn) {
           setSessionExpired(true);
         }
       }
@@ -212,16 +209,10 @@ export default function App() {
       try {
         const loggedIn = await checkLoginStatus();
 
-        // Jika logged in, cek juga apakah token sudah expired
+        // Token sekarang seumur hidup, tidak perlu cek expiry
         if (loggedIn) {
-          const expired = await isTokenExpired();
-          if (expired) {
-            await logoutUser(); // Logout jika token sudah expired
-            setIsLoggedIn(false);
-          } else {
-            setIsLoggedIn(true);
-            setCurrentScreen('Home'); // Selalu ke Home saat memulai aplikasi
-          }
+          setIsLoggedIn(true);
+          setCurrentScreen('Home'); // Selalu ke Home saat memulai aplikasi
         } else {
           setIsLoggedIn(false);
         }

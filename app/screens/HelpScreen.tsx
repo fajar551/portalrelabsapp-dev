@@ -27,7 +27,6 @@ const HelpScreen = ({
 
   // State untuk tiket
   const [tickets, setTickets] = useState<any[]>([]);
-  const [loadingTickets, setLoadingTickets] = useState(true);
   const [errorTickets, setErrorTickets] = useState('');
   const [scrollingToTickets, setScrollingToTickets] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -103,12 +102,10 @@ const HelpScreen = ({
       if (isPullRefresh) {
         setRefreshing(true);
       }
-      setLoadingTickets(true);
       setErrorTickets('');
       const userDataStr = await AsyncStorage.getItem('userData');
       if (!userDataStr) {
         setErrorTickets('User belum login');
-        setLoadingTickets(false);
         setRefreshing(false);
         return;
       }
@@ -120,7 +117,6 @@ const HelpScreen = ({
     } catch (err: any) {
       setErrorTickets(err.message || 'Gagal memuat tiket');
     } finally {
-      setLoadingTickets(false);
       setRefreshing(false);
     }
   };
@@ -165,35 +161,45 @@ const HelpScreen = ({
           />
         }>
         <View style={styles.topCardContainer}>
-          <View style={styles.topCard}>
-            <Text style={styles.topCardTitle}>Buat Tiket Baru</Text>
-            <View style={styles.illustrationContainer}>
-              <Image
-                source={{
-                  uri: 'https://portal.relabs.id/mobile/img/helps.png',
-                }}
-                style={styles.illustrationImage}
-                resizeMode="contain"
-              />
+          {refreshing ? (
+            <View style={styles.skeletonTopCard}>
+              <View style={styles.skeletonTopCardTitle} />
+              <View style={styles.skeletonTopCardImage} />
+              <View style={styles.skeletonTopCardText} />
+              <View style={styles.skeletonTopCardText} />
+              <View style={styles.skeletonTopCardText} />
             </View>
-            <Text style={styles.topCardSubtitle2}>
-              Jika Anda tidak dapat menemukan solusi untuk masalah Anda, Anda
-              dapat mengajukan tiket dengan memilih departemen yang sesuai di
-              bawah ini.
-            </Text>
-          </View>
+          ) : (
+            <View style={styles.topCard}>
+              <Text style={styles.topCardTitle}>Buat Tiket Baru</Text>
+              <View style={styles.illustrationContainer}>
+                <Image
+                  source={{
+                    uri: 'https://portal.relabs.id/mobile/img/helps.png',
+                  }}
+                  style={styles.illustrationImage}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.topCardSubtitle2}>
+                Jika Anda tidak dapat menemukan solusi untuk masalah Anda, Anda
+                dapat mengajukan tiket dengan memilih departemen yang sesuai di
+                bawah ini.
+              </Text>
+            </View>
+          )}
         </View>
         {/* Tombol Lihat Daftar Ticket Anda */}
-        {(tickets.length > 0 || loadingTickets) && (
+        {(tickets.length > 0 || refreshing) && (
           <TouchableOpacity
             style={styles.seeTicketsBtn}
             onPress={scrollToTickets}
             activeOpacity={0.7}
-            disabled={scrollingToTickets || loadingTickets}>
+            disabled={scrollingToTickets || refreshing}>
             <Text style={styles.seeTicketsText}>
-              {loadingTickets ? 'Loading ...' : 'Lihat Daftar Ticket Anda'}
+              {refreshing ? 'Loading ...' : 'Lihat Daftar Ticket Anda'}
             </Text>
-            {loadingTickets ? (
+            {refreshing ? (
               <ActivityIndicator
                 size="small"
                 color="#F26522"
@@ -213,42 +219,68 @@ const HelpScreen = ({
         {/* Department List di luar card */}
         <View style={styles.departmentList}>
           <Text style={styles.settingTitle}>Pilih Departemen</Text>
-          {departments.map((dept, idx) => (
-            <TouchableOpacity
-              key={idx}
-              style={styles.settingMenuCard}
-              activeOpacity={0.7}
-              onPress={() => handleDepartmentPress(dept.id)}>
-              <View style={styles.settingIconWrap}>
-                {dept.icon.type === 'MaterialIcons' ? (
-                  <Icon name={dept.icon.name} size={26} color="#F26522" />
-                ) : (
-                  <Icon2 name={dept.icon.name} size={26} color="#F26522" />
-                )}
-              </View>
-              <View style={styles.settingTextWrap}>
-                <Text style={styles.settingMenuText}>{dept.title}</Text>
-                {!!dept.subtitle && (
-                  <Text style={styles.settingMenuSubtitle}>
-                    {dept.subtitle}
-                  </Text>
-                )}
-              </View>
-              <Icon
-                name="chevron-right"
-                size={24}
-                color="#F26522"
-                style={styles.settingChevronIcon}
-              />
-            </TouchableOpacity>
-          ))}
+          {refreshing ? (
+            <View style={styles.skeletonDepartmentContainer}>
+              {[1, 2, 3].map((_, index) => (
+                <View key={index} style={styles.skeletonDepartmentCard}>
+                  <View style={styles.skeletonDepartmentIcon} />
+                  <View style={styles.skeletonDepartmentContent}>
+                    <View style={styles.skeletonDepartmentTitle} />
+                    <View style={styles.skeletonDepartmentSubtitle} />
+                  </View>
+                  <View style={styles.skeletonDepartmentChevron} />
+                </View>
+              ))}
+            </View>
+          ) : (
+            departments.map((dept, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.settingMenuCard}
+                activeOpacity={0.7}
+                onPress={() => handleDepartmentPress(dept.id)}>
+                <View style={styles.settingIconWrap}>
+                  {dept.icon.type === 'MaterialIcons' ? (
+                    <Icon name={dept.icon.name} size={26} color="#F26522" />
+                  ) : (
+                    <Icon2 name={dept.icon.name} size={26} color="#F26522" />
+                  )}
+                </View>
+                <View style={styles.settingTextWrap}>
+                  <Text style={styles.settingMenuText}>{dept.title}</Text>
+                  {!!dept.subtitle && (
+                    <Text style={styles.settingMenuSubtitle}>
+                      {dept.subtitle}
+                    </Text>
+                  )}
+                </View>
+                <Icon
+                  name="chevron-right"
+                  size={24}
+                  color="#F26522"
+                  style={styles.settingChevronIcon}
+                />
+              </TouchableOpacity>
+            ))
+          )}
         </View>
         {/* List Ticket */}
         <View style={styles.ticketSection}>
           <Text style={styles.ticketTitle}>Daftar Tiket Anda</Text>
-          {loadingTickets ? (
-            <View style={styles.ticketCard}>
-              <Text style={styles.ticketLoading}>Memuat tiket...</Text>
+          {refreshing ? (
+            <View style={styles.skeletonTicketContainer}>
+              {[1, 2, 3].map((_, index) => (
+                <View key={index} style={styles.skeletonTicketCard}>
+                  <View style={styles.skeletonTicketRow}>
+                    <View style={styles.skeletonTicketContent}>
+                      <View style={styles.skeletonText} />
+                      <View style={styles.skeletonText} />
+                      <View style={styles.skeletonText} />
+                    </View>
+                    <View style={styles.skeletonChevron} />
+                  </View>
+                </View>
+              ))}
             </View>
           ) : errorTickets ? (
             <Text style={styles.ticketError}>{errorTickets}</Text>
@@ -608,6 +640,116 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
     marginRight: 6,
+  },
+  skeletonTicketContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  skeletonTicketCard: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  skeletonTicketRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  skeletonTicketContent: {
+    flex: 1,
+    marginRight: 10,
+  },
+  skeletonText: {
+    height: 16,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  skeletonChevron: {
+    width: 26,
+    height: 26,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 13,
+  },
+  skeletonTopCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  skeletonTopCardTitle: {
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  skeletonTopCardImage: {
+    width: 100,
+    height: 100,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 50,
+    marginBottom: 10,
+  },
+  skeletonTopCardText: {
+    height: 14,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  skeletonDepartmentContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  skeletonDepartmentCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 22,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  skeletonDepartmentIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#e0e0e0',
+    marginRight: 18,
+  },
+  skeletonDepartmentContent: {
+    flex: 1,
+  },
+  skeletonDepartmentTitle: {
+    height: 16,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  skeletonDepartmentSubtitle: {
+    height: 14,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+  },
+  skeletonDepartmentChevron: {
+    width: 26,
+    height: 26,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 13,
   },
 });
 

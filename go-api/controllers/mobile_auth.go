@@ -72,7 +72,7 @@ func (c *MobileAuthController) Login(ctx *gin.Context) {
 
     // Generate token sederhana (setara dengan Str::random(60))
     token := generateRandomToken(60)
-    expiresAt := time.Now().Add(15 * time.Minute)
+    expiresAt := time.Now().AddDate(100, 0, 0) // 100 tahun ke depan (forever)
 
     // Simpan token di tabel api_tokens
     c.db.Exec(`

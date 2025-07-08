@@ -15,14 +15,16 @@ const CONFIG = {
 
 // Konstanta untuk kunci storage (sama dengan yang ada di LoginScreen)
 const STORAGE_KEYS = {
-  REMEMBER_ME: 'remember_me',
-  USER_IDENTIFIER: 'user_identifier',
-  USER_PASSWORD: 'user_password',
-  AUTH_TOKEN: 'auth_token', // Untuk menyimpan token autentikasi
-  CLIENT_ID: 'client_id',
+  AUTH_TOKEN: 'authToken',
+  CLIENT_ID: 'clientId',
   USER_TOKEN: 'userToken',
-  TOKEN_EXPIRES_AT: 'tokenExpiresAt',
   USER_DATA: 'userData',
+  USER_IDENTIFIER: 'userIdentifier',
+  USER_PASSWORD: 'userPassword',
+  REMEMBER_ME: 'rememberMe',
+  FCM_TOKEN: 'fcmToken',
+  CACHE_DATA: 'cacheData',
+  CACHE_TIMESTAMP: 'cacheTimestamp',
 };
 
 // Definisi SessionManager untuk mengelola token
@@ -80,16 +82,8 @@ export const isTokenExpired = async (): Promise<boolean> => {
     const token = await SessionManager.getToken();
     if (!token) { return true; } // Jika token tidak ada, anggap expired
 
-    // Periksa expiresAt seperti pada api.js
-    const expiresAtString = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
-    if (!expiresAtString) {
-      return true; // Jika tidak ada expires_at, anggap sudah expired
-    }
-
-    const expiresAt = new Date(expiresAtString);
-    const now = new Date();
-
-    return now >= expiresAt;
+    // Token sekarang seumur hidup, tidak perlu cek expiry
+    return false; // Token tidak pernah expired
   } catch (error) {
     console.error('Error checking token expiration:', error);
     return true; // Jika ada error, anggap token expired
@@ -146,17 +140,16 @@ export const loginUser = async (identifier: string, password: string, device_nam
 
     const data = await response.json();
 
-    // Jika login berhasil, simpan token dan expires_at di AsyncStorage
+    // Jika login berhasil, simpan token (seumur hidup)
     if (data.status === 'success' && data.data?.token) {
       // Simpan token ke SessionManager
       await SessionManager.setToken(data.data.token);
 
-      // Simpan waktu kedaluwarsa token seperti pada api.js
-      if (data.data?.expires_at) {
-        await AsyncStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRES_AT, data.data.expires_at);
-      }
+      // Token sekarang seumur hidup, tidak perlu expires_at
+      // Hapus expires_at jika ada
+      await AsyncStorage.removeItem('tokenExpiresAt');
 
-      // Simpan juga data client
+      // Simpan data client
       if (data.data?.client) {
         await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.data.client));
       }
@@ -192,7 +185,6 @@ export const logoutUser = async (): Promise<boolean> => {
       STORAGE_KEYS.CLIENT_ID,
       STORAGE_KEYS.USER_TOKEN,
       STORAGE_KEYS.USER_DATA,
-      STORAGE_KEYS.TOKEN_EXPIRES_AT,
     ]);
 
     return true;

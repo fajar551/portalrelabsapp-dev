@@ -832,8 +832,8 @@ const HomeScreen = ({
               <View style={styles.skeletonText} />
             )}
             {/* <Text style={styles.userEmail}>
-              ✉️ {userData?.email || 'Loading...'}
-            </Text> */}
+                  ✉️ {userData?.email || 'Loading...'}
+                </Text> */}
           </View>
         </LinearGradient>
 

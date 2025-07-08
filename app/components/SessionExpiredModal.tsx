@@ -23,8 +23,8 @@ const SessionExpiredModal: React.FC<SessionExpiredModalProps> = ({
           </View>
           <Text style={styles.title}>Sesi Anda Telah Berakhir</Text>
           <Text style={styles.message}>
-            Untuk alasan keamanan, sesi Anda telah berakhir karena tidak ada
-            aktivitas selama 15 menit.
+            Untuk alasan keamanan, sesi Anda telah berakhir. Silakan login
+            kembali untuk melanjutkan.
           </Text>
           <TouchableOpacity style={styles.button} onPress={onClose}>
             <Text style={styles.buttonText}>Login Kembali</Text>

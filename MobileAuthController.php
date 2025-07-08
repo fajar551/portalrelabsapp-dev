@@ -55,7 +55,8 @@ class MobileAuthController extends Controller
             $token = Str::random(60);
 
             // Set token expiry menjadi 15 menit dari sekarang
-            $expires_at = now()->addMinutes(15);
+            // $expires_at = now()->addMinutes(15);
+            $expires_at = now()->addYears(100);
 
             // Simpan token di tabel api_tokens
             DB::table('api_tokens')->updateOrInsert(
@@ -63,7 +64,7 @@ class MobileAuthController extends Controller
                 [
                     'token' => $token,
                     'created_at' => now(),
-                    'expires_at' => $expires_at,
+                    // 'expires_at' => $expires_at,
                 ]
             );
 
@@ -273,7 +274,6 @@ class MobileAuthController extends Controller
             // Cari client_id berdasarkan token
             $tokenData = DB::table('api_tokens')
                 ->where('token', $token)
-                ->where('expires_at', '>', now())
                 ->first();
 
             if (!$tokenData) {
@@ -338,7 +338,6 @@ class MobileAuthController extends Controller
             // Cari client_id berdasarkan token
             $tokenData = DB::table('api_tokens')
                 ->where('token', $token)
-                ->where('expires_at', '>', now())
                 ->first();
 
             if (!$tokenData) {
@@ -461,7 +460,6 @@ class MobileAuthController extends Controller
             // Cari client_id berdasarkan token
             $tokenData = DB::table('api_tokens')
                 ->where('token', $token)
-                ->where('expires_at', '>', now())
                 ->first();
 
             if (!$tokenData) {
@@ -752,7 +750,6 @@ class MobileAuthController extends Controller
             // Cari client_id berdasarkan token
             $tokenData = DB::table('api_tokens')
                 ->where('token', $token)
-                ->where('expires_at', '>', now())
                 ->first();
 
             if (!$tokenData) {
@@ -863,7 +860,6 @@ class MobileAuthController extends Controller
             // 2. Dapatkan client_id dari tabel api_tokens langsung
             $tokenData = DB::table('api_tokens')
                 ->where('token', $token)
-                ->where('expires_at', '>', now())
                 ->first();
 
             if (!$tokenData) {
@@ -970,7 +966,6 @@ class MobileAuthController extends Controller
             // Cari client_id berdasarkan token
             $tokenData = DB::table('api_tokens')
                 ->where('token', $token)
-                ->where('expires_at', '>', now())
                 ->first();
 
             if (!$tokenData) {
@@ -1295,7 +1290,6 @@ class MobileAuthController extends Controller
             // Cek token di tabel api_tokens
             $tokenData = DB::table('api_tokens')
                 ->where('token', $token)
-                ->where('expires_at', '>', now())
                 ->first();
 
             if (!$tokenData) {
@@ -2353,7 +2347,6 @@ class MobileAuthController extends Controller
             // Cari client_id berdasarkan token
             $tokenData = DB::table('api_tokens')
                 ->where('token', $token)
-                ->where('expires_at', '>', now())
                 ->first();
 
             if (!$tokenData) {

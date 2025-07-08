@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Picker} from '@react-native-picker/picker';
 import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
   Animated,
   FlatList,
+  Linking,
   Modal,
   RefreshControl,
   SafeAreaView,
@@ -107,10 +109,13 @@ const PayScreen = ({
       status: string;
       datepaid?: string;
       paymentmethod?: string;
+      duedate?: string; // Added duedate field
     }>
   >([]);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [filterMonthYear, setFilterMonthYear] = useState<string>('');
+  const [monthYearOptions, setMonthYearOptions] = useState<string[]>([]);
 
   const insets = useSafeAreaInsets();
 
@@ -178,7 +183,43 @@ const PayScreen = ({
       // Mengambil data riwayat pembayaran
       const payments = await getPaymentHistory();
       if (payments && payments.length > 0) {
-        setPaymentHistory(payments);
+        // Mapping invoiceId ke duedate
+        const invoiceMap: Record<string, string> = {};
+        invoices.forEach((inv: any) => {
+          if (inv.id) {
+            invoiceMap[inv.id] = inv.duedate;
+          }
+          if (inv.invoicenum) {
+            invoiceMap[inv.invoicenum] = inv.duedate;
+          }
+        });
+
+        console.log('=== PAYMENT MAPPING DEBUG ===');
+        console.log('Invoice map:', invoiceMap);
+        console.log('Original payments:', payments);
+
+        // Tambahkan duedate ke setiap payment
+        const paymentsWithDue = payments.map((p: any) => {
+          const mappedDue =
+            invoiceMap[p.id] || invoiceMap[p.invoicenum] || null;
+          console.log('Payment mapping:', {
+            paymentId: p.id,
+            paymentInvoicenum: p.invoicenum,
+            mappedDue: mappedDue,
+            invoiceMapId: invoiceMap[p.id],
+            invoiceMapInvoicenum: invoiceMap[p.invoicenum],
+          });
+
+          return {
+            ...p,
+            duedate: mappedDue,
+          };
+        });
+
+        console.log('Payments with duedate:', paymentsWithDue);
+        console.log('=== END PAYMENT MAPPING ===');
+
+        setPaymentHistory(paymentsWithDue);
       } else {
         // Jangan gunakan fallback data, biarkan array kosong
         setPaymentHistory([]);
@@ -288,6 +329,67 @@ const PayScreen = ({
     navigateTo('InvoiceDetail');
   };
 
+  // Fungsi untuk export PDF invoice berdasarkan ID
+  const exportPDFInvoice = async (invoiceId: number | string) => {
+    try {
+      // Ambil token dari AsyncStorage
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        Alert.alert('Error', 'Token tidak ditemukan. Silakan login kembali.');
+        return;
+      }
+
+      // Buat URL dengan token autentikasi
+      const pdfUrl = `https://portal.relabs.id/dl.php?type=i&id=${invoiceId}&token=${token}`;
+
+      console.log('Exporting PDF with URL:', pdfUrl);
+
+      // Coba buka URL dengan berbagai metode
+      const supported = await Linking.canOpenURL(pdfUrl);
+      if (supported) {
+        await Linking.openURL(pdfUrl);
+      } else {
+        // Jika tidak bisa dibuka langsung, coba dengan http/https
+        const httpUrl = pdfUrl.replace('https://', 'http://');
+        const httpSupported = await Linking.canOpenURL(httpUrl);
+        if (httpSupported) {
+          await Linking.openURL(httpUrl);
+        } else {
+          // Fallback: coba download PDF menggunakan fetch
+          try {
+            const response = await fetch(pdfUrl, {
+              method: 'GET',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/pdf',
+              },
+            });
+
+            if (response.ok) {
+              // Jika berhasil, buka dengan Linking lagi
+              await Linking.openURL(pdfUrl);
+            } else {
+              throw new Error('PDF tidak dapat diakses');
+            }
+          } catch (fetchError) {
+            // Fallback terakhir: tampilkan URL untuk copy-paste
+            Alert.alert(
+              'Export PDF',
+              `Silakan copy URL berikut dan buka di browser:\n\n${pdfUrl}`,
+              [{text: 'OK', style: 'cancel'}],
+            );
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error exporting PDF:', err);
+      Alert.alert(
+        'Error',
+        'Gagal mengexport PDF. Silakan coba lagi atau hubungi support.',
+      );
+    }
+  };
+
   // Format tanggal untuk tampilan
   const formatDate = (date: Date) => {
     const day = date.getDate().toString().padStart(2, '0');
@@ -301,7 +403,81 @@ const PayScreen = ({
     try {
       const gateways = await getPaymentGateways();
       if (gateways && gateways.length > 0) {
-        setPaymentGateways(gateways);
+        // Urutkan gateways sesuai prioritas
+        const sortedGateways = gateways.sort(
+          (
+            a: {
+              id: number;
+              name: string;
+              description: string;
+              instructions: string;
+            },
+            b: {
+              id: number;
+              name: string;
+              description: string;
+              instructions: string;
+            },
+          ) => {
+            const priorityOrder = {
+              bri: 1,
+              briva: 1,
+              brivaconventionalpayment: 1,
+              brivaxendit: 1,
+              bca: 2,
+              bcava: 2,
+              bcavaconventionalpayment: 2,
+              bcavaxendit: 2,
+              mandiri: 3,
+              mandiriva: 3,
+              mandirieconventionalpayment: 3,
+              mandirivaxendit: 3,
+              mandiriea: 3,
+              qris: 4,
+              ewallet: 4,
+              gopay: 4,
+              ovo: 4,
+              dana: 4,
+              shopeepay: 4,
+              linkaja: 4,
+              credit: 5,
+              card: 5,
+              visa: 5,
+              mastercard: 5,
+              jcb: 5,
+            };
+
+            const aName = a.name.toLowerCase();
+            const bName = b.name.toLowerCase();
+
+            // Cari prioritas berdasarkan nama gateway
+            let aPriority = 999;
+            let bPriority = 999;
+
+            for (const [key, priority] of Object.entries(priorityOrder)) {
+              if (aName.includes(key)) {
+                aPriority = priority;
+                break;
+              }
+            }
+
+            for (const [key, priority] of Object.entries(priorityOrder)) {
+              if (bName.includes(key)) {
+                bPriority = priority;
+                break;
+              }
+            }
+
+            // Jika prioritas sama, urutkan berdasarkan nama
+            if (aPriority === bPriority) {
+              return aName.localeCompare(bName);
+            }
+
+            return aPriority - bPriority;
+          },
+        );
+
+        setPaymentGateways(sortedGateways);
       } else {
         setPaymentGateways([]);
       }
@@ -322,6 +498,106 @@ const PayScreen = ({
     setRefreshing(true);
     await fetchInvoiceData();
   };
+
+  // Ambil opsi bulan-tahun unik dari duedate invoice
+  useEffect(() => {
+    const fetchMonthYearOptions = async () => {
+      const invoices = await getClientInvoices();
+      console.log('=== INVOICE DATA FOR FILTER ===');
+      console.log('All invoices:', invoices);
+
+      const optionsSet = new Set<string>();
+      invoices.forEach((inv: any) => {
+        if (inv.duedate) {
+          const date = new Date(inv.duedate);
+          const month = date.toLocaleString('id-ID', {month: 'long'});
+          const year = date.getFullYear();
+          const monthYearString = `${month} ${year}`;
+          optionsSet.add(monthYearString);
+
+          console.log('Invoice:', {
+            id: inv.id,
+            invoicenum: inv.invoicenum,
+            duedate: inv.duedate,
+            parsedDate: date,
+            month: month,
+            year: year,
+            monthYearString: monthYearString,
+          });
+        }
+      });
+
+      const options = Array.from(optionsSet).sort((a, b) => {
+        // Sort descending (terbaru di atas)
+        const [ma, ya] = a.split(' ');
+        const [mb, yb] = b.split(' ');
+        if (ya !== yb) {
+          return Number(yb) - Number(ya);
+        }
+        // Urutkan bulan (Jan - Dec)
+        const monthOrder = [
+          'Januari',
+          'Februari',
+          'Maret',
+          'April',
+          'Mei',
+          'Juni',
+          'Juli',
+          'Agustus',
+          'September',
+          'Oktober',
+          'November',
+          'Desember',
+        ];
+        return monthOrder.indexOf(mb) - monthOrder.indexOf(ma);
+      });
+
+      console.log('Generated options:', options);
+      console.log('=== END INVOICE DATA ===');
+
+      setMonthYearOptions(options);
+      setFilterMonthYear(options[0] || '');
+    };
+    fetchMonthYearOptions();
+  }, []);
+
+  // Filter paymentHistory sesuai filterMonthYear
+  const filteredHistory = paymentHistory.filter(payment => {
+    if (!filterMonthYear) {
+      return true;
+    }
+    if (!payment.duedate) {
+      return false;
+    }
+    const date = new Date(payment.duedate);
+    const month = date.toLocaleString('id-ID', {month: 'long'});
+    const year = date.getFullYear();
+    const monthYearString = `${month} ${year}`;
+
+    // Log untuk debugging
+    console.log('Payment:', {
+      id: payment.id,
+      invoicenum: payment.invoicenum,
+      month: payment.month,
+      year: payment.year,
+      duedate: payment.duedate,
+      parsedMonth: month,
+      parsedYear: year,
+      monthYearString: monthYearString,
+      filterMonthYear: filterMonthYear,
+      isMatch: monthYearString === filterMonthYear,
+    });
+
+    return monthYearString === filterMonthYear;
+  });
+
+  // Log semua payment history untuk debugging
+  console.log('=== PAYMENT HISTORY DEBUG ===');
+  console.log('All paymentHistory:', paymentHistory);
+  console.log('Filter month/year:', filterMonthYear);
+  console.log('Month year options:', monthYearOptions);
+  console.log('Filtered history:', filteredHistory);
+  console.log('=== END DEBUG ===');
 
   // Jika terjadi error, tampilkan pesan dan tombol retry
   if (error) {
@@ -504,57 +780,75 @@ const PayScreen = ({
           </Text>
         </View>
 
-        {/* Last Payment Section */}
-        <View style={[styles.lastPaymentContainer]}>
-          <Text style={styles.lastPaymentTitle}>Pembayaran Terakhir</Text>
-
-          {/* Payment History List */}
-          {paymentHistory.length > 0 ? (
-            paymentHistory.map((payment, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.paymentItem}
-                onPress={() => showPaymentDetail(payment)}>
-                <View style={styles.paymentInfo}>
-                  <Text style={styles.paymentPeriod}>
-                    {payment.month} {payment.year}
-                  </Text>
-                  <View style={styles.paymentStatusBadge}>
-                    <Text style={styles.paymentStatusBadgeText}>
-                      {payment.status}
-                    </Text>
-                  </View>
+        {/* Filter Dropdown */}
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={filterMonthYear}
+            onValueChange={setFilterMonthYear}
+            style={styles.pickerStyle}
+            itemStyle={styles.pickerItemStyle}>
+            {monthYearOptions.map(opt => (
+              <Picker.Item key={opt} label={`   ${opt}   `} value={opt} />
+            ))}
+          </Picker>
+        </View>
+        {/* Payment History List */}
+        {refreshing ? (
+          <View style={styles.skeletonPaymentContainer}>
+            {[1, 2, 3].map((_, index) => (
+              <View key={index} style={styles.skeletonPaymentItem}>
+                <View style={styles.skeletonPaymentInfo}>
+                  <View style={styles.skeletonText} />
+                  <View style={styles.skeletonBadge} />
                 </View>
-                <View style={styles.paymentAmount}>
+                <View style={styles.skeletonPaymentAmount}>
+                  <View style={styles.skeletonText} />
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : filteredHistory.length > 0 ? (
+          filteredHistory.map((payment, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.paymentItem}
+              onPress={() => showPaymentDetail(payment)}>
+              <View style={styles.paymentInfo}>
+                <Text style={styles.paymentPeriod}>
+                  {payment.month} {payment.year}
+                </Text>
+                <View style={styles.paymentStatusBadge}>
+                  <Text style={styles.paymentStatusBadgeText}>
+                    {payment.status}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.paymentAmount}>
+                <View style={styles.paymentAmountColumn}>
                   <Text style={styles.paymentAmountText}>
                     {formatRupiah(payment.amount)}
                   </Text>
-                  <Text style={styles.arrowIcon}>›</Text>
+                  <TouchableOpacity
+                    style={styles.exportButton}
+                    onPress={() =>
+                      exportPDFInvoice(payment.id || payment.invoicenum || '')
+                    }>
+                    <Text style={styles.exportButtonText}>
+                      Download Invoice
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
-            ))
-          ) : paymentHistory.length === 0 && !refreshing ? (
-            <View style={styles.noPaymentHistoryContainer}>
-              <Text style={styles.noPaymentHistoryText}>
-                Belum ada riwayat pembayaran
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.skeletonPaymentContainer}>
-              {[1, 2, 3].map((_, index) => (
-                <View key={index} style={styles.skeletonPaymentItem}>
-                  <View style={styles.skeletonPaymentInfo}>
-                    <View style={styles.skeletonText} />
-                    <View style={styles.skeletonBadge} />
-                  </View>
-                  <View style={styles.skeletonPaymentAmount}>
-                    <View style={styles.skeletonText} />
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
+                <Text style={styles.arrowIcon}>›</Text>
+              </View>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.noPaymentHistoryContainer}>
+            <Text style={styles.noPaymentHistoryText}>
+              Tidak ada riwayat pembayaran di bulan ini
+            </Text>
+          </View>
+        )}
 
         {/* Tambahkan tombol Detail Invoice */}
         <View style={styles.detailInvoiceContainer}>
@@ -566,7 +860,7 @@ const PayScreen = ({
             </Text>
           </TouchableOpacity>
         </View>
-        <View style={{height: 100 + insets.bottom}} />
+        <View style={[styles.bottomSpacer, {height: 100 + insets.bottom}]} />
       </ScrollView>
 
       <View
@@ -744,7 +1038,7 @@ const PayScreen = ({
               <TouchableOpacity
                 style={styles.shareButton}
                 onPress={() => setModalVisible(false)}>
-                <Text style={styles.shareButtonText}>Kembali</Text>
+                <Text style={styles.shareButtonText}>Back</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -803,7 +1097,7 @@ const PayScreen = ({
                       Tanggal Tagihan
                     </Text>
                     <Text style={styles.billingDetailValue}>
-                      {selectedPayment?.datepaid
+                      {selectedPayment?.datepaid && selectedPayment.datepaid
                         ? new Date(selectedPayment.datepaid).toLocaleDateString(
                             'id-ID',
                             {day: '2-digit', month: 'short', year: 'numeric'},
@@ -854,61 +1148,6 @@ const PayScreen = ({
                       </Text>
                     </View>
                   ))}
-
-                  {/* Pajak dinamis dari API */}
-                  {selectedPayment?.taxes?.map((tax, index) => (
-                    <View key={`tax-${index}`} style={styles.billingDetailRow}>
-                      <Text style={styles.billingDetailLabel}>
-                        {tax.description}
-                      </Text>
-                      <Text style={styles.billingDetailValue}>
-                        Rp {tax.amount.toLocaleString('id-ID')}
-                      </Text>
-                    </View>
-                  ))}
-
-                  {/* Monthly charges dinamis dari API */}
-                  {selectedPayment?.monthly_charges?.map((item, index) => (
-                    <View
-                      key={`monthly-${index}`}
-                      style={styles.billingDetailRow}>
-                      <Text style={styles.billingDetailLabel2}>
-                        {item.description}
-                      </Text>
-                      <Text style={styles.billingDetailValue}>
-                        Rp {item.amount.toLocaleString('id-ID')}
-                      </Text>
-                    </View>
-                  ))}
-
-                  {selectedPayment?.prorated_charges &&
-                    selectedPayment.prorated_charges.length > 0 && (
-                      <View style={styles.billingDetailRow}>
-                        <Text style={styles.billingDetailSectionHeader}>
-                          *PRORATED BILLING AMOUNT*
-                        </Text>
-                        <Text style={styles.billingDetailValue}>
-                          Rp{' '}
-                          {selectedPayment.prorated_charges
-                            .reduce((total, item) => total + item.amount, 0)
-                            .toLocaleString('id-ID')}
-                        </Text>
-                      </View>
-                    )}
-
-                  {/* Prorated charges dinamis dari API */}
-                  {selectedPayment?.prorated_charges?.map((item, index) => (
-                    <View
-                      key={`prorated-${index}`}
-                      style={styles.billingDetailRow}>
-                      <Text style={styles.billingDetailLabel}>
-                        {item.description}
-                      </Text>
-                      <Text style={styles.billingDetailValue}>
-                        Rp {item.amount.toLocaleString('id-ID')}
-                      </Text>
-                    </View>
-                  ))}
                 </View>
 
                 <TouchableOpacity
@@ -943,29 +1182,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     alignItems: 'center',
   },
-  headerIcon: {
-    marginRight: 10,
-  },
-  headerIconText: {
-    fontSize: 24,
-  },
-  personIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#fd7e14',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 7.5,
-  },
-  iconImage: {
-    width: 14,
-    height: 14,
-    tintColor: 'white',
-  },
-  fullWidthContainer: {
-    width: '100%',
-  },
   headerTitle: {
     color: '#f0f0f0',
     fontSize: 20,
@@ -973,39 +1189,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  sectionContainer: {
-    backgroundColor: '#fd7e14',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-  },
-  sectionTitle: {
-    color: '#f0f0f0',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 15,
-  },
-  periodContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  periodDate: {
-    color: '#f0f0f0',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  progressBarContainer: {
-    flex: 1,
-    height: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 6,
-    marginHorizontal: 10,
-  },
-  progressBar: {
-    width: '80%',
-    height: 12,
-    borderRadius: 6,
   },
   paymentStatusContainer: {
     flexDirection: 'row',
@@ -1034,7 +1217,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   lastPaymentContainer: {
-    // backgroundColor: '#ddd',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -1064,6 +1246,7 @@ const styles = StyleSheet.create({
     color: '#22325a',
     fontWeight: 'bold',
     marginBottom: 8,
+    marginLeft: 13,
   },
   paymentStatusBadge: {
     backgroundColor: '#4CD964',
@@ -1071,6 +1254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 5,
     alignSelf: 'flex-start',
+    marginLeft: 12,
   },
   paymentStatusBadgeText: {
     color: 'white',
@@ -1081,17 +1265,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
   paymentAmountText: {
     fontSize: 16,
     color: '#666',
     fontWeight: '500',
-    marginRight: 7,
+    marginBottom: 6,
   },
   arrowIcon: {
     fontSize: 24,
-    marginTop: -5,
-    fontWeight: '500',
     color: '#fd7e14',
+    marginRight: 90,
+    marginLeft: 20,
+    fontWeight: 500,
+    alignSelf: 'center',
+  },
+  arrowContainer: {
+    // justifyContent: 'center',
+    marginRight: 130,
+    // alignItems: 'center',
   },
   bottomNav: {
     flexDirection: 'row',
@@ -1142,9 +1338,6 @@ const styles = StyleSheet.create({
   navText: {
     fontSize: 9,
     color: '#666',
-  },
-  activeNav: {
-    color: '#fd7e14',
   },
   activeNavText: {
     color: '#fd7e14',
@@ -1279,12 +1472,6 @@ const styles = StyleSheet.create({
     color: '#e74c3c',
     textAlign: 'right',
   },
-  billingDetailSectionHeader: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
-  },
   shareButton: {
     backgroundColor: '#ddd',
     padding: 15,
@@ -1371,7 +1558,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     textAlign: 'center',
   },
-  // Payment Gateway Modal styles
   gatewayModalContent: {
     width: '90%',
     maxHeight: '70%',
@@ -1413,10 +1599,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     padding: 10,
-  },
-  gatewayDescription: {
-    fontSize: 14,
-    color: '#666',
   },
   noGatewaysContainer: {
     padding: 20,
@@ -1499,6 +1681,18 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 15,
     alignItems: 'center',
+  },
+  progressBarContainer: {
+    flex: 1,
+    height: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 6,
+    marginHorizontal: 10,
+  },
+  progressBar: {
+    width: '80%',
+    height: 12,
+    borderRadius: 6,
   },
   progressLineContainer: {
     width: '100%',
@@ -1611,6 +1805,38 @@ const styles = StyleSheet.create({
   skeletonPaymentAmount: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  exportButton: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#F26522',
+  },
+  exportButtonText: {
+    fontSize: 10,
+    color: '#F26522',
+    fontWeight: 'bold',
+  },
+  pickerContainer: {
+    marginBottom: 10,
+    marginHorizontal: 10,
+  },
+  pickerStyle: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    textAlign: 'center', // untuk iOS
+  },
+  pickerItemStyle: {
+    textAlign: 'center',
+  },
+  paymentAmountColumn: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    flex: 1,
+  },
+  bottomSpacer: {
+    // hanya sebagai penanda, height akan tetap dinamis
   },
 });
 
