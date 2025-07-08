@@ -868,3 +868,33 @@ export const sendTicketReply = async (tid: number | string, message: string, nam
     throw error;
   }
 };
+
+// Fungsi untuk mendapatkan semua data HomeScreen dalam satu request
+export const getHomeData = async () => {
+  try {
+    const token = await SessionManager.getToken();
+    if (!token) {
+      throw new Error('Token tidak ditemukan. Silakan login kembali.');
+    }
+
+    const response = await fetch(`${CONFIG.API_URL}/mobile/home-data`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal mengambil data home');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error saat mengambil data home:', error);
+    throw error;
+  }
+};

@@ -1,7 +1,6 @@
 import axios from 'axios';
 import React, {useEffect, useState} from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -27,7 +26,6 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Ambil parameter dari deep link
@@ -53,8 +51,6 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
       Alert.alert('Error', 'Password minimal 6 karakter');
       return;
     }
-
-    setIsLoading(true);
 
     try {
       // Ganti dengan URL API Anda
@@ -88,8 +84,6 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
       }
 
       Alert.alert('Error', errorMessage);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -140,15 +134,8 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
               onChangeText={setConfirmPassword}
             />
 
-            <TouchableOpacity
-              style={styles.resetButton}
-              onPress={handleSubmit}
-              disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.resetButtonText}>Reset Password</Text>
-              )}
+            <TouchableOpacity style={styles.resetButton} onPress={handleSubmit}>
+              <Text style={styles.resetButtonText}>Reset Password</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigateToScreen('Login')}>

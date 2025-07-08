@@ -84,7 +84,6 @@ const PayScreen = ({
       instructions: string;
     }>
   >([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isGatewaysLoading, setIsGatewaysLoading] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [error, setError] = useState('');
@@ -132,7 +131,6 @@ const PayScreen = ({
 
   // Fungsi untuk mengambil data invoice
   const fetchInvoiceData = async () => {
-    setIsLoading(true);
     setError('');
     try {
       // Mengambil data invoice untuk billing period
@@ -191,7 +189,6 @@ const PayScreen = ({
       // Jika error, set billing amount ke 0 untuk menunjukkan tidak ada tagihan
       setBillingPeriod(prev => ({...prev, amount: 0}));
     } finally {
-      setIsLoading(false);
       setRefreshing(false);
     }
   };
@@ -541,15 +538,10 @@ const PayScreen = ({
         <View style={styles.detailInvoiceContainer}>
           <TouchableOpacity
             style={styles.detailInvoiceButton}
-            onPress={handleViewInvoiceDetails}
-            disabled={isLoading}>
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.detailInvoiceButtonText}>
-                Lihat Detail Invoice
-              </Text>
-            )}
+            onPress={handleViewInvoiceDetails}>
+            <Text style={styles.detailInvoiceButtonText}>
+              Lihat Detail Invoice
+            </Text>
           </TouchableOpacity>
         </View>
         <View style={{height: 100 + insets.bottom}} />

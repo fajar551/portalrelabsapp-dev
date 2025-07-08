@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useCallback, useEffect, useState} from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Clipboard,
   Dimensions,
@@ -29,7 +28,6 @@ const PaymentInstructionsScreen = ({
   navigateTo: (screen: string) => void;
   onLogout: () => void;
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [_invoiceData, setInvoiceData] = useState<any>(null); // Prefixed with _ to indicate it's not used directly
   const [selectedGateway, setSelectedGateway] = useState<any>(null);
@@ -599,7 +597,6 @@ const PaymentInstructionsScreen = ({
       setError('Gagal memuat data instruksi pembayaran');
       console.error('Error loading payment instructions data:', err);
     } finally {
-      setIsLoading(false);
       setRefreshing(false);
     }
   }, [updatePaymentMethod, redirectToWebInvoice]);
@@ -957,18 +954,6 @@ const PaymentInstructionsScreen = ({
   //   // untuk mendapatkan CSRF token dari backend.
   //   return 'dummy_csrf_token'; // Ganti dengan logika yang sesuai
   // };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor="#00008B" barStyle="light-content" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#fd7e14" />
-          <Text style={styles.loadingText}>Memuat instruksi pembayaran...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   if (error) {
     return (

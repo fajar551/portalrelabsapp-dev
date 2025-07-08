@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import {
-  ActivityIndicator,
   Image,
   RefreshControl,
   SafeAreaView,
@@ -26,7 +25,6 @@ const AccountScreen = ({
   onLogout: () => void;
 }) => {
   const [clientData, setClientData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -40,7 +38,6 @@ const AccountScreen = ({
       setError(err instanceof Error ? err.message : 'Gagal memuat akun');
       console.error('Error loading akun:', err);
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   };
@@ -54,15 +51,6 @@ const AccountScreen = ({
     setError('');
     await fetchProfile();
   };
-
-  if (loading) {
-    return (
-      <View style={[styles.root, styles.centeredContainer]}>
-        <ActivityIndicator size="large" color="#fd7e14" />
-        <Text style={styles.loadingText}>Memuat akun...</Text>
-      </View>
-    );
-  }
 
   if (error) {
     // Cek apakah error terkait dengan token atau autentikasi
@@ -89,7 +77,6 @@ const AccountScreen = ({
               onLogout();
             } else {
               // Jika bukan error autentikasi, coba lagi seperti biasa
-              setLoading(true);
               setError('');
               fetchProfile();
             }

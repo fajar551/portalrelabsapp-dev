@@ -3,7 +3,6 @@ import CheckBox from '@react-native-community/checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect, useRef, useState} from 'react';
 import {
-  ActivityIndicator,
   Animated,
   // Alert,
   Image,
@@ -41,7 +40,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // State untuk popup
   const [showPassword, setShowPassword] = useState(false); // State untuk menampilkan/menyembunyikan password
@@ -136,13 +134,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
       return;
     }
 
-    setIsLoading(true);
-    setError('');
-
     try {
       // Login ke API
       const response = await loginUser(identifier, password);
-      setIsLoading(false);
 
       if (response && response.status === 'success') {
         console.log('Login berhasil:', response.data.client.name);
@@ -156,7 +150,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
         setError(response.message || 'Terjadi kesalahan saat login');
       }
     } catch (err) {
-      setIsLoading(false);
       console.error('Login error:', err);
       setError(
         err instanceof Error ? err.message : 'Terjadi kesalahan saat login',
@@ -275,15 +268,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleLogin}
-              disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.loginButtonText}>Masuk</Text>
-              )}
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>Masuk</Text>
             </TouchableOpacity>
 
             {/* Client Dropdown untuk Testing */}

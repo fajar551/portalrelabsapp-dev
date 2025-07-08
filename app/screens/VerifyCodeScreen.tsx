@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import React, {useRef, useState} from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -31,7 +30,6 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
   const [code, setCode] = useState(['', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -76,8 +74,6 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
       Alert.alert('Error', 'Password minimal harus 6 karakter');
       return;
     }
-
-    setIsLoading(true);
 
     try {
       // Kirim permintaan reset password ke API
@@ -161,8 +157,6 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
               },
             ],
           );
-        } finally {
-          setIsLoading(false);
         }
       } else {
         Alert.alert('Error', response.data.message || 'Gagal mereset password');
@@ -177,14 +171,10 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
       }
 
       Alert.alert('Error', errorMessage);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleResendCode = async () => {
-    setIsLoading(true);
-
     try {
       // Kirim ulang permintaan kode
       const response = await axios.post(
@@ -215,8 +205,6 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
       }
 
       Alert.alert('Error', errorMessage);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -310,13 +298,8 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
             {/* Submit Button */}
             <TouchableOpacity
               style={styles.submitButton}
-              onPress={handleSubmit}
-              disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.submitButtonText}>Submit</Text>
-              )}
+              onPress={handleSubmit}>
+              <Text style={styles.submitButtonText}>Submit</Text>
             </TouchableOpacity>
           </View>
         </View>

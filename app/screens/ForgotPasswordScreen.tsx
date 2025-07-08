@@ -1,7 +1,6 @@
 import axios from 'axios';
 import React, {useState} from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -24,15 +23,12 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
   // route,
 }) => {
   const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleResetPassword = async () => {
     if (!email || !email.trim()) {
       Alert.alert('Error', 'Masukkan email yang valid');
       return;
     }
-
-    setIsLoading(true);
 
     try {
       // Kirim request forgot password
@@ -42,8 +38,6 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
           email: email,
         },
       );
-
-      setIsLoading(false);
 
       if (response.data.success === true) {
         // Tampilkan konfirmasi sukses, bukan error
@@ -63,7 +57,6 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
         );
       }
     } catch (error: any) {
-      setIsLoading(false);
       let errorMessage =
         'Terjadi kesalahan saat mengirim permintaan reset password.';
 
@@ -95,8 +88,8 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
             />
             <Text style={styles.title}>Mengubah Password</Text>
             <Text style={styles.subtitle}>
-              Silakan masukkan email Anda untuk menerima instruksi untuk
-              mereset password.
+              Silakan masukkan email Anda untuk menerima instruksi untuk mereset
+              password.
             </Text>
 
             <Text style={styles.label}>Email Address</Text>
@@ -112,15 +105,8 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
 
             <TouchableOpacity
               style={styles.resetButton}
-              onPress={handleResetPassword}
-              disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.resetButtonText}>
-                  Send Verification Code
-                </Text>
-              )}
+              onPress={handleResetPassword}>
+              <Text style={styles.resetButtonText}>Send Verification Code</Text>
             </TouchableOpacity>
 
             <Text style={styles.orText}>or</Text>
