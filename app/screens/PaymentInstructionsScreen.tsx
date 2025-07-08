@@ -634,7 +634,25 @@ const PaymentInstructionsScreen = ({
           <Text>Nama Rekening: RELABS NET DAYACIPTA PT{'\n'}</Text>
           {'\n'}
           <Text>Silahkan konfirmasi bukti pembayaran ke{'\n'}</Text>
-          <Text style={styles.fwBold}>0819 9277 1888</Text>
+          <Text
+            style={[styles.fwBold, styles.whatsappLink]}
+            onPress={() => {
+              const phoneNumber = '081992771888';
+              const whatsappUrl = `whatsapp://send?phone=${phoneNumber}`;
+              Linking.canOpenURL(whatsappUrl).then(supported => {
+                if (supported) {
+                  Linking.openURL(whatsappUrl);
+                } else {
+                  // Fallback ke browser jika WhatsApp tidak terinstall
+                  const webWhatsappUrl = `https://api.whatsapp.com/send/?phone=62${phoneNumber.substring(
+                    1,
+                  )}&text&type=phone_number&app_absent=0`;
+                  Linking.openURL(webWhatsappUrl);
+                }
+              });
+            }}>
+            0819 9277 1888
+          </Text>
         </Text>
       );
     }
@@ -1378,7 +1396,32 @@ const PaymentInstructionsScreen = ({
                   <Icon name="payment" size={50} color="#fd7e14" />
                 </View>
               )}
-              <Text style={styles.modalMessage}>{modalMessage}</Text>
+              {modalType === 'bank' ? (
+                <Text style={styles.modalMessage}>
+                  Silahkan konfirmasi bukti pembayaran ke{' '}
+                  <Text
+                    style={[styles.modalMessage, styles.whatsappLink]}
+                    onPress={() => {
+                      const phoneNumber = '081992771888';
+                      const whatsappUrl = `whatsapp://send?phone=${phoneNumber}`;
+                      Linking.canOpenURL(whatsappUrl).then(supported => {
+                        if (supported) {
+                          Linking.openURL(whatsappUrl);
+                        } else {
+                          // Fallback ke browser jika WhatsApp tidak terinstall
+                          const webWhatsappUrl = `https://api.whatsapp.com/send/?phone=62${phoneNumber.substring(
+                            1,
+                          )}&text&type=phone_number&app_absent=0`;
+                          Linking.openURL(webWhatsappUrl);
+                        }
+                      });
+                    }}>
+                    0819 9277 1888
+                  </Text>
+                </Text>
+              ) : (
+                <Text style={styles.modalMessage}>{modalMessage}</Text>
+              )}
             </View>
             <View style={styles.modalButtonContainer}>
               {modalType === 'other' ? (
@@ -1795,6 +1838,10 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     marginTop: 8,
+  },
+  whatsappLink: {
+    color: '#25D366',
+    textDecorationLine: 'underline',
   },
 });
 
