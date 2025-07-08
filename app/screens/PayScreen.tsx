@@ -503,27 +503,21 @@ const PayScreen = ({
   useEffect(() => {
     const fetchMonthYearOptions = async () => {
       const invoices = await getClientInvoices();
-      console.log('=== INVOICE DATA FOR FILTER ===');
-      console.log('All invoices:', invoices);
-
+      // Filter hanya invoice yang statusnya Paid
+      const paidInvoices = invoices.filter(
+        (inv: any) =>
+          inv.status === 'Paid' ||
+          inv.status === 'Lunas' ||
+          inv.status === 'Sudah Dibayar',
+      );
       const optionsSet = new Set<string>();
-      invoices.forEach((inv: any) => {
+      paidInvoices.forEach((inv: any) => {
         if (inv.duedate) {
           const date = new Date(inv.duedate);
           const month = date.toLocaleString('id-ID', {month: 'long'});
           const year = date.getFullYear();
           const monthYearString = `${month} ${year}`;
           optionsSet.add(monthYearString);
-
-          console.log('Invoice:', {
-            id: inv.id,
-            invoicenum: inv.invoicenum,
-            duedate: inv.duedate,
-            parsedDate: date,
-            month: month,
-            year: year,
-            monthYearString: monthYearString,
-          });
         }
       });
 
@@ -551,9 +545,6 @@ const PayScreen = ({
         ];
         return monthOrder.indexOf(mb) - monthOrder.indexOf(ma);
       });
-
-      console.log('Generated options:', options);
-      console.log('=== END INVOICE DATA ===');
 
       setMonthYearOptions(options);
       setFilterMonthYear(options[0] || '');
