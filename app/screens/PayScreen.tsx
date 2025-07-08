@@ -476,11 +476,19 @@ const PayScreen = ({
               </View>
             </View>
           </View>
-        ) : (
+        ) : paymentHistory.length > 0 ? (
           <View style={styles.noBillingContainer}>
             <Text style={styles.noBillingText}>
               Anda belum mempunyai tagihan
             </Text>
+          </View>
+        ) : (
+          <View style={styles.skeletonBillingContainer}>
+            <View style={styles.skeletonBillingCard}>
+              <View style={styles.skeletonBillingHeader} />
+              <View style={styles.skeletonBillingContent} />
+              <View style={styles.skeletonBillingButton} />
+            </View>
           </View>
         )}
 
@@ -525,11 +533,25 @@ const PayScreen = ({
                 </View>
               </TouchableOpacity>
             ))
-          ) : (
+          ) : paymentHistory.length === 0 && !refreshing ? (
             <View style={styles.noPaymentHistoryContainer}>
               <Text style={styles.noPaymentHistoryText}>
                 Belum ada riwayat pembayaran
               </Text>
+            </View>
+          ) : (
+            <View style={styles.skeletonPaymentContainer}>
+              {[1, 2, 3].map((_, index) => (
+                <View key={index} style={styles.skeletonPaymentItem}>
+                  <View style={styles.skeletonPaymentInfo}>
+                    <View style={styles.skeletonText} />
+                    <View style={styles.skeletonBadge} />
+                  </View>
+                  <View style={styles.skeletonPaymentAmount}>
+                    <View style={styles.skeletonText} />
+                  </View>
+                </View>
+              ))}
             </View>
           )}
         </View>
@@ -1525,6 +1547,70 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  skeletonBillingContainer: {
+    padding: 15,
+    backgroundColor: '#f5f5f5',
+  },
+  skeletonBillingCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  skeletonBillingHeader: {
+    height: 20,
+    backgroundColor: '#eee',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  skeletonBillingContent: {
+    height: 100,
+    backgroundColor: '#eee',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  skeletonBillingButton: {
+    height: 40,
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  skeletonPaymentContainer: {
+    padding: 15,
+    backgroundColor: '#f5f5f5',
+  },
+  skeletonPaymentItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  skeletonPaymentInfo: {
+    flexDirection: 'column',
+  },
+  skeletonText: {
+    height: 16,
+    backgroundColor: '#eee',
+    borderRadius: 5,
+    marginBottom: 5,
+  },
+  skeletonBadge: {
+    height: 20,
+    backgroundColor: '#eee',
+    borderRadius: 5,
+    width: '40%',
+  },
+  skeletonPaymentAmount: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

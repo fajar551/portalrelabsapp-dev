@@ -826,7 +826,11 @@ const HomeScreen = ({
           style={styles.profileSection}>
           <View style={styles.profileInfo}>
             <Text style={styles.helloText}>Halo,</Text>
-            <Text style={styles.userName}>{userData?.name || 'User'}</Text>
+            {userData ? (
+              <Text style={styles.userName}>{userData?.name || 'User'}</Text>
+            ) : (
+              <View style={styles.skeletonText} />
+            )}
             {/* <Text style={styles.userEmail}>
               ✉️ {userData?.email || 'Loading...'}
             </Text> */}
@@ -837,12 +841,20 @@ const HomeScreen = ({
         <View style={styles.accountCard}>
           <View style={styles.accountInfoItem}>
             <Text style={styles.accountLabel}>ID Pelanggan</Text>
-            <Text style={styles.accountValue}>{userData?.id || '-'}</Text>
+            {userData ? (
+              <Text style={styles.accountValue}>{userData?.id || '-'}</Text>
+            ) : (
+              <View style={styles.skeletonText} />
+            )}
           </View>
           <View style={styles.accountInfoDivider} />
           <View style={styles.accountInfoItem}>
             <Text style={styles.accountLabel}>Status Layanan</Text>
-            <Text style={styles.blueText}>{domainStatus || '-'}</Text>
+            {domainStatus ? (
+              <Text style={styles.blueText}>{domainStatus || '-'}</Text>
+            ) : (
+              <View style={styles.skeletonText} />
+            )}
           </View>
         </View>
 
@@ -957,22 +969,6 @@ const HomeScreen = ({
                 </View>
 
                 <View style={styles.progressBarWrapper}>
-                  {/* progressBar Anima */}
-                  {/* <View style={styles.progressBarContainer}>
-                    <Animated.View
-                      style={[
-                        styles.progressBar,
-                        {
-                          width: progressAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: ['0%', '100%'],
-                          }),
-                          backgroundColor: getProgressBarColor(),
-                        },
-                      ]}
-                    />
-                  </View> */}
-
                   <View style={styles.progressLineContainer}>
                     <View style={styles.progressLineBg}>
                       <Animated.View
@@ -1022,17 +1018,24 @@ const HomeScreen = ({
                 <TouchableOpacity
                   style={styles.duePayButton}
                   onPress={handlePayNow}>
-                  {/* onPress={() => navigateTo('Notification')}> */}
                   <Text style={styles.duePayButtonText}>Bayar Sekarang</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
-        ) : (
+        ) : userData ? (
           <View style={styles.noBillingContainer}>
             <Text style={styles.noBillingText}>
               Anda belum mempunyai tagihan
             </Text>
+          </View>
+        ) : (
+          <View style={styles.skeletonBillingContainer}>
+            <View style={styles.skeletonBillingCard}>
+              <View style={styles.skeletonBillingHeader} />
+              <View style={styles.skeletonBillingContent} />
+              <View style={styles.skeletonBillingButton} />
+            </View>
           </View>
         )}
 
@@ -1758,6 +1761,46 @@ const styles = StyleSheet.create({
   },
   spacerBottom: {
     // height akan di-set dinamis di JSX
+  },
+  skeletonText: {
+    width: 100,
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+  },
+  skeletonBillingContainer: {
+    backgroundColor: '#fff',
+    margin: 15,
+    padding: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  skeletonBillingCard: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    padding: 16,
+  },
+  skeletonBillingHeader: {
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  skeletonBillingContent: {
+    height: 10,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  skeletonBillingButton: {
+    height: 40,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+    marginTop: 10,
   },
 });
 

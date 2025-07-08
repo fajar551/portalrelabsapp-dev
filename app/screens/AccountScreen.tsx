@@ -126,10 +126,21 @@ const AccountScreen = ({
           end={{x: 0, y: 1}}
           style={styles.mainProfile}>
           <View style={styles.profileInfo}>
-            <Text style={styles.userName}>
-              {clientData?.firstname} {clientData?.lastname}
-            </Text>
-            <Text style={styles.userEmail}>{clientData?.email}</Text>
+            {clientData ? (
+              <>
+                <Text style={styles.userName}>
+                  {clientData?.firstname} {clientData?.lastname}
+                </Text>
+                <Text style={styles.userEmail}>{clientData?.email}</Text>
+              </>
+            ) : (
+              <>
+                <View style={styles.skeletonText} />
+                <View
+                  style={[styles.skeletonText, {width: 150, marginTop: 5}]}
+                />
+              </>
+            )}
           </View>
           <View style={styles.profileImageContainer}>
             <View style={styles.profileImageWrapper}>
@@ -146,20 +157,57 @@ const AccountScreen = ({
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>ID Relabs</Text>
           <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Nama</Text>
-              <Text style={styles.infoValue}>
-                {clientData?.firstname} {clientData?.lastname}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{clientData?.email}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>No. Telepon</Text>
-              <Text style={styles.infoValue}>{clientData?.phonenumber}</Text>
-            </View>
+            {clientData ? (
+              <>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>ID Relabs</Text>
+                  <Text style={styles.infoValue}>{clientData?.id}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Nama</Text>
+                  <Text style={styles.infoValue}>
+                    {clientData?.firstname} {clientData?.lastname}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Email</Text>
+                  <Text style={styles.infoValue}>{clientData?.email}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>No. Telepon</Text>
+                  <Text style={styles.infoValue}>
+                    {clientData?.phonenumber}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View
+                  style={[
+                    styles.skeletonText,
+                    {width: '80%', height: 18, marginBottom: 15},
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.skeletonText,
+                    {width: '60%', height: 18, marginBottom: 15},
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.skeletonText,
+                    {width: '70%', height: 18, marginBottom: 15},
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.skeletonText,
+                    {width: '50%', height: 18, marginBottom: 0},
+                  ]}
+                />
+              </>
+            )}
           </View>
         </View>
 
@@ -167,39 +215,87 @@ const AccountScreen = ({
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Akun Portal Relabs</Text>
           <View style={styles.activeAccountBadge}>
-            <View style={styles.activeAccountRow}>
-              <Text style={styles.activeAccountText}>{clientData?.id} </Text>
-              <Text style={styles.activeAccountText2}>ID Pelanggan Anda</Text>
-            </View>
-            <View style={styles.checkIcon}>
-              <Text>✓</Text>
-            </View>
+            {clientData ? (
+              <>
+                <View style={styles.activeAccountRow}>
+                  <Text style={styles.activeAccountText}>
+                    {clientData?.id}{' '}
+                  </Text>
+                  <Text style={styles.activeAccountText2}>
+                    ID Pelanggan Anda
+                  </Text>
+                </View>
+                <View style={styles.checkIcon}>
+                  <Text>✓</Text>
+                </View>
+              </>
+            ) : (
+              <View style={[styles.skeletonText, {width: '40%', height: 16}]} />
+            )}
           </View>
           <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Nama</Text>
-              <Text style={styles.infoValue}>
-                {clientData?.firstname} {clientData?.lastname}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Status Akun</Text>
-              <Text style={styles.infoValue}>{clientData?.status}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Perusahaan</Text>
-              <Text style={styles.infoValue}>{clientData?.company}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{clientData?.email}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Alamat</Text>
-              <Text style={styles.infoValue}>
-                {clientData?.address1} {clientData?.city} {clientData?.postcode}
-              </Text>
-            </View>
+            {clientData ? (
+              <>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Nama</Text>
+                  <Text style={styles.infoValue}>
+                    {clientData?.firstname} {clientData?.lastname}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Status Akun</Text>
+                  <Text style={styles.infoValue}>{clientData?.status}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Perusahaan</Text>
+                  <Text style={styles.infoValue}>{clientData?.company}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Email</Text>
+                  <Text style={styles.infoValue}>{clientData?.email}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Alamat</Text>
+                  <Text style={styles.infoValue}>
+                    {clientData?.address1} {clientData?.city}{' '}
+                    {clientData?.postcode}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View
+                  style={[
+                    styles.skeletonText,
+                    {width: '80%', height: 18, marginBottom: 15},
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.skeletonText,
+                    {width: '60%', height: 18, marginBottom: 15},
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.skeletonText,
+                    {width: '70%', height: 18, marginBottom: 15},
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.skeletonText,
+                    {width: '50%', height: 18, marginBottom: 15},
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.skeletonText,
+                    {width: '90%', height: 18, marginBottom: 0},
+                  ]}
+                />
+              </>
+            )}
           </View>
         </View>
 
@@ -535,6 +631,11 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     tintColor: 'white',
+  },
+  skeletonText: {
+    backgroundColor: '#e0e0e0',
+    height: 15,
+    borderRadius: 5,
   },
 });
 
