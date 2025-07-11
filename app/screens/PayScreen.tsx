@@ -116,6 +116,7 @@ const PayScreen = ({
   const [refreshing, setRefreshing] = useState(false);
   const [filterMonthYear, setFilterMonthYear] = useState<string>('');
   const [monthYearOptions, setMonthYearOptions] = useState<string[]>([]);
+  const [filterStatus, setFilterStatus] = useState<string>('Semua');
 
   const insets = useSafeAreaInsets();
 
@@ -140,12 +141,15 @@ const PayScreen = ({
     try {
       // Mengambil data invoice untuk billing period
       const invoices = await getClientInvoices();
+      console.log('=== DEBUG INVOICES ===');
+      console.log('Raw invoices from API:', invoices);
 
       // Filter untuk mendapatkan invoice yang belum dibayar (Unpaid)
       const unpaidInvoices = invoices.filter(
         (invoice: any) =>
           invoice.status === 'Unpaid' || invoice.status === 'Belum Dibayar',
       );
+      console.log('Unpaid invoices:', unpaidInvoices);
 
       // Get most recent unpaid invoice
       if (unpaidInvoices && unpaidInvoices.length > 0) {
@@ -180,50 +184,127 @@ const PayScreen = ({
         });
       }
 
-      // Mengambil data riwayat pembayaran
+      // Mengambil data riwayat pembayaran dan semua invoice
       const payments = await getPaymentHistory();
-      if (payments && payments.length > 0) {
-        // Mapping invoiceId ke duedate
-        const invoiceMap: Record<string, string> = {};
+      console.log('Raw payments from API:', payments);
+
+      // Gabungkan data invoice dan payment history
+      const allInvoicesData: Array<{
+        id?: number;
+        invoicenum?: string;
+        month: string;
+        year: number;
+        amount: number;
+        status: string;
+        datepaid?: string;
+        paymentmethod?: string;
+        duedate?: string;
+      }> = [];
+
+      // LANGKAH 1: Tambahkan SEMUA invoice dari getClientInvoices (baik paid maupun unpaid)
+      if (invoices && invoices.length > 0) {
         invoices.forEach((inv: any) => {
-          if (inv.id) {
-            invoiceMap[inv.id] = inv.duedate;
-          }
-          if (inv.invoicenum) {
-            invoiceMap[inv.invoicenum] = inv.duedate;
-          }
-        });
-
-        console.log('=== PAYMENT MAPPING DEBUG ===');
-        console.log('Invoice map:', invoiceMap);
-        console.log('Original payments:', payments);
-
-        // Tambahkan duedate ke setiap payment
-        const paymentsWithDue = payments.map((p: any) => {
-          const mappedDue =
-            invoiceMap[p.id] || invoiceMap[p.invoicenum] || null;
-          console.log('Payment mapping:', {
-            paymentId: p.id,
-            paymentInvoicenum: p.invoicenum,
-            mappedDue: mappedDue,
-            invoiceMapId: invoiceMap[p.id],
-            invoiceMapInvoicenum: invoiceMap[p.invoicenum],
+          console.log('Processing invoice:', {
+            id: inv.id,
+            invoicenum: inv.invoicenum,
+            status: inv.status,
+            total: inv.total,
+            duedate: inv.duedate,
           });
 
-          return {
-            ...p,
-            duedate: mappedDue,
-          };
+          // Tambahkan semua invoice ke allInvoicesData dengan status asli dari API
+          allInvoicesData.push({
+            id: inv.id,
+            invoicenum: inv.invoicenum,
+            month: new Date(inv.duedate || inv.date).toLocaleString('id-ID', {
+              month: 'long',
+            }),
+            year: new Date(inv.duedate || inv.date).getFullYear(),
+            amount: inv.total || inv.amount || 0,
+            status: inv.status || 'Unknown', // Gunakan status asli dari API
+            duedate: inv.duedate,
+            datepaid: inv.datepaid || null,
+            paymentmethod: inv.paymentmethod || null,
+          });
+        });
+      }
+
+      // LANGKAH 2: Update data invoice yang sudah dibayar dengan informasi dari payment history
+      if (payments && payments.length > 0) {
+        // Mapping invoiceId ke payment details
+        const paymentMap: Record<string, any> = {};
+        payments.forEach((payment: any) => {
+          if (payment.id) {
+            paymentMap[payment.id] = payment;
+          }
+          if (payment.invoicenum) {
+            paymentMap[payment.invoicenum] = payment;
+          }
         });
 
-        console.log('Payments with duedate:', paymentsWithDue);
-        console.log('=== END PAYMENT MAPPING ===');
+        console.log('Payment map:', paymentMap);
 
-        setPaymentHistory(paymentsWithDue);
-      } else {
-        // Jangan gunakan fallback data, biarkan array kosong
-        setPaymentHistory([]);
+        // Update invoice yang sudah ada dengan data pembayaran
+        allInvoicesData.forEach((invoice, index) => {
+          const invoiceId = invoice.id?.toString() || '';
+          const invoiceNum = invoice.invoicenum?.toString() || '';
+          const paymentDetail = paymentMap[invoiceId] || paymentMap[invoiceNum];
+
+          if (paymentDetail) {
+            // Update dengan informasi pembayaran
+            allInvoicesData[index] = {
+              ...invoice,
+              status: paymentDetail.status || 'Paid',
+              datepaid: paymentDetail.datepaid,
+              paymentmethod: paymentDetail.paymentmethod,
+              // Gunakan data dari payment jika tersedia
+              month: paymentDetail.month || invoice.month,
+              year: paymentDetail.year || invoice.year,
+            };
+            console.log(
+              'Updated invoice with payment details:',
+              allInvoicesData[index],
+            );
+          }
+        });
+
+        // Tambahkan payment yang tidak memiliki invoice terkait (jika ada)
+        payments.forEach((payment: any) => {
+          const existingInvoice = allInvoicesData.find(
+            (inv: any) =>
+              inv.id === payment.id || inv.invoicenum === payment.invoicenum,
+          );
+
+          if (!existingInvoice) {
+            console.log('Adding orphan payment:', payment);
+            allInvoicesData.push({
+              id: payment.id,
+              invoicenum: payment.invoicenum,
+              month: payment.month,
+              year: payment.year,
+              amount: payment.amount,
+              status: payment.status || 'Paid',
+              duedate: undefined,
+              datepaid: payment.datepaid,
+              paymentmethod: payment.paymentmethod,
+            });
+          }
+        });
       }
+
+      console.log('Final combined data:', allInvoicesData);
+
+      // Urutkan berdasarkan duedate (terbaru di atas)
+      allInvoicesData.sort((a, b) => {
+        const dateA = new Date(a.duedate || Date.now());
+        const dateB = new Date(b.duedate || Date.now());
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      console.log('Sorted final data:', allInvoicesData);
+      console.log('=== END DEBUG ===');
+
+      setPaymentHistory(allInvoicesData);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err instanceof Error ? err.message : 'Gagal memuat data');
@@ -330,7 +411,17 @@ const PayScreen = ({
   };
 
   // Fungsi untuk export PDF invoice berdasarkan ID
-  const exportPDFInvoice = async (invoiceId: number | string) => {
+  const exportPDFInvoice = async (
+    invoiceId: number | string,
+    status?: string,
+    selectedPayment?: any,
+  ) => {
+    console.log('=== EXPORT PDF DEBUG ===');
+    console.log('Invoice ID:', invoiceId);
+    console.log('Status:', status);
+    console.log('Selected Payment:', selectedPayment);
+    console.log('=== END EXPORT DEBUG ===');
+
     try {
       // Ambil token dari AsyncStorage
       const token = await AsyncStorage.getItem('authToken');
@@ -503,15 +594,20 @@ const PayScreen = ({
   useEffect(() => {
     const fetchMonthYearOptions = async () => {
       const invoices = await getClientInvoices();
-      // Filter hanya invoice yang statusnya Paid
+      // Ambil semua invoice (baik Paid maupun Unpaid)
       const paidInvoices = invoices.filter(
         (inv: any) =>
           inv.status === 'Paid' ||
           inv.status === 'Lunas' ||
           inv.status === 'Sudah Dibayar',
       );
+      const unpaidInvoices = invoices.filter(
+        (inv: any) => inv.status === 'Unpaid' || inv.status === 'Belum Dibayar',
+      );
+
+      const allInvoices = [...paidInvoices, ...unpaidInvoices];
       const optionsSet = new Set<string>();
-      paidInvoices.forEach((inv: any) => {
+      allInvoices.forEach((inv: any) => {
         if (inv.duedate) {
           const date = new Date(inv.duedate);
           const month = date.toLocaleString('id-ID', {month: 'long'});
@@ -552,40 +648,44 @@ const PayScreen = ({
     fetchMonthYearOptions();
   }, []);
 
-  // Filter paymentHistory sesuai filterMonthYear
+  // Filter paymentHistory sesuai filterMonthYear dan filterStatus
   const filteredHistory = paymentHistory.filter(payment => {
-    if (!filterMonthYear) {
-      return true;
+    // Filter berdasarkan bulan-tahun
+    let monthYearMatch = true;
+    if (filterMonthYear && payment.duedate) {
+      const date = new Date(payment.duedate);
+      const month = date.toLocaleString('id-ID', {month: 'long'});
+      const year = date.getFullYear();
+      const monthYearString = `${month} ${year}`;
+      monthYearMatch = monthYearString === filterMonthYear;
+    } else if (filterMonthYear && !payment.duedate) {
+      // Jika tidak ada duedate, gunakan month dan year dari payment
+      const monthYearString = `${payment.month} ${payment.year}`;
+      monthYearMatch = monthYearString === filterMonthYear;
     }
-    if (!payment.duedate) {
-      return false;
+
+    // Filter berdasarkan status
+    let statusMatch = true;
+    if (filterStatus !== 'Semua') {
+      if (filterStatus === 'Lunas') {
+        statusMatch =
+          payment.status === 'Paid' ||
+          payment.status === 'Lunas' ||
+          payment.status === 'Sudah Dibayar';
+      } else if (filterStatus === 'Belum Dibayar') {
+        statusMatch =
+          payment.status === 'Unpaid' || payment.status === 'Belum Dibayar';
+      }
     }
-    const date = new Date(payment.duedate);
-    const month = date.toLocaleString('id-ID', {month: 'long'});
-    const year = date.getFullYear();
-    const monthYearString = `${month} ${year}`;
 
-    // Log untuk debugging
-    console.log('Payment:', {
-      id: payment.id,
-      invoicenum: payment.invoicenum,
-      month: payment.month,
-      year: payment.year,
-      duedate: payment.duedate,
-      parsedMonth: month,
-      parsedYear: year,
-      monthYearString: monthYearString,
-      filterMonthYear: filterMonthYear,
-      isMatch: monthYearString === filterMonthYear,
-    });
-
-    return monthYearString === filterMonthYear;
+    return monthYearMatch && statusMatch;
   });
 
   // Log semua payment history untuk debugging
   console.log('=== PAYMENT HISTORY DEBUG ===');
   console.log('All paymentHistory:', paymentHistory);
   console.log('Filter month/year:', filterMonthYear);
+  console.log('Filter status:', filterStatus);
   console.log('Month year options:', monthYearOptions);
   console.log('Filtered history:', filteredHistory);
   console.log('=== END DEBUG ===');
@@ -783,6 +883,19 @@ const PayScreen = ({
             ))}
           </Picker>
         </View>
+
+        {/* Filter Status */}
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={filterStatus}
+            onValueChange={setFilterStatus}
+            style={styles.pickerStyle}
+            itemStyle={styles.pickerItemStyle}>
+            <Picker.Item label="   Semua Status   " value="Semua" />
+            <Picker.Item label="   Lunas   " value="Lunas" />
+            <Picker.Item label="   Belum Dibayar   " value="Belum Dibayar" />
+          </Picker>
+        </View>
         {/* Payment History List */}
         {refreshing ? (
           <View style={styles.skeletonPaymentContainer}>
@@ -808,7 +921,17 @@ const PayScreen = ({
                 <Text style={styles.paymentPeriod}>
                   {payment.month} {payment.year}
                 </Text>
-                <View style={styles.paymentStatusBadge}>
+                <View
+                  style={[
+                    styles.paymentStatusBadge,
+                    payment.status === 'Unpaid' ||
+                    payment.status === 'Belum Dibayar'
+                      ? styles.paymentStatusBadgeUnpaid
+                      : payment.status === 'Cancelled' ||
+                        payment.status === 'Dibatalkan'
+                      ? styles.paymentStatusBadgeCancelled
+                      : styles.paymentStatusBadgePaid,
+                  ]}>
                   <Text style={styles.paymentStatusBadgeText}>
                     {payment.status}
                   </Text>
@@ -820,11 +943,34 @@ const PayScreen = ({
                     {formatRupiah(payment.amount)}
                   </Text>
                   <TouchableOpacity
-                    style={styles.exportButton}
-                    onPress={() =>
-                      exportPDFInvoice(payment.id || payment.invoicenum || '')
-                    }>
-                    <Text style={styles.exportButtonText}>
+                    style={[
+                      styles.exportButton,
+                      payment.status === 'Unpaid' ||
+                      payment.status === 'Belum Dibayar'
+                        ? styles.exportButtonUnpaid
+                        : payment.status === 'Cancelled' ||
+                          payment.status === 'Dibatalkan'
+                        ? styles.exportButtonCancelled
+                        : styles.exportButtonPaid,
+                    ]}
+                    onPress={() => {
+                      exportPDFInvoice(
+                        payment.id || payment.invoicenum || '',
+                        payment.status,
+                        payment, // Pass the payment object to exportPDFInvoice
+                      );
+                    }}>
+                    <Text
+                      style={[
+                        styles.exportButtonText,
+                        payment.status === 'Unpaid' ||
+                        payment.status === 'Belum Dibayar'
+                          ? styles.exportButtonTextUnpaid
+                          : payment.status === 'Cancelled' ||
+                            payment.status === 'Dibatalkan'
+                          ? styles.exportButtonTextCancelled
+                          : styles.exportButtonTextPaid,
+                      ]}>
                       Download Invoice
                     </Text>
                   </TouchableOpacity>
@@ -836,7 +982,7 @@ const PayScreen = ({
         ) : (
           <View style={styles.noPaymentHistoryContainer}>
             <Text style={styles.noPaymentHistoryText}>
-              Tidak ada riwayat pembayaran di bulan ini
+              Tidak ada tagihan di periode ini
             </Text>
           </View>
         )}
@@ -1246,6 +1392,15 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignSelf: 'flex-start',
     marginLeft: 12,
+  },
+  paymentStatusBadgeUnpaid: {
+    backgroundColor: '#FFCC00', // Kuning untuk status Belum Dibayar
+  },
+  paymentStatusBadgePaid: {
+    backgroundColor: '#4CD964', // Hijau untuk status Lunas/Sudah Dibayar
+  },
+  paymentStatusBadgeCancelled: {
+    backgroundColor: '#FF3B30', // Merah untuk status Cancelled
   },
   paymentStatusBadgeText: {
     color: 'white',
@@ -1804,10 +1959,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F26522',
   },
+  exportButtonUnpaid: {
+    backgroundColor: '#FFF3CD', // Light yellow untuk invoice belum dibayar
+    borderColor: '#FFCC00',
+  },
+  exportButtonPaid: {
+    backgroundColor: '#D4F5D4', // Light green untuk invoice sudah dibayar
+    borderColor: '#4CD964',
+  },
+  exportButtonCancelled: {
+    backgroundColor: '#FFE4E1', // Light red untuk invoice dibatalkan
+    borderColor: '#FF3B30',
+  },
   exportButtonText: {
     fontSize: 10,
     color: '#F26522',
     fontWeight: 'bold',
+  },
+  exportButtonTextUnpaid: {
+    color: '#B8860B', // Dark yellow text
+  },
+  exportButtonTextPaid: {
+    color: '#228B22', // Dark green text
+  },
+  exportButtonTextCancelled: {
+    color: '#8B0000', // Dark red text
   },
   pickerContainer: {
     marginBottom: 10,
