@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,7 +15,7 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
@@ -31,7 +31,6 @@ const InvoiceDetailScreen = ({
   onLogout: () => void;
 }) => {
   const [invoiceData, setInvoiceData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(
@@ -108,8 +107,6 @@ const InvoiceDetailScreen = ({
   }, []);
 
   const fetchInvoiceDetails = async () => {
-    setLoading(true);
-    setError('');
     try {
       const data = await getDetailedClientInvoices();
       setInvoiceData(data);
@@ -124,7 +121,6 @@ const InvoiceDetailScreen = ({
       );
       console.error('Error loading invoice details:', err);
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   };
@@ -168,7 +164,81 @@ const InvoiceDetailScreen = ({
       const gateways = await getPaymentGateways();
 
       if (gateways && gateways.length > 0) {
-        setPaymentMethods(gateways);
+        // Urutkan gateways sesuai prioritas seperti di PayScreen
+        const sortedGateways = gateways.sort(
+          (
+            a: {
+              id: number;
+              name: string;
+              description: string;
+              instructions: string;
+            },
+            b: {
+              id: number;
+              name: string;
+              description: string;
+              instructions: string;
+            },
+          ) => {
+            const priorityOrder = {
+              bri: 1,
+              briva: 1,
+              brivaconventionalpayment: 1,
+              brivaxendit: 1,
+              bca: 2,
+              bcava: 2,
+              bcavaconventionalpayment: 2,
+              bcavaxendit: 2,
+              mandiri: 3,
+              mandiriva: 3,
+              mandirieconventionalpayment: 3,
+              mandirivaxendit: 3,
+              mandiriea: 3,
+              qris: 4,
+              ewallet: 4,
+              gopay: 4,
+              ovo: 4,
+              dana: 4,
+              shopeepay: 4,
+              linkaja: 4,
+              credit: 5,
+              card: 5,
+              visa: 5,
+              mastercard: 5,
+              jcb: 5,
+            };
+
+            const aName = a.name.toLowerCase();
+            const bName = b.name.toLowerCase();
+
+            // Cari prioritas berdasarkan nama gateway
+            let aPriority = 999;
+            let bPriority = 999;
+
+            for (const [key, priority] of Object.entries(priorityOrder)) {
+              if (aName.includes(key)) {
+                aPriority = priority;
+                break;
+              }
+            }
+
+            for (const [key, priority] of Object.entries(priorityOrder)) {
+              if (bName.includes(key)) {
+                bPriority = priority;
+                break;
+              }
+            }
+
+            // Jika prioritas sama, urutkan berdasarkan nama
+            if (aPriority === bPriority) {
+              return aName.localeCompare(bName);
+            }
+
+            return aPriority - bPriority;
+          },
+        );
+
+        setPaymentMethods(sortedGateways);
         setShowPaymentMethods(true);
       } else {
         Alert.alert('Error', 'Tidak ada metode pembayaran yang tersedia');
@@ -188,7 +258,7 @@ const InvoiceDetailScreen = ({
         'currentInvoice',
         JSON.stringify({
           id: selectedInvoiceId,
-          total: getSelectedInvoice()?.total,
+          total: getSelectedInvoice()?.total || 0,
         }),
       );
 
@@ -214,11 +284,119 @@ const InvoiceDetailScreen = ({
   };
 
   // Render loading state
-  if (loading) {
+  if (!invoiceData) {
     return (
-      <SafeAreaView style={[styles.root, styles.centerContainer]}>
-        <ActivityIndicator size="large" color="#fd7e14" />
-        <Text style={styles.loadingText}>Memuat data invoice...</Text>
+      <SafeAreaView style={styles.root}>
+        <StatusBar backgroundColor="#2e7ce4" barStyle="light-content" />
+
+        {/* Header */}
+        <LinearGradient
+          colors={['#E4571B', '#F26522']}
+          start={{x: 0, y: 0}}
+          end={{x: 0, y: 1}}
+          style={styles.header}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigateTo('Pay')}>
+            <Icon name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Detail Invoice</Text>
+          <View style={styles.emptySpace} />
+        </LinearGradient>
+
+        <ScrollView
+          style={[styles.scrollView, {paddingBottom: 80 + insets.bottom}]}>
+          {/* Skeleton Invoice Selector */}
+          <View style={styles.skeletonInvoiceSelector}>
+            <View style={styles.skeletonSectionTitle} />
+            <View style={styles.skeletonTabsContainer}>
+              <View style={styles.skeletonTab} />
+              <View style={styles.skeletonTab} />
+              <View style={styles.skeletonTab} />
+            </View>
+          </View>
+
+          {/* Skeleton Invoice Summary */}
+          <View style={styles.skeletonCard}>
+            <View style={styles.skeletonCardHeader}>
+              <View style={styles.skeletonTitle} />
+              <View style={styles.skeletonBadge} />
+            </View>
+            <View style={styles.skeletonRow} />
+            <View style={styles.skeletonRow} />
+            <View style={styles.skeletonRow} />
+            <View style={styles.skeletonRow} />
+            <View style={styles.skeletonRowLarge} />
+          </View>
+
+          {/* Skeleton Items */}
+          <View style={styles.skeletonCard}>
+            <View style={styles.skeletonSectionTitle} />
+            <View style={styles.skeletonItem} />
+            <View style={styles.skeletonItem} />
+            <View style={styles.skeletonItem} />
+          </View>
+
+          {/* Skeleton Hosting Services */}
+          <View style={styles.skeletonCard}>
+            <View style={styles.skeletonSectionTitle} />
+            <View style={styles.skeletonHostingItem} />
+            <View style={styles.skeletonHostingItem} />
+          </View>
+
+          <View style={{height: 100 + insets.bottom}} />
+        </ScrollView>
+
+        {/* Bottom Nav */}
+        <View
+          style={[
+            styles.bottomNav,
+            {
+              paddingBottom: insets.bottom,
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 1000,
+            },
+          ]}>
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => navigateTo('Home')}>
+            <View style={styles.navIconContainerInactive}>
+              <Icon name="home" size={24} color="#666" />
+            </View>
+            <Text style={styles.navText}>Beranda</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => navigateTo('Pay')}>
+            <LinearGradient
+              colors={['#E4571B', '#F26522']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.navIconContainer}>
+              <Icon name="receipt" size={24} color="#fff" />
+            </LinearGradient>
+            <Text style={[styles.navText, styles.activeNavText]}>Tagihan</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => navigateTo('Help')}>
+            <View style={styles.navIconContainerInactive}>
+              <Icon name="help" size={24} color="#666" />
+            </View>
+            <Text style={styles.navText}>Bantuan</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => navigateTo('Account')}>
+            <View style={styles.navIconContainerInactive}>
+              <Icon2 name="person" size={24} color="#666" />
+            </View>
+            <Text style={styles.navText}>Akun</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
@@ -279,6 +457,20 @@ const InvoiceDetailScreen = ({
 
   const selectedInvoice = getSelectedInvoice();
   const invoiceItems = getInvoiceItems();
+
+  // Add null check for selectedInvoice
+  if (!selectedInvoice) {
+    return (
+      <SafeAreaView style={[styles.root, styles.centerContainer]}>
+        <Text style={styles.noDataText}>Invoice tidak ditemukan.</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigateTo('Pay')}>
+          <Text style={styles.backButtonText}>Kembali</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>
@@ -368,13 +560,13 @@ const InvoiceDetailScreen = ({
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Pajak:</Text>
             <Text style={styles.detailValue}>
-              {formatCurrency(selectedInvoice.tax)}
+              {formatCurrency(selectedInvoice.tax || 0)}
             </Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Total:</Text>
             <Text style={styles.detailTotal}>
-              {formatCurrency(selectedInvoice.total)}
+              {formatCurrency(selectedInvoice.total || 0)}
             </Text>
           </View>
         </View>
@@ -404,26 +596,36 @@ const InvoiceDetailScreen = ({
         {/* Hosting Services related to this invoice (if any) */}
         <View style={styles.hostingServices}>
           <Text style={styles.sectionTitle}>Layanan Hosting Terkait:</Text>
-          {invoiceData.hosting.map((service: any) => (
-            <View key={service.hosting_id} style={styles.hostingItem}>
-              <Text style={styles.hostingName}>{service.product_name}</Text>
-              <Text style={styles.hostingDomain}>{service.domain}</Text>
-              <View style={styles.hostingDetails}>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Status:</Text>
-                  <Text style={getHostingStatusStyle(service.domainstatus)}>
-                    {service.domainstatus}
+          {invoiceData.hosting && invoiceData.hosting.length > 0 ? (
+            invoiceData.hosting.map((service: any) => (
+              <View key={service.hosting_id} style={styles.hostingItem}>
+                <Text style={styles.hostingName}>{service.product_name}</Text>
+                <Text style={styles.hostingDomain}>{service.domain}</Text>
+                <View style={styles.hostingDetails}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Status:</Text>
+                    <Text style={getHostingStatusStyle(service.domainstatus)}>
+                      {service.domainstatus}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Siklus Penagihan:</Text>
+                    <Text style={styles.detailValue}>
+                      {service.billingcycle}
+                    </Text>
+                  </View>
+                  <Text style={styles.detailLabel}>
+                    Jatuh Tempo Berikutnya:
                   </Text>
+                  <Text style={styles.detailValue}>{service.nextduedate}</Text>
                 </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Siklus Penagihan:</Text>
-                  <Text style={styles.detailValue}>{service.billingcycle}</Text>
-                </View>
-                <Text style={styles.detailLabel}>Jatuh Tempo Berikutnya:</Text>
-                <Text style={styles.detailValue}>{service.nextduedate}</Text>
               </View>
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={styles.noItemsText}>
+              Tidak ada layanan hosting terkait
+            </Text>
+          )}
         </View>
 
         {/* Pay Button (if unpaid) */}
@@ -955,6 +1157,80 @@ const styles = StyleSheet.create({
   arrowIcon: {
     color: '#666',
     fontSize: 16,
+  },
+  skeletonInvoiceSelector: {
+    marginBottom: 20,
+  },
+  skeletonSectionTitle: {
+    width: '50%',
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  skeletonTabsContainer: {
+    flexDirection: 'row',
+    marginBottom: 5,
+  },
+  skeletonTab: {
+    width: 100,
+    height: 30,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  skeletonCard: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  skeletonCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  skeletonTitle: {
+    width: '70%',
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+  },
+  skeletonBadge: {
+    width: 50,
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 10,
+  },
+  skeletonRow: {
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  skeletonRowLarge: {
+    height: 25,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  skeletonItem: {
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  skeletonHostingItem: {
+    height: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    marginBottom: 10,
   },
 });
 

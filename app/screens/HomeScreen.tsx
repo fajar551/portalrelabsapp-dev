@@ -110,8 +110,8 @@ const HomeScreen = ({
           console.log(`🗑️ Cleared ${sortedKeys.length} old cache entries`);
         }
       }
-    } catch (error) {
-      console.log('Error clearing old cache:', error);
+    } catch (err) {
+      console.log('Error clearing old cache:', err);
     }
   };
 
@@ -261,8 +261,8 @@ const HomeScreen = ({
           } else {
             console.log('📭 Cache tidak ditemukan, akan fetch dari API');
           }
-        } catch (error) {
-          console.log('❌ Error loading cache:', error);
+        } catch (err) {
+          console.log('❌ Error loading cache:', err);
           // Lanjut ke fetch API jika cache error
         }
       }
@@ -474,8 +474,8 @@ const HomeScreen = ({
                 await fetchHomeData(true, true);
               }
             }
-          } catch (error) {
-            console.log('Error checking cache on app state change:', error);
+          } catch (err) {
+            console.log('Error checking cache on app state change:', err);
           }
         };
 
@@ -714,8 +714,8 @@ const HomeScreen = ({
       await AsyncStorage.removeItem('homeDataTimestamp');
       await AsyncStorage.removeItem('userData');
       console.log('Cache berhasil dibersihkan');
-    } catch (error) {
-      console.log('Error clearing cache:', error);
+    } catch (err) {
+      console.log('Error clearing cache:', err);
     }
   };
 

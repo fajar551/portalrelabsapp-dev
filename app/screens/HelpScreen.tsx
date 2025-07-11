@@ -72,31 +72,6 @@ const HelpScreen = ({
     return {marginLeft: 6};
   };
 
-  const departments = [
-    {
-      id: '1',
-      title: 'Technical Support',
-      subtitle: 'Bantuan untuk permasalahan teknis',
-      icon: {name: 'support-agent', type: 'MaterialIcons'},
-    },
-    {
-      id: '2',
-      title: 'Billing Support',
-      subtitle: 'Bantuan untuk permasalahan billing',
-      icon: {name: 'receipt', type: 'MaterialIcons'},
-    },
-    {
-      id: '3',
-      title: 'Finance & Tax',
-      subtitle: 'Faktur Pajak & Bukti Potong',
-      icon: {name: 'attach-money', type: 'MaterialIcons'},
-    },
-  ];
-
-  const handleDepartmentPress = (deptId: string) => {
-    navigateTo('OpenTicket', {departmentId: deptId});
-  };
-
   const fetchTickets = async (isPullRefresh = false) => {
     try {
       if (isPullRefresh) {
@@ -171,20 +146,25 @@ const HelpScreen = ({
             </View>
           ) : (
             <View style={styles.topCard}>
-              <Text style={styles.topCardTitle}>Buat Tiket Baru</Text>
+              <Text style={styles.topCardTitle}>Buat Permintaan Bantuan</Text>
               <View style={styles.illustrationContainer}>
-                <Image
-                  source={{
-                    uri: 'https://portal.relabs.id/mobile/img/helps.png',
-                  }}
-                  style={styles.illustrationImage}
-                  resizeMode="contain"
-                />
+                <View style={styles.illustrationWrapper}>
+                  <Image
+                    source={{
+                      uri: 'https://portal.relabs.id/mobile/img/helps.png',
+                    }}
+                    style={styles.illustrationImage}
+                    resizeMode="contain"
+                  />
+                  <View style={styles.plusIconContainer}>
+                    <Icon name="add" size={24} color="#F26522" />
+                  </View>
+                </View>
               </View>
               <Text style={styles.topCardSubtitle2}>
                 Jika Anda tidak dapat menemukan solusi untuk masalah Anda, Anda
-                dapat mengajukan tiket dengan memilih departemen yang sesuai di
-                bawah ini.
+                dapat mengajukan permintaan bantuan dengan memilih departemen
+                yang sesuai di bawah ini.
               </Text>
             </View>
           )}
@@ -197,7 +177,7 @@ const HelpScreen = ({
             activeOpacity={0.7}
             disabled={scrollingToTickets || refreshing}>
             <Text style={styles.seeTicketsText}>
-              {refreshing ? 'Loading ...' : 'Lihat Daftar Ticket Anda'}
+              {refreshing ? 'Loading ...' : 'Daftar Permintaan Bantuan Anda'}
             </Text>
             {refreshing ? (
               <ActivityIndicator
@@ -216,57 +196,23 @@ const HelpScreen = ({
             )}
           </TouchableOpacity>
         )}
-        {/* Department List di luar card */}
-        <View style={styles.departmentList}>
-          <Text style={styles.settingTitle}>Pilih Departemen</Text>
-          {refreshing ? (
-            <View style={styles.skeletonDepartmentContainer}>
-              {[1, 2, 3].map((_, index) => (
-                <View key={index} style={styles.skeletonDepartmentCard}>
-                  <View style={styles.skeletonDepartmentIcon} />
-                  <View style={styles.skeletonDepartmentContent}>
-                    <View style={styles.skeletonDepartmentTitle} />
-                    <View style={styles.skeletonDepartmentSubtitle} />
-                  </View>
-                  <View style={styles.skeletonDepartmentChevron} />
-                </View>
-              ))}
+
+        {/* Tombol Buat Permintaan Bantuan */}
+        <View style={styles.createTicketContainer}>
+          <TouchableOpacity
+            style={styles.createTicketBtn}
+            onPress={() => navigateTo('OpenTicket')}
+            activeOpacity={0.7}>
+            <View style={styles.createTicketIconContainer}>
+              <Icon name="add" size={28} color="#fff" />
             </View>
-          ) : (
-            departments.map((dept, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={styles.settingMenuCard}
-                activeOpacity={0.7}
-                onPress={() => handleDepartmentPress(dept.id)}>
-                <View style={styles.settingIconWrap}>
-                  {dept.icon.type === 'MaterialIcons' ? (
-                    <Icon name={dept.icon.name} size={26} color="#F26522" />
-                  ) : (
-                    <Icon2 name={dept.icon.name} size={26} color="#F26522" />
-                  )}
-                </View>
-                <View style={styles.settingTextWrap}>
-                  <Text style={styles.settingMenuText}>{dept.title}</Text>
-                  {!!dept.subtitle && (
-                    <Text style={styles.settingMenuSubtitle}>
-                      {dept.subtitle}
-                    </Text>
-                  )}
-                </View>
-                <Icon
-                  name="chevron-right"
-                  size={24}
-                  color="#F26522"
-                  style={styles.settingChevronIcon}
-                />
-              </TouchableOpacity>
-            ))
-          )}
+            <Text style={styles.createTicketText}>Buat Permintaan Bantuan</Text>
+            <Icon name="chevron-right" size={24} color="#F26522" />
+          </TouchableOpacity>
         </View>
         {/* List Ticket */}
         <View style={styles.ticketSection}>
-          <Text style={styles.ticketTitle}>Daftar Tiket Anda</Text>
+          <Text style={styles.ticketTitle}>Daftar Permintaan Bantuan Anda</Text>
           {refreshing ? (
             <View style={styles.skeletonTicketContainer}>
               {[1, 2, 3].map((_, index) => (
@@ -391,11 +337,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+    alignItems: 'center',
   },
   topCardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    // textAlign: 'center',
     marginBottom: 25,
     marginTop: 4,
   },
@@ -403,11 +351,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  illustrationImage: {
+  illustrationWrapper: {
+    position: 'relative',
     width: 120,
     height: 120,
-    marginBottom: 10,
-    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  illustrationImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
+  },
+  plusIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F26522',
   },
   content: {
     padding: 16,
@@ -509,62 +476,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 8,
     lineHeight: 22,
-  },
-  departmentList: {
-    paddingHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#22325a',
-    marginLeft: 8,
-    marginBottom: 10,
-    marginTop: 5,
-  },
-  settingMenuCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 22,
-    paddingVertical: 18,
-    paddingHorizontal: 18,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  settingIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#fff4ec',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 18,
-  },
-  settingTextWrap: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  settingMenuText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#22325a',
-    marginBottom: 2,
-  },
-  settingMenuSubtitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#666',
-    marginTop: 2,
-  },
-  settingChevronIcon: {
-    marginLeft: 8,
-    alignSelf: 'center',
   },
   ticketSection: {
     marginTop: 24,
@@ -706,50 +617,43 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 8,
   },
-  skeletonDepartmentContainer: {
+  createTicketContainer: {
+    paddingHorizontal: 16,
     marginTop: 10,
     marginBottom: 10,
+    // alignItems: 'center',
   },
-  skeletonDepartmentCard: {
+  createTicketBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 22,
-    paddingVertical: 18,
-    paddingHorizontal: 18,
-    marginBottom: 16,
+    backgroundColor: '#F26522',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    minWidth: 260,
+    justifyContent: 'center',
   },
-  skeletonDepartmentIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#e0e0e0',
-    marginRight: 18,
+  createTicketIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    // backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
   },
-  skeletonDepartmentContent: {
+  createTicketText: {
     flex: 1,
-  },
-  skeletonDepartmentTitle: {
-    height: 16,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 8,
-    marginBottom: 4,
-  },
-  skeletonDepartmentSubtitle: {
-    height: 14,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 8,
-  },
-  skeletonDepartmentChevron: {
-    width: 26,
-    height: 26,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 13,
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginRight: 10,
   },
 });
 

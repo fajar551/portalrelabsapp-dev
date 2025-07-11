@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Modal,
   PermissionsAndroid,
   Platform,
   ScrollView,
@@ -37,6 +38,8 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
   const [urgency, setUrgency] = useState<'Low' | 'Medium' | 'High'>('Low');
   const [attachment, setAttachment] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [autoDepartmentChange, setAutoDepartmentChange] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
@@ -60,6 +63,24 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
     {id: 2, name: 'Billing Support'},
     {id: 3, name: 'Finance & Tax'},
   ];
+
+  const subjects = [
+    'Upgrade layanan',
+    'Tanya soal tagihan',
+    'Ada kendala internet',
+    'Seputar faktur pajak',
+    'Pertanyaan lain',
+    'Ingin downgrade layanan',
+  ];
+
+  const subjectDepartmentMap = {
+    'Upgrade layanan': 1, // Technical Support
+    'Tanya soal tagihan': 2, // Billing Support
+    'Ada kendala internet': 1, // Technical Support
+    'Seputar faktur pajak': 3, // Finance & Tax
+    'Pertanyaan lain': 1, // Technical Support
+    'Ingin downgrade layanan': 1, // Technical Support
+  };
 
   const urgencies = [
     {value: 'Low', label: 'Low'},
@@ -173,7 +194,7 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
   const handleSubmit = async () => {
     // Validasi input
     if (!subject.trim()) {
-      Alert.alert('Lengkapi Data', 'Subject harus diisi.');
+      Alert.alert('Lengkapi Data', 'Subject harus dipilih.');
       return;
     }
 
@@ -272,6 +293,11 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
         <View style={styles.headerSpacer} />
       </View>
       <Text style={styles.label}>Departemen</Text>
+      {autoDepartmentChange && (
+        <Text style={styles.autoChangeNote}>
+          Departemen diubah otomatis sesuai subject yang dipilih
+        </Text>
+      )}
       <View style={styles.departmentRow}>
         {showLeftArrow && (
           <TouchableOpacity onPress={scrollLeft} style={styles.arrowBtn}>
@@ -319,14 +345,74 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
         )}
       </View>
       <Text style={styles.label}>Subject</Text>
-      <TextInput
-        style={styles.input}
-        value={subject}
-        onChangeText={setSubject}
-        placeholder="Masukkan subject"
-        placeholderTextColor="#dedbd5"
-      />
-      <Text style={styles.label}>Pesan</Text>
+      <TouchableOpacity
+        style={styles.dropdownButton}
+        onPress={() => setShowSubjectModal(true)}>
+        <Text
+          style={
+            subject ? styles.dropdownButtonText : styles.dropdownPlaceholder
+          }>
+          {subject || 'Pilih subject'}
+        </Text>
+        <Icon name="keyboard-arrow-down" size={24} color="#22325a" />
+      </TouchableOpacity>
+
+      <Modal
+        visible={showSubjectModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSubjectModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Pilih Subject</Text>
+              <TouchableOpacity
+                onPress={() => setShowSubjectModal(false)}
+                style={styles.closeButton}>
+                <Icon name="close" size={24} color="#22325a" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScrollView}>
+              {subjects.map(subjectOption => (
+                <TouchableOpacity
+                  key={subjectOption}
+                  style={[
+                    styles.modalItem,
+                    subject === subjectOption && styles.modalSelectedItem,
+                  ]}
+                  onPress={() => {
+                    setSubject(subjectOption);
+                    // Set departemen otomatis berdasarkan subject
+                    const newDepartmentId =
+                      subjectDepartmentMap[
+                        subjectOption as keyof typeof subjectDepartmentMap
+                      ];
+                    if (newDepartmentId && newDepartmentId !== departmentId) {
+                      setDepartmentId(newDepartmentId);
+                      setAutoDepartmentChange(true);
+                      // Reset flag setelah 3 detik
+                      setTimeout(() => setAutoDepartmentChange(false), 3000);
+                    }
+                    setShowSubjectModal(false);
+                  }}>
+                  <Text
+                    style={
+                      subject === subjectOption
+                        ? styles.modalSelectedText
+                        : styles.modalItemText
+                    }>
+                    {subjectOption}
+                  </Text>
+                  {subject === subjectOption && (
+                    <Icon name="check" size={20} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+      <Text style={styles.label}>Tuliskan Permintaan Bantuan Anda</Text>
       <TextInput
         style={[styles.input, styles.inputMessage]}
         value={message}
@@ -519,6 +605,92 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 12,
     marginTop: 4,
+  },
+  dropdownButton: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownButtonText: {
+    color: '#22325a',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  dropdownPlaceholder: {
+    color: '#dedbd5',
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    width: '80%',
+    maxHeight: '70%',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#22325a',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalScrollView: {
+    maxHeight: '70%',
+  },
+  modalItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalItemText: {
+    color: '#22325a',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  modalSelectedItem: {
+    backgroundColor: '#F26522',
+    borderColor: '#F26522',
+  },
+  modalSelectedText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  autoChangeNote: {
+    color: '#F26522',
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 4,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
   },
 });
 
