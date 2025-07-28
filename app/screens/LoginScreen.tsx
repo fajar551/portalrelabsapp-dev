@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {getFCMToken, loginUser} from '../../src/services/api';
 // import ClientDropdown from '../components/ClientDropdown';
@@ -149,140 +150,146 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.flex1}>
-      <Image
-        source={{
-          uri: 'https://portal.internetan.id/mobile/img/Splash%20Screen%203.png',
-        }}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      />
-      <ScrollView
-        contentContainerStyle={styles.containerFlex1}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.root}>
-          <View style={styles.card}>
-            {/* Logo Qwords dengan key icon */}
-            <View style={styles.logoContainer}>
-              <Text style={styles.qwordsText}>Qwords</Text>
-              <View style={styles.keyIcon}>
-                <Icon name="vpn-key" size={18} color="#ffb444" />
+    <LinearGradient
+      colors={[
+        'rgba(231, 107, 56, 1)',
+        'rgba(245, 143, 91, 1)',
+        'rgba(248, 157, 48, 1)',
+        'rgba(248, 166, 68, 1)',
+        'rgba(249, 176, 88, 1)',
+      ]}
+      style={styles.mainContainer}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.flex1}>
+        <ScrollView
+          contentContainerStyle={styles.containerFlex1}
+          keyboardShouldPersistTaps="handled"
+          style={styles.scrollView}>
+          <View style={styles.root}>
+            <View style={styles.card}>
+              {/* Logo Qwords dengan key icon */}
+              <View style={styles.logoContainer}>
+                <Text style={styles.qwordsText}>Qwords</Text>
+                <View style={styles.keyIcon}>
+                  <Icon name="vpn-key" size={18} color="#ffb444" />
+                </View>
               </View>
-            </View>
 
-            <Text style={styles.title}>Masukkan Akun Relabs</Text>
-            <Text style={styles.subtitle}>
-              Silakan masukkan Email/ID Pelanggan dan Password untuk Masuk
-            </Text>
+              <Text style={styles.title}>Masukkan Akun Relabs</Text>
+              <Text style={styles.subtitle}>
+                Silakan masukkan Email/ID Pelanggan dan Password untuk Masuk
+              </Text>
 
-            <Text style={styles.label}>Email/ID Pelanggan</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Masukkan Email/ID Pelanggan"
-              placeholderTextColor="#b0c4de"
-              value={identifier}
-              onChangeText={setIdentifier}
-              autoCapitalize="none"
-              keyboardType="default"
-            />
-
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
+              <Text style={styles.label}>Email/ID Pelanggan</Text>
               <TextInput
-                style={styles.passwordInput}
-                placeholder="Masukkan Password"
+                style={styles.input}
+                placeholder="Masukkan Email/ID Pelanggan"
                 placeholderTextColor="#b0c4de"
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
+                value={identifier}
+                onChangeText={setIdentifier}
+                autoCapitalize="none"
+                keyboardType="default"
               />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeButton}>
-                <Icon
-                  name={showPassword ? 'visibility' : 'visibility-off'}
-                  size={18}
-                  color="#ffb444"
+
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Masukkan Password"
+                  placeholderTextColor="#b0c4de"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
                 />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeButton}>
+                  <Icon
+                    name={showPassword ? 'visibility' : 'visibility-off'}
+                    size={18}
+                    color="#ffb444"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => navigateToScreen('ForgotPassword')}
+                style={styles.forgotContainer}>
+                <Text style={styles.forgot}>Lupa Password?</Text>
+              </TouchableOpacity>
+
+              <View style={styles.rememberRow}>
+                <CheckBox
+                  value={remember}
+                  onValueChange={setRemember}
+                  style={styles.checkbox}
+                  tintColors={{true: '#ffb444', false: '#ffb444'}}
+                  boxType="square"
+                />
+                <Text style={styles.rememberText}>Ingat Saya</Text>
+              </View>
+
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLogin}>
+                <Text style={styles.loginButtonText}>Masuk</Text>
+              </TouchableOpacity>
+
+              {/* Separator */}
+              <View style={styles.separator}>
+                <View style={styles.separatorLine} />
+                <Text style={styles.separatorText}>Or</Text>
+                <View style={styles.separatorLine} />
+              </View>
+
+              {/* WhatsApp Login Button */}
+              <TouchableOpacity
+                style={styles.whatsappButton}
+                onPress={handleWhatsAppLogin}>
+                <Image
+                  source={{
+                    uri: 'https://portal.internetan.id/mobile/img/whatsapp.png',
+                  }}
+                  style={styles.whatsappIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.whatsappButtonText}>
+                  Masuk dengan WhatsApp
+                </Text>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              onPress={() => navigateToScreen('ForgotPassword')}
-              style={styles.forgotContainer}>
-              <Text style={styles.forgot}>Lupa Password?</Text>
-            </TouchableOpacity>
-
-            <View style={styles.rememberRow}>
-              <CheckBox
-                value={remember}
-                onValueChange={setRemember}
-                style={styles.checkbox}
-                tintColors={{true: '#ffb444', false: '#ffb444'}}
-                boxType="square"
-              />
-              <Text style={styles.rememberText}>Ingat Saya</Text>
-            </View>
-
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-              <Text style={styles.loginButtonText}>Masuk</Text>
-            </TouchableOpacity>
-
-            {/* Separator */}
-            <View style={styles.separator}>
-              <View style={styles.separatorLine} />
-              <Text style={styles.separatorText}>Or</Text>
-              <View style={styles.separatorLine} />
-            </View>
-
-            {/* WhatsApp Login Button */}
-            <TouchableOpacity
-              style={styles.whatsappButton}
-              onPress={handleWhatsAppLogin}>
-              <Image
-                source={{
-                  uri: 'https://portal.internetan.id/mobile/img/whatsapp.png',
-                }}
-                style={styles.whatsappIcon}
-                resizeMode="contain"
-              />
-              <Text style={styles.whatsappButtonText}>
-                Masuk dengan WhatsApp
+            {/* Footer Information */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                PT Relabs Net DayaCipta © {new Date().getFullYear()},{'\n'}
+                Relabs adalah anggota dari{'\n'}
+                PT Qwords Company International Group
               </Text>
-            </TouchableOpacity>
+              <Animated.Text
+                style={[
+                  styles.versionText,
+                  {
+                    opacity: fadeAnim,
+                    transform: [
+                      {
+                        translateY: fadeAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0],
+                        }),
+                      },
+                    ],
+                  },
+                ]}>
+                Versi 1.4
+              </Animated.Text>
+            </View>
           </View>
-
-          {/* Footer Information */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              PT Relabs Net DayaCipta © {new Date().getFullYear()},{'\n'}
-              Relabs adalah anggota dari{'\n'}
-              PT Qwords Company International Group
-            </Text>
-            <Animated.Text
-              style={[
-                styles.versionText,
-                {
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: fadeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [20, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}>
-              Versi 1.4
-            </Animated.Text>
-          </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Modal Popup untuk Forgot Password */}
       <Modal
@@ -305,11 +312,21 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+  },
+  flex1: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  scrollView: {
+    flex: 1,
+  },
   root: {
     flex: 1,
     width: '100%',
@@ -318,14 +335,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     backgroundColor: 'transparent',
+    minHeight: '100%',
   },
   containerFlex1: {
     flexGrow: 1,
     width: '100%',
     height: '100%',
-  },
-  flex1: {
-    flex: 1,
+    backgroundColor: 'transparent',
   },
   errorText: {
     color: 'red',
@@ -386,7 +402,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: '#000',
     borderWidth: 1,
-    borderColor: '#ffb444',
+    borderColor: 'rgba(246, 138, 9, 1)',
   },
   passwordContainer: {
     width: '100%',
@@ -543,16 +559,6 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 11,
     fontStyle: 'italic',
-  },
-  backgroundImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-    zIndex: -1,
   },
 });
 
