@@ -96,6 +96,8 @@ const PayScreen = ({
     startDate: new Date(),
     dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Default to 14 days from now
     amount: 0, // Default 0 yang berarti tidak ada tagihan
+    invoiceId: null as number | null, // Tambahkan invoice ID
+    invoiceNum: null as string | null, // Tambahkan invoice number
   });
 
   // Data pembayaran dari API
@@ -161,6 +163,8 @@ const PayScreen = ({
             startDate: new Date(latestUnpaidInvoice.date),
             dueDate: new Date(latestUnpaidInvoice.duedate),
             amount: latestUnpaidInvoice.total || 0,
+            invoiceId: latestUnpaidInvoice.id,
+            invoiceNum: latestUnpaidInvoice.invoicenum,
           });
         }
       } else if (invoices && invoices.length > 0) {
@@ -173,6 +177,8 @@ const PayScreen = ({
             startDate: new Date(latestInvoice.date),
             dueDate: new Date(latestInvoice.duedate),
             amount: 0, // Tandai tidak ada yang perlu dibayar
+            invoiceId: latestInvoice.id,
+            invoiceNum: latestInvoice.invoicenum,
           });
         }
       } else {
@@ -181,6 +187,8 @@ const PayScreen = ({
           startDate: new Date(),
           dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
           amount: 0,
+          invoiceId: null,
+          invoiceNum: null,
         });
       }
 
@@ -755,6 +763,26 @@ const PayScreen = ({
             <View style={styles.dueCard}>
               <View style={styles.dueCardHeader}>
                 <Text style={styles.dueCardTitle}>Periode Jatuh Tempo</Text>
+                {billingPeriod.invoiceId && (
+                  <View style={styles.invoiceCardContainer}>
+                    <View style={styles.invoiceCard}>
+                      <Icon
+                        name="receipt"
+                        size={16}
+                        color="#F26522"
+                        style={styles.invoiceIcon}
+                      />
+                      <Text style={styles.invoiceInlineText}>
+                        <Text style={styles.invoiceLabel}>Invoice ID: </Text>
+                        <Text style={styles.invoiceNumber}>
+                          {billingPeriod.invoiceNum
+                            ? `#${billingPeriod.invoiceNum}`
+                            : `#${billingPeriod.invoiceId}`}
+                        </Text>
+                      </Text>
+                    </View>
+                  </View>
+                )}
                 <View style={styles.amountContainer}>
                   <Text style={styles.amountLabel}>Total Tagihan</Text>
                   <Text style={styles.amountValue}>
@@ -866,8 +894,8 @@ const PayScreen = ({
           </View>
           <Text style={styles.paymentStatusText}>
             {billingPeriod.amount > 0
-              ? 'Pembayaran terakhir telah diterima'
-              : 'Semua tagihan telah dibayar'}
+              ? 'Daftar tagihan anda'
+              : 'Loading ...'}
           </Text>
         </View>
 
@@ -1403,7 +1431,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF3B30', // Merah untuk status Cancelled
   },
   paymentStatusBadgeText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -1793,8 +1821,16 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 8,
   },
-  amountContainer: {
+  invoiceInfoContainer: {
     marginTop: 5,
+  },
+  invoiceIdLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  amountContainer: {
+    marginTop: 15,
   },
   amountLabel: {
     fontSize: 14,
@@ -2004,6 +2040,35 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     // hanya sebagai penanda, height akan tetap dinamis
+  },
+  invoiceCardContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  invoiceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  invoiceIcon: {
+    marginRight: 5,
+  },
+  invoiceInlineText: {
+    flexDirection: 'row',
+  },
+  invoiceLabel: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  invoiceNumber: {
+    color: '#fd7e14',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 

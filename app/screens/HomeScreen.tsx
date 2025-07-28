@@ -58,6 +58,8 @@ const HomeScreen = ({
     startDate: new Date(),
     dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Default to 14 days from now
     amount: 0, // Contoh jumlah tagihan
+    invoiceId: null as number | null, // Tambahkan invoice ID
+    invoiceNum: null as string | null, // Tambahkan invoice number
   });
   const [daysLeft, setDaysLeft] = useState(0);
   const [_progress, setProgress] = useState(0);
@@ -221,6 +223,8 @@ const HomeScreen = ({
                         startDate: new Date(latestUnpaidInvoice.date),
                         dueDate: new Date(latestUnpaidInvoice.duedate),
                         amount: latestUnpaidInvoice.total || 0,
+                        invoiceId: latestUnpaidInvoice.id || null,
+                        invoiceNum: latestUnpaidInvoice.invoicenum || null,
                       });
                     }
                   } else if (data.invoices && data.invoices.length > 0) {
@@ -230,6 +234,8 @@ const HomeScreen = ({
                         startDate: new Date(latestInvoice.date),
                         dueDate: new Date(latestInvoice.duedate),
                         amount: 0,
+                        invoiceId: null,
+                        invoiceNum: null,
                       });
                     }
                   }
@@ -238,6 +244,8 @@ const HomeScreen = ({
                     startDate: new Date(),
                     dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
                     amount: 0,
+                    invoiceId: null,
+                    invoiceNum: null,
                   });
                 }
 
@@ -361,6 +369,8 @@ const HomeScreen = ({
                 startDate: new Date(latestUnpaidInvoice.date),
                 dueDate: new Date(latestUnpaidInvoice.duedate),
                 amount: latestUnpaidInvoice.total || 0,
+                invoiceId: latestUnpaidInvoice.id || null,
+                invoiceNum: latestUnpaidInvoice.invoicenum || null,
               });
             }
           } else if (homeData.invoices && homeData.invoices.length > 0) {
@@ -374,6 +384,8 @@ const HomeScreen = ({
                 startDate: new Date(latestInvoice.date),
                 dueDate: new Date(latestInvoice.duedate),
                 amount: 0, // Tandai tidak ada yang perlu dibayar
+                invoiceId: null,
+                invoiceNum: null,
               });
             }
           }
@@ -384,6 +396,8 @@ const HomeScreen = ({
             startDate: new Date(),
             dueDate: new Date(Date.now() + 14 * 60 * 60 * 1000),
             amount: 0,
+            invoiceId: null,
+            invoiceNum: null,
           });
         }
 
@@ -950,6 +964,26 @@ const HomeScreen = ({
             <View style={styles.dueCard}>
               <View style={styles.dueCardHeader}>
                 <Text style={styles.dueCardTitle}>Periode Jatuh Tempo</Text>
+                {billingPeriod.invoiceId && (
+                  <View style={styles.invoiceCardContainer}>
+                    <View style={styles.invoiceCard}>
+                      <Icon
+                        name="receipt"
+                        size={16}
+                        color="#F26522"
+                        style={styles.invoiceIcon}
+                      />
+                      <Text style={styles.invoiceInlineText}>
+                        <Text style={styles.invoiceLabel}>Invoice ID: </Text>
+                        <Text style={styles.invoiceNumber}>
+                          {billingPeriod.invoiceNum
+                            ? `#${billingPeriod.invoiceNum}`
+                            : `#${billingPeriod.invoiceId}`}
+                        </Text>
+                      </Text>
+                    </View>
+                  </View>
+                )}
                 <View style={styles.amountContainer}>
                   <Text style={styles.amountLabel}>Total Tagihan</Text>
                   <Text style={styles.amountValue}>
@@ -1801,6 +1835,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     borderRadius: 8,
     marginTop: 10,
+  },
+  invoiceCardContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  invoiceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  invoiceIcon: {
+    marginRight: 5,
+  },
+  invoiceInlineText: {
+    flexDirection: 'row',
+  },
+  invoiceLabel: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  invoiceNumber: {
+    color: '#fd7e14',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 
