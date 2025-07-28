@@ -41,8 +41,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState('');
-  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // State untuk popup
-  const [showPassword, setShowPassword] = useState(false); // State untuk menampilkan/menyembunyikan password
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Memeriksa dan mengambil data yang tersimpan saat komponen dimuat
@@ -65,9 +65,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             setIdentifier(savedIdentifier);
             setPassword(savedPassword);
             setRemember(true);
-
-            // Opsional: Login otomatis
-            // await handleLogin(savedIdentifier, savedPassword);
           }
         }
       } catch (err) {
@@ -102,7 +99,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
         );
         await AsyncStorage.setItem(STORAGE_KEYS.USER_PASSWORD, userPassword);
       } else {
-        // Hapus kredensial yang tersimpan jika "Remember Me" tidak dicentang
         await AsyncStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
         await AsyncStorage.removeItem(STORAGE_KEYS.USER_IDENTIFIER);
         await AsyncStorage.removeItem(STORAGE_KEYS.USER_PASSWORD);
@@ -114,13 +110,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const handleLoginSuccess = async (_userData: any) => {
     try {
-      // Get dan simpan FCM token
       const fcmToken = await getFCMToken();
       if (!fcmToken) {
         console.error('Failed to setup push notification');
       }
-
-      // Panggil callback onLoginSuccess
       onLoginSuccess();
     } catch (err: any) {
       console.error('Error in handleLoginSuccess:', err);
@@ -128,23 +121,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   const handleLogin = async () => {
-    // Validasi form dasar
     if (!identifier.trim() || !password.trim()) {
       setError('Email/ID Pelanggan dan password harus diisi');
       return;
     }
 
     try {
-      // Login ke API
       const response = await loginUser(identifier, password);
 
       if (response && response.status === 'success') {
         console.log('Login berhasil:', response.data.client.name);
-
-        // Simpan kredensial jika "Remember Me" dicentang
         await saveCredentials(identifier, password, remember);
-
-        // Panggil handleLoginSuccess dengan data user
         await handleLoginSuccess(response.data.client);
       } else {
         setError(response.message || 'Terjadi kesalahan saat login');
@@ -157,47 +144,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
 
-  // const _handleResetPassword = async () => {
-  //   if (!identifier || !identifier.trim()) {
-  //     Alert.alert('Error', 'Masukkan email yang valid');
-  //     return;
-  //   }
-
-  //   setIsLoading(true);
-  //   setError('');
-
-  //   try {
-  //     // Ganti dengan URL API Anda
-  //     const response = await axios.post(
-  //       'https://portal.relabs.id/mobile/forgot-password',
-  //       {
-  //         email: identifier,
-  //       },
-  //     );
-
-  //     if (response.data.status === 'success') {
-  //       setError(response.data.message);
-  //       setTimeout(() => {
-  //         navigateToScreen('Login');
-  //       }, 3000);
-  //     }
-  //   } catch (err: any) {
-  //     let errorMessage =
-  //       'Terjadi kesalahan saat mengirim permintaan reset password.';
-
-  //     if (err.response) {
-  //       if (err.response.status === 404) {
-  //         errorMessage = 'Email tidak ditemukan dalam database.';
-  //       } else if (err.response.data && err.response.data.message) {
-  //         errorMessage = err.response.data.message;
-  //       }
-  //     }
-
-  //     Alert.alert('Error', errorMessage);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+  const handleWhatsAppLogin = () => {
+    console.log('Login dengan WhatsApp');
+  };
 
   return (
     <KeyboardAvoidingView
@@ -208,20 +157,23 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
         keyboardShouldPersistTaps="handled">
         <View style={styles.root}>
           <View style={styles.card}>
-            <Image
-              source={require('../assets/logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
+            {/* Logo Qwords dengan key icon */}
+            <View style={styles.logoContainer}>
+              <Text style={styles.qwordsText}>Qwords</Text>
+              <View style={styles.keyIcon}>
+                <Icon name="vpn-key" size={18} color="#ffb444" />
+              </View>
+            </View>
+
             <Text style={styles.title}>Masukkan Akun Relabs</Text>
             <Text style={styles.subtitle}>
-              Silakan masukkan Email atau ID Pelanggan dan Password untuk Masuk
+              Silakan masukkan Email/ID Pelanggan dan Password untuk Masuk
             </Text>
 
             <Text style={styles.label}>Email/ID Pelanggan</Text>
             <TextInput
               style={styles.input}
-              placeholder="Email atau ID Pelanggan"
+              placeholder="Masukkan Email/ID Pelanggan"
               placeholderTextColor="#b0c4de"
               value={identifier}
               onChangeText={setIdentifier}
@@ -233,7 +185,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
-                placeholder="Password"
+                placeholder="Masukkan Password"
                 placeholderTextColor="#b0c4de"
                 secureTextEntry={!showPassword}
                 value={password}
@@ -244,14 +196,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                 style={styles.eyeButton}>
                 <Icon
                   name={showPassword ? 'visibility' : 'visibility-off'}
-                  size={24}
+                  size={18}
                   color="#ffb444"
                 />
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity
-              onPress={() => navigateToScreen('ForgotPassword')}>
+              onPress={() => navigateToScreen('ForgotPassword')}
+              style={styles.forgotContainer}>
               <Text style={styles.forgot}>Lupa Password?</Text>
             </TouchableOpacity>
 
@@ -260,7 +213,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                 value={remember}
                 onValueChange={setRemember}
                 style={styles.checkbox}
-                tintColors={{true: '#fd7e14', false: '#888888'}}
+                tintColors={{true: '#ffb444', false: '#ffb444'}}
                 boxType="square"
               />
               <Text style={styles.rememberText}>Ingat Saya</Text>
@@ -272,25 +225,37 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
               <Text style={styles.loginButtonText}>Masuk</Text>
             </TouchableOpacity>
 
-            {/* Client Dropdown untuk Testing */}
-            {/* <View style={styles.testingSection}>
-              <Text style={styles.testingSectionTitle}>
-                Test API Connection
-              </Text>
-              <ClientDropdown />
-            </View> */}
-
-            {/* Client Dropdown untuk Testing */}
-            <View style={styles.testingSection}>
-              <Text style={styles.testingSectionTitle2}>
-                PT Relabs Net DayaCipta © {new Date().getFullYear()}, {'\n'}{' '}
-                Relabs adalah anggota dari{'\n'}PT Qwords Company International
-                Group
-              </Text>
-              {/* <ClientDropdown /> */}
+            {/* Separator */}
+            <View style={styles.separator}>
+              <View style={styles.separatorLine} />
+              <Text style={styles.separatorText}>Or</Text>
+              <View style={styles.separatorLine} />
             </View>
 
-            {/* Version Text */}
+            {/* WhatsApp Login Button */}
+            <TouchableOpacity
+              style={styles.whatsappButton}
+              onPress={handleWhatsAppLogin}>
+              <Image
+                source={{
+                  uri: 'https://portal.internetan.id/mobile/img/whatsapp.png',
+                }}
+                style={styles.whatsappIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.whatsappButtonText}>
+                Masuk dengan WhatsApp
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Footer Information */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              PT Relabs Net DayaCipta © {new Date().getFullYear()},{'\n'}
+              Relabs adalah anggota dari{'\n'}
+              PT Qwords Company International Group
+            </Text>
             <Animated.Text
               style={[
                 styles.versionText,
@@ -340,9 +305,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f6f9ff',
+    backgroundColor: '#ffb444',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   containerFlex1: {
     flexGrow: 1,
@@ -353,103 +319,109 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     marginBottom: 10,
+    textAlign: 'center',
   },
   card: {
-    width: '90%',
+    width: '100%',
     maxWidth: 400,
     backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 28,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: {width: 0, height: 8},
-    elevation: 8,
+    borderRadius: 15,
+    padding: 30,
     alignItems: 'center',
+    marginBottom: 20,
   },
-  logo: {
-    width: 90,
-    height: 90,
-    marginBottom: 10,
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  qwordsText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
+    marginRight: 6,
+  },
+  keyIcon: {
+    transform: [{rotate: '15deg'}],
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#22325a',
-    marginBottom: 4,
+    color: '#000',
+    marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#8a98b7',
-    fontSize: 14,
-    marginBottom: 18,
+    color: '#666',
+    fontSize: 13,
+    marginBottom: 25,
     textAlign: 'center',
+    lineHeight: 18,
   },
   label: {
     alignSelf: 'flex-start',
-    color: '#22325a',
+    color: '#000',
     fontWeight: '600',
-    marginTop: 10,
-    marginBottom: 4,
-    fontSize: 15,
+    marginBottom: 6,
+    fontSize: 14,
   },
   input: {
     width: '100%',
-    backgroundColor: '#eaf2ff',
+    backgroundColor: '#fff',
     borderRadius: 8,
     paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
-    fontSize: 16,
-    marginBottom: 6,
-    color: '#22325a',
+    paddingVertical: 12,
+    fontSize: 15,
+    marginBottom: 15,
+    color: '#000',
+    borderWidth: 1,
+    borderColor: '#ffb444',
   },
   passwordContainer: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eaf2ff',
+    backgroundColor: '#fff',
     borderRadius: 8,
-    marginBottom: 6,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#ffb444',
   },
   passwordInput: {
     flex: 1,
     paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
-    fontSize: 16,
-    color: '#22325a',
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#000',
   },
   eyeButton: {
     padding: 10,
   },
-  eyeText: {
-    color: '#ffb444',
-    fontSize: 14,
-    fontWeight: '500',
-  },
   forgot: {
     color: '#ffb444',
-    alignSelf: 'flex-end',
-    marginBottom: 10,
-    marginTop: 2,
     fontSize: 13,
+    fontWeight: '500',
+  },
+  forgotContainer: {
+    alignItems: 'center',
+    marginBottom: 15,
   },
   rememberRow: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    marginBottom: 18,
-    marginTop: 2,
+    marginBottom: 20,
   },
   checkbox: {
-    marginRight: 8,
-    width: 20,
-    height: 20,
+    marginRight: 6,
+    width: 16,
+    height: 16,
     borderWidth: 1,
   },
   rememberText: {
-    color: '#22325a',
-    fontSize: 15,
-    marginLeft: 3,
+    color: '#000',
+    fontSize: 14,
+    marginLeft: 10,
   },
   loginButton: {
     backgroundColor: '#ffb444',
@@ -457,42 +429,62 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     alignItems: 'center',
     width: '100%',
-    marginBottom: 12,
-    marginTop: 2,
+    marginBottom: 15,
   },
   loginButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 17,
-  },
-  signupText: {
-    color: '#3b82f6',
-    fontSize: 15,
-    marginTop: 2,
-    textAlign: 'center',
-  },
-  testingSection: {
-    marginTop: 20,
-    width: '100%',
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    paddingTop: 20,
-  },
-  testingSectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#22325a',
-    marginBottom: 10,
-    textAlign: 'center',
   },
-  testingSectionTitle2: {
-    fontSize: 12,
+  separator: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 15,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+  },
+  separatorText: {
+    marginHorizontal: 15,
+    color: '#666',
+    fontSize: 13,
+  },
+  whatsappButton: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 13,
+    alignItems: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ffb444',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  whatsappIcon: {
+    width: 18,
+    height: 18,
+    marginRight: 8,
+  },
+  whatsappButtonText: {
+    color: '#000',
     fontWeight: '500',
-    color: '#999',
-    marginBottom: 10,
-    textAlign: 'center',
+    fontSize: 15,
   },
-  // Styles untuk Modal Popup
+  footer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  footerText: {
+    fontSize: 11,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 16,
+    marginBottom: 6,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -535,9 +527,7 @@ const styles = StyleSheet.create({
   versionText: {
     textAlign: 'center',
     color: '#666',
-    fontSize: 12,
-    marginTop: 5,
-    marginBottom: 2,
+    fontSize: 11,
     fontStyle: 'italic',
   },
 });
