@@ -1086,9 +1086,9 @@ const HomeScreen = ({
         ]}>
         <TouchableOpacity style={styles.navItem}>
           <View style={styles.navIconContainerActive}>
-            <Icon name="home" size={28} color="#F26522" />
+            <Icon name="home" size={25} color="#F26522" />
           </View>
-          <Text style={[styles.navText, styles.activeNavText]}>Beranda</Text>
+          <Text style={styles.navTextActive}>Beranda</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
@@ -1515,7 +1515,7 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: 'row',
     backgroundColor: '#F26522',
-    paddingTop: 5,
+    paddingTop: 2,
     borderTopWidth: 1,
     borderTopColor: '#E4571B',
     overflow: 'visible',
@@ -1558,19 +1558,19 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   navIconContainerActive: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 35,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'white',
-    marginBottom: 2,
-    marginTop: -20,
+    marginBottom: 5,
+    marginTop: -25,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
   },
   navText: {
     fontSize: 9,
@@ -1876,6 +1876,11 @@ const styles = StyleSheet.create({
   invoiceNumber: {
     color: '#fd7e14',
     fontSize: 12,
+    fontWeight: 'bold',
+  },
+  navTextActive: {
+    fontSize: 10,
+    color: '#fff',
     fontWeight: 'bold',
   },
 });

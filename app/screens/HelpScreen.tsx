@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -12,10 +12,10 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {getTicketsByUserId} from '../../src/services/api';
+import { getTicketsByUserId } from '../../src/services/api';
 
 const HelpScreen = ({
   navigateTo,
@@ -46,10 +46,6 @@ const HelpScreen = ({
       styles.bottomNavFixed,
       {paddingBottom: insets.bottom},
     ];
-  };
-
-  const getNavTextStyle = (isActive: boolean) => {
-    return [styles.navText, isActive && styles.activeNavText];
   };
 
   const getTicketCardRowStyle = () => {
@@ -268,35 +264,31 @@ const HelpScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="home" size={24} color="#666" />
+            <Icon name="home" size={24} color="#fff" />
           </View>
-          <Text style={getNavTextStyle(false)}>Beranda</Text>
+          <Text style={styles.navTextInactive}>Beranda</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="receipt" size={24} color="#666" />
+            <Icon name="receipt" size={24} color="#fff" />
           </View>
-          <Text style={getNavTextStyle(false)}>Tagihan</Text>
+          <Text style={styles.navTextInactive}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
-          <LinearGradient
-            colors={['#E4571B', '#F26522']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={styles.navIconContainer}>
-            <Icon name="help" size={24} color="#fff" />
-          </LinearGradient>
-          <Text style={getNavTextStyle(true)}>Bantuan</Text>
+          <View style={styles.navIconContainerActive}>
+            <Icon name="help" size={25} color="#F26522" />
+          </View>
+          <Text style={styles.navTextActive}>Bantuan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon2 name="person" size={24} color="#666" />
+            <Icon2 name="person" size={24} color="#fff" />
           </View>
-          <Text style={getNavTextStyle(false)}>Akun</Text>
+          <Text style={styles.navTextInactive}>Akun</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -417,10 +409,11 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    paddingTop: 5,
+    backgroundColor: '#F26522',
+    paddingTop: 1,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: '#E4571B',
+    overflow: 'visible',
   },
   bottomNavFixed: {
     position: 'absolute',
@@ -432,6 +425,7 @@ const styles = StyleSheet.create({
   navItem: {
     flex: 1,
     alignItems: 'center',
+    position: 'relative',
   },
   navIconContainer: {
     width: 35,
@@ -452,17 +446,41 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent', // Changed to transparent
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 3,
+    // elevation: 3,
     marginBottom: 2,
+  },
+  navIconContainerActive: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    marginBottom: 5,
+    marginTop: -25,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
   },
   navText: {
     fontSize: 9,
     color: '#666',
+  },
+  navTextInactive: {
+    fontSize: 9,
+    color: '#fff',
+  },
+  navTextActive: {
+    fontSize: 10,
+    color: '#fff',
+    fontWeight: 'bold',
   },
   activeNavText: {
     color: '#F26522',

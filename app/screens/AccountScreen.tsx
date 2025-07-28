@@ -320,36 +320,31 @@ const AccountScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="home" size={24} color="#666" />
+            <Icon name="home" size={24} color="#fff" />
           </View>
-          <Text style={styles.navText}>Beranda</Text>
+          <Text style={styles.navTextInactive}>Beranda</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="receipt" size={24} color="#666" />
+            <Icon name="receipt" size={24} color="#fff" />
           </View>
-          <Text style={styles.navText}>Tagihan</Text>
+          <Text style={styles.navTextInactive}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigateTo('Help')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="help" size={24} color="#666" />
+            <Icon name="help" size={24} color="#fff" />
           </View>
-          <Text style={styles.navText}>Bantuan</Text>
+          <Text style={styles.navTextInactive}>Bantuan</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
-          <LinearGradient
-            // colors={['#ffb347', '#fd7e14']}
-            colors={['#E4571B', '#F26522']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={styles.navIconContainer}>
-            <Icon2 name="person" size={24} color="#fff" />
-          </LinearGradient>
-          <Text style={[styles.navText, styles.activeNavText]}>Akun</Text>
+          <View style={styles.navIconContainerActive}>
+            <Icon2 name="person" size={25} color="#F26522" />
+          </View>
+          <Text style={styles.navTextActive}>Akun</Text>
         </TouchableOpacity>
       </View>
 
@@ -537,11 +532,11 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    paddingTop: 5,
-    paddingBottom: 4,
+    backgroundColor: '#F26522',
+    paddingTop: 1,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: '#E4571B',
+    overflow: 'visible',
   },
   bottomNavFixed: {
     position: 'absolute',
@@ -553,6 +548,7 @@ const styles = StyleSheet.create({
   navItem: {
     flex: 1,
     alignItems: 'center',
+    position: 'relative',
   },
   navIconContainer: {
     width: 35,
@@ -573,17 +569,41 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent', // Changed to transparent
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 3,
+    // elevation: 3,
     marginBottom: 2,
+  },
+  navIconContainerActive: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    marginBottom: 5,
+    marginTop: -25,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
   },
   navText: {
     fontSize: 9,
     color: '#666',
+  },
+  navTextInactive: {
+    fontSize: 9,
+    color: '#fff',
+  },
+  navTextActive: {
+    fontSize: 10,
+    color: '#fff',
+    fontWeight: 'bold',
   },
   activeNavText: {
     color: '#fd7e14',
