@@ -168,13 +168,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
           style={styles.scrollView}>
           <View style={styles.root}>
             <View style={styles.card}>
-              {/* Logo Qwords dengan key icon */}
-              <View style={styles.logoContainer}>
-                <Text style={styles.qwordsText}>Qwords</Text>
-                <View style={styles.keyIcon}>
-                  <Icon name="vpn-key" size={18} color="#ffb444" />
-                </View>
-              </View>
+              {/* Logo Qwords */}
+              <Image
+                source={{
+                  uri: 'https://portal.internetan.id/mobile/img/qwords.png',
+                }}
+                style={styles.logo}
+                resizeMode="contain"
+              />
 
               <Text style={styles.title}>Masukkan Akun Relabs</Text>
               <Text style={styles.subtitle}>
@@ -207,8 +208,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                   style={styles.eyeButton}>
                   <Icon
                     name={showPassword ? 'visibility' : 'visibility-off'}
-                    size={18}
-                    color="#ffb444"
+                    size={20}
+                    color="rgba(246, 138, 9, 1)"
                   />
                 </TouchableOpacity>
               </View>
@@ -224,7 +225,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                   value={remember}
                   onValueChange={setRemember}
                   style={styles.checkbox}
-                  tintColors={{true: '#ffb444', false: '#ffb444'}}
+                  tintColors={{true: 'rgba(246, 138, 9, 1)', false: 'rgba(246, 138, 9, 1)'}}
                   boxType="square"
                 />
                 <Text style={styles.rememberText}>Ingat Saya</Text>
@@ -353,52 +354,44 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     backgroundColor: '#fff',
     borderRadius: 15,
-    padding: 30,
+    padding: 25,
     alignItems: 'center',
     marginBottom: 20,
   },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  qwordsText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
-    marginRight: 6,
-  },
-  keyIcon: {
-    transform: [{rotate: '15deg'}],
+  logo: {
+    width: 111,
+    height: 111,
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#000',
-    marginBottom: 6,
+    marginBottom: 15,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#666',
-    fontSize: 13,
+    color: 'rgba(0, 0, 0, 1)',
+    fontSize: 16,
     marginBottom: 25,
     textAlign: 'center',
     lineHeight: 18,
   },
   label: {
     alignSelf: 'flex-start',
-    color: '#000',
+    color: 'rgba(0, 0, 0, 1)',
     fontWeight: '600',
     marginBottom: 6,
     fontSize: 14,
   },
   input: {
     width: '100%',
+    maxWidth: 318,
+    height: 40,
     backgroundColor: '#fff',
     borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    fontSize: 14,
     marginBottom: 15,
     color: '#000',
     borderWidth: 1,
@@ -406,26 +399,31 @@ const styles = StyleSheet.create({
   },
   passwordContainer: {
     width: '100%',
+    maxWidth: 318,
+    height: 40,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 8,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#ffb444',
+    borderColor: 'rgba(246, 138, 9, 1)',
   },
   passwordInput: {
     flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    fontSize: 14,
     color: '#000',
   },
   eyeButton: {
     padding: 10,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   forgot: {
-    color: '#ffb444',
+    color: 'rgba(207, 116, 7, 1)',
     fontSize: 13,
     fontWeight: '500',
   },
@@ -451,17 +449,18 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   loginButton: {
-    backgroundColor: '#ffb444',
+    backgroundColor: '#rgba(246, 138, 9, 1)',
     borderRadius: 8,
-    paddingVertical: 13,
+    paddingVertical: 9,
     alignItems: 'center',
+    height: 40,
     width: '100%',
     marginBottom: 15,
   },
   loginButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 14,
   },
   separator: {
     width: '100%',
@@ -472,6 +471,8 @@ const styles = StyleSheet.create({
   separatorLine: {
     flex: 1,
     height: 1,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
     backgroundColor: '#e0e0e0',
   },
   separatorText: {
@@ -482,21 +483,21 @@ const styles = StyleSheet.create({
   whatsappButton: {
     backgroundColor: '#fff',
     borderRadius: 8,
-    paddingVertical: 13,
+    paddingVertical: 3,
     alignItems: 'center',
     width: '100%',
-    borderWidth: 1,
-    borderColor: '#ffb444',
+    borderWidth: 2,
+    borderColor: 'rgba(246, 138, 9, 1)',
     flexDirection: 'row',
     justifyContent: 'center',
   },
   whatsappIcon: {
-    width: 18,
-    height: 18,
+    width: 31,
+    height: 31,
     marginRight: 8,
   },
   whatsappButtonText: {
-    color: '#000',
+    color: 'rgba(246, 138, 9, 1)',
     fontWeight: '500',
     fontSize: 15,
   },
@@ -510,10 +511,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 11,
-    color: '#666',
+    color: 'rgba(0, 0, 0, 1)',
     textAlign: 'center',
     lineHeight: 16,
     marginBottom: 6,
+    fontWeight: '400',
   },
   modalOverlay: {
     flex: 1,
@@ -556,9 +558,10 @@ const styles = StyleSheet.create({
   },
   versionText: {
     textAlign: 'center',
-    color: '#666',
+    color: 'rgba(0, 0, 0, 1)',
     fontSize: 11,
     fontStyle: 'italic',
+    fontWeight: '400',
   },
 });
 
