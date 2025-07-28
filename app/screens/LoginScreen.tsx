@@ -32,11 +32,13 @@ const STORAGE_KEYS = {
 interface LoginScreenProps {
   onLoginSuccess: () => void;
   navigateToScreen: (screen: string) => void;
+  onWhatsAppLogin: () => void;
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSuccess,
   navigateToScreen,
+  onWhatsAppLogin,
 }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -146,7 +148,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   const handleWhatsAppLogin = () => {
-    console.log('Login dengan WhatsApp');
+    onWhatsAppLogin();
   };
 
   return (
@@ -225,7 +227,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                   value={remember}
                   onValueChange={setRemember}
                   style={styles.checkbox}
-                  tintColors={{true: 'rgba(246, 138, 9, 1)', false: 'rgba(246, 138, 9, 1)'}}
+                  tintColors={{
+                    true: 'rgba(246, 138, 9, 1)',
+                    false: 'rgba(246, 138, 9, 1)',
+                  }}
                   boxType="square"
                 />
                 <Text style={styles.rememberText}>Ingat Saya</Text>
@@ -361,6 +366,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 111,
     height: 111,
+    marginTop: -15,
+    marginBottom: -10,
   },
   title: {
     fontSize: 22,

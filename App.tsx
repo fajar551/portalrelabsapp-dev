@@ -17,6 +17,7 @@ import AccountScreen from './app/screens/AccountScreen';
 import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
 import HelpScreen from './app/screens/HelpScreen';
 import HomeScreen from './app/screens/HomeScreen';
+// import HomeScreen2 from './app/screens/HomeScreen2';
 import InvoiceDetailScreen from './app/screens/InvoiceDetailScreen';
 import LoginScreen from './app/screens/LoginScreen';
 import NotificationScreen from './app/screens/NotificationScreen';
@@ -28,6 +29,7 @@ import ResetPasswordScreen from './app/screens/ResetPasswordScreen';
 import SplashScreen from './app/screens/SplashScreen';
 import TicketDetailScreen from './app/screens/TicketDetailScreen';
 import VerifyCodeScreen from './app/screens/VerifyCodeScreen';
+import WhatsAppLoginScreen from './app/screens/WhatsAppLoginScreen';
 import {checkLoginStatus, getFCMToken, logoutUser} from './src/services/api';
 
 // Type untuk props yang diteruskan ke screens
@@ -180,6 +182,7 @@ export default function App() {
     token: string;
     email: string;
   }>({token: '', email: ''});
+  const [showWhatsAppLogin, setShowWhatsAppLogin] = useState(false);
 
   // Menyimpan email yang dimasukkan di ForgotPasswordScreen
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
@@ -293,6 +296,19 @@ export default function App() {
     setCurrentScreen('Home');
     // Panggil getFCMToken setelah login berhasil
     await getFCMToken();
+  };
+
+  const handleWhatsAppLogin = () => {
+    setShowWhatsAppLogin(true);
+  };
+
+  const handleBackFromWhatsApp = () => {
+    setShowWhatsAppLogin(false);
+  };
+
+  const handleWhatsAppLoginSuccess = async () => {
+    setShowWhatsAppLogin(false);
+    await handleLoginSuccess();
   };
 
   const handleLogout = async () => {
@@ -429,7 +445,12 @@ export default function App() {
       <NavigationContainer>
         {!isLoggedIn ? (
           <>
-            {currentScreen === 'ForgotPassword' ? (
+            {showWhatsAppLogin ? (
+              <WhatsAppLoginScreen
+                onBack={handleBackFromWhatsApp}
+                onLoginSuccess={handleWhatsAppLoginSuccess}
+              />
+            ) : currentScreen === 'ForgotPassword' ? (
               <ForgotPasswordScreen
                 navigateToScreen={(screen, params) =>
                   navigateToScreen(screen, params)
@@ -450,6 +471,7 @@ export default function App() {
               <LoginScreen
                 onLoginSuccess={handleLoginSuccess}
                 navigateToScreen={navigateToScreen}
+                onWhatsAppLogin={handleWhatsAppLogin}
               />
             )}
           </>
@@ -499,8 +521,6 @@ export default function App() {
                     />
                   );
                 default:
-                  console.log('Default case triggered, showing Home');
-                  return <HomeScreen {...screenProps} />;
               }
             })()}
           </>
