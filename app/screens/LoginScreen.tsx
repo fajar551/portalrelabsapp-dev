@@ -152,6 +152,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.flex1}>
+      <Image
+        source={{
+          uri: 'https://portal.internetan.id/mobile/img/Splash%20Screen%203.png',
+        }}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
       <ScrollView
         contentContainerStyle={styles.containerFlex1}
         keyboardShouldPersistTaps="handled">
@@ -305,13 +312,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#ffb444',
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    backgroundColor: 'transparent',
   },
   containerFlex1: {
     flexGrow: 1,
+    width: '100%',
+    height: '100%',
   },
   flex1: {
     flex: 1,
@@ -477,6 +488,9 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: 20,
+    position: 'relative',
+    zIndex: 1,
+    backgroundColor: 'transparent',
   },
   footerText: {
     fontSize: 11,
@@ -529,6 +543,16 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 11,
     fontStyle: 'italic',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: -1,
   },
 });
 
