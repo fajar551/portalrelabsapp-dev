@@ -1,7 +1,8 @@
 import axios from 'axios';
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Alert,
+  Animated,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -23,6 +24,16 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
   // route,
 }) => {
   const [email, setEmail] = useState('');
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Animate version text
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   const handleResetPassword = async () => {
     if (!email || !email.trim()) {
@@ -82,7 +93,9 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
         <View style={styles.container}>
           <View style={styles.card}>
             <Image
-              source={require('../assets/logo.png')}
+              source={{
+                uri: 'https://portal.internetan.id/mobile/img/qwords.png',
+              }}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -109,11 +122,49 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
               <Text style={styles.resetButtonText}>Send Verification Code</Text>
             </TouchableOpacity>
 
-            <Text style={styles.orText}>or</Text>
+            <View style={styles.orContainer}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>Or</Text>
+              <View style={styles.orLine} />
+            </View>
 
-            <TouchableOpacity onPress={() => navigateToScreen('Login')}>
+            <TouchableOpacity
+              style={styles.backToLoginButton}
+              onPress={() => navigateToScreen('Login')}>
+              <Image
+                source={{
+                  uri: 'https://portal.internetan.id/mobile/img/backIconorange.png',
+                }}
+                style={styles.backToLoginIcon}
+                resizeMode="contain"
+              />
               <Text style={styles.backToLoginText}>Back to Login</Text>
             </TouchableOpacity>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>PT Relabs Net DayaCipta 2025</Text>
+            <Text style={styles.footerText}>Relabs adalah anggota dari</Text>
+            <Text style={styles.footerText}>
+              PT Qwords Company International Group
+            </Text>
+            <Animated.Text
+              style={[
+                styles.versionText,
+                {
+                  opacity: fadeAnim,
+                  transform: [
+                    {
+                      translateY: fadeAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
+              Versi 1.4
+            </Animated.Text>
           </View>
         </View>
       </ScrollView>
@@ -138,7 +189,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: '#fff',
-    borderRadius: 20,
+    borderRadius: 10,
     padding: 28,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -148,22 +199,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 70,
-    height: 70,
-    marginBottom: 18,
+    width: 111,
+    height: 111,
+    marginTop: -15,
+    marginBottom: -10,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#22325a',
+    color: 'rgba(0, 0, 0, 1)',
     marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#8a98b7',
+    color: 'rgba(0, 0, 0, 1)',
     fontSize: 14,
     marginBottom: 25,
     textAlign: 'center',
+    lineHeight: 24,
   },
   successContainer: {
     flexDirection: 'row',
@@ -186,44 +239,98 @@ const styles = StyleSheet.create({
   },
   label: {
     alignSelf: 'flex-start',
-    color: '#22325a',
+    color: 'rgba(0, 0, 0, 1)',
     fontWeight: '600',
     marginBottom: 8,
-    fontSize: 15,
+    fontSize: 14,
   },
   input: {
     width: '100%',
-    backgroundColor: '#eaf2ff',
+    backgroundColor: 'rgba(255, 255, 255, 1)',
     borderRadius: 8,
     paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 7,
     fontSize: 16,
     marginBottom: 20,
-    color: '#22325a',
+    borderColor: 'rgba(246, 138, 9, 1)',
+    borderWidth: 1,
+    color: 'rgba(0, 0, 0, 1)r5',
   },
   resetButton: {
-    backgroundColor: '#ffb444',
-    borderRadius: 8,
-    paddingVertical: 13,
+    backgroundColor: 'rgba(246, 138, 9, 1)',
+    borderRadius: 16,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    marginBottom: 15,
+    // marginBottom: 15,
   },
   resetButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 5,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+  },
   orText: {
     color: '#8a98b7',
-    marginVertical: 10,
+    marginHorizontal: 10,
     fontSize: 14,
+    fontWeight: '500',
+  },
+  backToLoginButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: 'rgba(246, 138, 9, 1)',
+    borderRadius: 16,
+    paddingVertical: 6,
+    // paddingHorizontal: 9,
+    width: '100%',
+    marginBottom: 10,
+  },
+  backToLoginIcon: {
+    width: 8,
+    height: 12,
+    marginRight: 8,
+    marginTop: 1,
+    color: 'rgba(246, 138, 9, 1)',
   },
   backToLoginText: {
-    color: '#ffb444',
+    color: 'rgba(246, 138, 9, 1)',
     fontSize: 16,
     fontWeight: '500',
+  },
+  footer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  footerText: {
+    fontSize: 12,
+    color: 'rgba(0, 0, 0, 1)',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  versionText: {
+    textAlign: 'center',
+    color: 'rgba(0, 0, 0, 1)',
+    fontSize: 11,
+    fontStyle: 'italic',
+    fontWeight: '400',
   },
 });
 

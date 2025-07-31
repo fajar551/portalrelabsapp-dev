@@ -165,6 +165,67 @@ export const loginUser = async (identifier: string, password: string, device_nam
   }
 };
 
+// Fungsi untuk WhatsApp login
+export const whatsappLogin = async (phoneNumber: string, otpCode: string, device_name: string = 'mobile_app') => {
+  try {
+    console.log('WhatsApp Login dengan API Laravel:', `${CONFIG.API_URL}/mobile/whatsapp-login`);
+
+    // Implementasi WhatsApp login dengan timeout dan retry
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.FETCH_TIMEOUT);
+
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
+      body: JSON.stringify({
+        phone_number: phoneNumber,
+        otp_code: otpCode,
+        device_name,
+      }),
+      signal: controller.signal,
+    };
+
+    const response = await retryFetch(`${CONFIG.API_URL}/mobile/whatsapp-login`, options);
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Jika login berhasil, simpan token (seumur hidup)
+    if (data.status === 'success' && data.data?.token) {
+      // Simpan token ke SessionManager
+      await SessionManager.setToken(data.data.token);
+
+      // Token sekarang seumur hidup, tidak perlu expires_at
+      // Hapus expires_at jika ada
+      await AsyncStorage.removeItem('tokenExpiresAt');
+
+      // Simpan data client
+      if (data.data?.client) {
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.data.client));
+      }
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error('WhatsApp Login error:', error);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout - koneksi terlalu lama');
+    }
+    throw error;
+  }
+};
+
 // Tambahkan fungsi untuk logout yang juga membersihkan token yang disimpan
 export const logoutUser = async (): Promise<boolean> => {
   try {

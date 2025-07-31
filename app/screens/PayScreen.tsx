@@ -119,8 +119,37 @@ const PayScreen = ({
   const [filterMonthYear, setFilterMonthYear] = useState<string>('');
   const [monthYearOptions, setMonthYearOptions] = useState<string[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('Semua');
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // Tambahkan state untuk initial loading
+  const [skeletonOpacity] = useState(new Animated.Value(0.3)); // Tambahkan animasi untuk skeleton
 
   const insets = useSafeAreaInsets();
+
+  // Animasi skeleton loading
+  useEffect(() => {
+    if (isInitialLoading) {
+      const animateSkeleton = () => {
+        Animated.sequence([
+          Animated.timing(skeletonOpacity, {
+            toValue: 0.7,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(skeletonOpacity, {
+            toValue: 0.3,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          if (isInitialLoading) {
+            animateSkeleton();
+          }
+        });
+      };
+      animateSkeleton();
+    } else {
+      skeletonOpacity.setValue(0.3);
+    }
+  }, [isInitialLoading, skeletonOpacity]);
 
   const formatRupiah = (amount: number) => {
     // Gunakan NumberFormat dari Intl untuk format yang benar sesuai standar Indonesia
@@ -140,6 +169,7 @@ const PayScreen = ({
   // Fungsi untuk mengambil data invoice
   const fetchInvoiceData = async () => {
     setError('');
+    setIsInitialLoading(true); // Set loading state di awal
     try {
       // Mengambil data invoice untuk billing period
       const invoices = await getClientInvoices();
@@ -320,6 +350,7 @@ const PayScreen = ({
       setBillingPeriod(prev => ({...prev, amount: 0}));
     } finally {
       setRefreshing(false);
+      setIsInitialLoading(false); // Set loading state ke false setelah selesai
     }
   };
 
@@ -601,60 +632,73 @@ const PayScreen = ({
   // Ambil opsi bulan-tahun unik dari duedate invoice
   useEffect(() => {
     const fetchMonthYearOptions = async () => {
-      const invoices = await getClientInvoices();
-      // Ambil semua invoice (baik Paid maupun Unpaid)
-      const paidInvoices = invoices.filter(
-        (inv: any) =>
-          inv.status === 'Paid' ||
-          inv.status === 'Lunas' ||
-          inv.status === 'Sudah Dibayar',
-      );
-      const unpaidInvoices = invoices.filter(
-        (inv: any) => inv.status === 'Unpaid' || inv.status === 'Belum Dibayar',
-      );
+      if (isInitialLoading) {
+        return;
+      } // Skip jika masih loading awal
 
-      const allInvoices = [...paidInvoices, ...unpaidInvoices];
-      const optionsSet = new Set<string>();
-      allInvoices.forEach((inv: any) => {
-        if (inv.duedate) {
-          const date = new Date(inv.duedate);
-          const month = date.toLocaleString('id-ID', {month: 'long'});
-          const year = date.getFullYear();
-          const monthYearString = `${month} ${year}`;
-          optionsSet.add(monthYearString);
-        }
-      });
+      try {
+        const invoices = await getClientInvoices();
+        // Ambil semua invoice (baik Paid maupun Unpaid)
+        const paidInvoices = invoices.filter(
+          (inv: any) =>
+            inv.status === 'Paid' ||
+            inv.status === 'Lunas' ||
+            inv.status === 'Sudah Dibayar',
+        );
+        const unpaidInvoices = invoices.filter(
+          (inv: any) =>
+            inv.status === 'Unpaid' || inv.status === 'Belum Dibayar',
+        );
 
-      const options = Array.from(optionsSet).sort((a, b) => {
-        // Sort descending (terbaru di atas)
-        const [ma, ya] = a.split(' ');
-        const [mb, yb] = b.split(' ');
-        if (ya !== yb) {
-          return Number(yb) - Number(ya);
-        }
-        // Urutkan bulan (Jan - Dec)
-        const monthOrder = [
-          'Januari',
-          'Februari',
-          'Maret',
-          'April',
-          'Mei',
-          'Juni',
-          'Juli',
-          'Agustus',
-          'September',
-          'Oktober',
-          'November',
-          'Desember',
-        ];
-        return monthOrder.indexOf(mb) - monthOrder.indexOf(ma);
-      });
+        const allInvoices = [...paidInvoices, ...unpaidInvoices];
+        const optionsSet = new Set<string>();
+        allInvoices.forEach((inv: any) => {
+          if (inv.duedate) {
+            const date = new Date(inv.duedate);
+            const month = date.toLocaleString('id-ID', {month: 'long'});
+            const year = date.getFullYear();
+            const monthYearString = `${month} ${year}`;
+            optionsSet.add(monthYearString);
+          }
+        });
 
-      setMonthYearOptions(options);
-      setFilterMonthYear(options[0] || '');
+        const options = Array.from(optionsSet).sort((a, b) => {
+          // Sort descending (terbaru di atas)
+          const [ma, ya] = a.split(' ');
+          const [mb, yb] = b.split(' ');
+          if (ya !== yb) {
+            return Number(yb) - Number(ya);
+          }
+          // Urutkan bulan (Jan - Dec)
+          const monthOrder = [
+            'Januari',
+            'Februari',
+            'Maret',
+            'April',
+            'Mei',
+            'Juni',
+            'Juli',
+            'Agustus',
+            'September',
+            'Oktober',
+            'November',
+            'Desember',
+          ];
+          return monthOrder.indexOf(mb) - monthOrder.indexOf(ma);
+        });
+
+        setMonthYearOptions(options);
+        setFilterMonthYear(options[0] || '');
+      } catch (err) {
+        console.error('Error fetching month year options:', err);
+      }
     };
-    fetchMonthYearOptions();
-  }, []);
+
+    // Hanya jalankan jika tidak sedang loading awal
+    if (!isInitialLoading) {
+      fetchMonthYearOptions();
+    }
+  }, [isInitialLoading]); // Dependency pada isInitialLoading
 
   // Filter paymentHistory sesuai filterMonthYear dan filterStatus
   const filteredHistory = paymentHistory.filter(payment => {
@@ -758,7 +802,30 @@ const PayScreen = ({
           />
         }>
         {/* Due Date Period - hanya tampilkan jika ada tagihan yang belum dibayar */}
-        {billingPeriod.amount > 0 ? (
+        {isInitialLoading ? (
+          <View style={styles.skeletonBillingContainer}>
+            <View style={styles.skeletonBillingCard}>
+              <Animated.View
+                style={[
+                  styles.skeletonBillingHeader,
+                  {opacity: skeletonOpacity},
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.skeletonBillingContent,
+                  {opacity: skeletonOpacity},
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.skeletonBillingButton,
+                  {opacity: skeletonOpacity},
+                ]}
+              />
+            </View>
+          </View>
+        ) : billingPeriod.amount > 0 ? (
           <View style={styles.dueCardContainer}>
             <View style={styles.dueCard}>
               <View style={styles.dueCardHeader}>
@@ -878,151 +945,211 @@ const PayScreen = ({
             </Text>
           </View>
         ) : (
-          <View style={styles.skeletonBillingContainer}>
-            <View style={styles.skeletonBillingCard}>
-              <View style={styles.skeletonBillingHeader} />
-              <View style={styles.skeletonBillingContent} />
-              <View style={styles.skeletonBillingButton} />
-            </View>
+          <View style={styles.noBillingContainer}>
+            {isInitialLoading ? (
+              <View style={styles.noPaymentHistoryLoadingContainer}>
+                <ActivityIndicator size="large" color="#F26522" />
+                <Text style={styles.loadingText}>Memuat data tagihan...</Text>
+              </View>
+            ) : (
+              <Text style={styles.noBillingText}>
+                Tidak ada data tagihan tersedia
+              </Text>
+            )}
           </View>
         )}
 
         {/* Payment Status */}
-        <View style={styles.paymentStatusContainer}>
+        <View
+          style={[
+            styles.paymentStatusContainer,
+            isInitialLoading && styles.loadingPaymentStatus,
+          ]}>
           <View style={styles.paymentStatusIcon}>
-            <Text style={styles.checkIcon}>✓</Text>
+            {isInitialLoading ? (
+              <ActivityIndicator size="small" color="#4CD964" />
+            ) : (
+              <Text style={styles.checkIcon}>✓</Text>
+            )}
           </View>
           <Text style={styles.paymentStatusText}>
-            {billingPeriod.amount > 0 ? 'Daftar tagihan anda' : 'Loading ...'}
+            {isInitialLoading
+              ? 'Memuat data tagihan...'
+              : billingPeriod.amount > 0
+              ? 'Daftar tagihan anda'
+              : 'Daftar riwayat tagihan'}
           </Text>
         </View>
 
-        {/* Filter Dropdown */}
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={filterMonthYear}
-            onValueChange={setFilterMonthYear}
-            style={styles.pickerStyle}
-            itemStyle={styles.pickerItemStyle}>
-            {monthYearOptions.map(opt => (
-              <Picker.Item key={opt} label={`   ${opt}   `} value={opt} />
-            ))}
-          </Picker>
-        </View>
+        {/* Filter Dropdown - hanya tampilkan jika tidak loading dan ada data */}
+        {!isInitialLoading && monthYearOptions.length > 0 && (
+          <>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={filterMonthYear}
+                onValueChange={setFilterMonthYear}
+                style={styles.pickerStyle}
+                itemStyle={styles.pickerItemStyle}>
+                {monthYearOptions.map(opt => (
+                  <Picker.Item key={opt} label={`   ${opt}   `} value={opt} />
+                ))}
+              </Picker>
+            </View>
 
-        {/* Filter Status */}
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={filterStatus}
-            onValueChange={setFilterStatus}
-            style={styles.pickerStyle}
-            itemStyle={styles.pickerItemStyle}>
-            <Picker.Item label="   Semua Status   " value="Semua" />
-            <Picker.Item label="   Lunas   " value="Lunas" />
-            <Picker.Item label="   Belum Dibayar   " value="Belum Dibayar" />
-          </Picker>
-        </View>
+            {/* Filter Status */}
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={filterStatus}
+                onValueChange={setFilterStatus}
+                style={styles.pickerStyle}
+                itemStyle={styles.pickerItemStyle}>
+                <Picker.Item label="   Semua Status   " value="Semua" />
+                <Picker.Item label="   Lunas   " value="Lunas" />
+                <Picker.Item
+                  label="   Belum Dibayar   "
+                  value="Belum Dibayar"
+                />
+              </Picker>
+            </View>
+          </>
+        )}
+
         {/* Payment History List */}
-        {refreshing ? (
+        {isInitialLoading ? (
           <View style={styles.skeletonPaymentContainer}>
             {[1, 2, 3].map((_, index) => (
               <View key={index} style={styles.skeletonPaymentItem}>
                 <View style={styles.skeletonPaymentInfo}>
-                  <View style={styles.skeletonText} />
-                  <View style={styles.skeletonBadge} />
+                  <Animated.View
+                    style={[styles.skeletonText, {opacity: skeletonOpacity}]}
+                  />
+                  <Animated.View
+                    style={[styles.skeletonBadge, {opacity: skeletonOpacity}]}
+                  />
                 </View>
                 <View style={styles.skeletonPaymentAmount}>
-                  <View style={styles.skeletonText} />
+                  <Animated.View
+                    style={[styles.skeletonText, {opacity: skeletonOpacity}]}
+                  />
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : refreshing ? (
+          <View style={styles.skeletonPaymentContainer}>
+            {[1, 2, 3].map((_, index) => (
+              <View key={index} style={styles.skeletonPaymentItem}>
+                <View style={styles.skeletonPaymentInfo}>
+                  <Animated.View
+                    style={[styles.skeletonText, {opacity: skeletonOpacity}]}
+                  />
+                  <Animated.View
+                    style={[styles.skeletonBadge, {opacity: skeletonOpacity}]}
+                  />
+                </View>
+                <View style={styles.skeletonPaymentAmount}>
+                  <Animated.View
+                    style={[styles.skeletonText, {opacity: skeletonOpacity}]}
+                  />
                 </View>
               </View>
             ))}
           </View>
         ) : filteredHistory.length > 0 ? (
           filteredHistory.map((payment, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.paymentItem}
-              onPress={() => showPaymentDetail(payment)}>
-              <View style={styles.paymentInfo}>
-                <Text style={styles.paymentPeriod}>
-                  {payment.month} {payment.year}
-                </Text>
-                <View
-                  style={[
-                    styles.paymentStatusBadge,
-                    payment.status === 'Unpaid' ||
-                    payment.status === 'Belum Dibayar'
-                      ? styles.paymentStatusBadgeUnpaid
-                      : payment.status === 'Cancelled' ||
-                        payment.status === 'Dibatalkan'
-                      ? styles.paymentStatusBadgeCancelled
-                      : styles.paymentStatusBadgePaid,
-                  ]}>
-                  <Text style={styles.paymentStatusBadgeText}>
-                    {payment.status}
+            <View key={index} style={styles.paymentItem}>
+              <TouchableOpacity
+                style={styles.paymentItemTouchable}
+                onPress={() => showPaymentDetail(payment)}>
+                <View style={styles.paymentInfo}>
+                  <Text style={styles.paymentPeriod}>
+                    {payment.month} {payment.year}
                   </Text>
+                  <View
+                    style={[
+                      styles.paymentStatusBadge,
+                      payment.status === 'Unpaid' ||
+                      payment.status === 'Belum Dibayar'
+                        ? styles.paymentStatusBadgeUnpaid
+                        : payment.status === 'Cancelled' ||
+                          payment.status === 'Dibatalkan'
+                        ? styles.paymentStatusBadgeCancelled
+                        : styles.paymentStatusBadgePaid,
+                    ]}>
+                    <Text style={styles.paymentStatusBadgeText}>
+                      {payment.status}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.paymentAmount}>
-                <View style={styles.paymentAmountColumn}>
+                <View style={styles.paymentAmount}>
                   <Text style={styles.paymentAmountText}>
                     {formatRupiah(payment.amount)}
                   </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.exportButton,
-                      payment.status === 'Unpaid' ||
-                      payment.status === 'Belum Dibayar'
-                        ? styles.exportButtonUnpaid
-                        : payment.status === 'Cancelled' ||
-                          payment.status === 'Dibatalkan'
-                        ? styles.exportButtonCancelled
-                        : styles.exportButtonPaid,
-                    ]}
-                    onPress={() => {
-                      exportPDFInvoice(
-                        payment.id || payment.invoicenum || '',
-                        payment.status,
-                        payment, // Pass the payment object to exportPDFInvoice
-                      );
-                    }}>
-                    <Text
-                      style={[
-                        styles.exportButtonText,
-                        payment.status === 'Unpaid' ||
-                        payment.status === 'Belum Dibayar'
-                          ? styles.exportButtonTextUnpaid
-                          : payment.status === 'Cancelled' ||
-                            payment.status === 'Dibatalkan'
-                          ? styles.exportButtonTextCancelled
-                          : styles.exportButtonTextPaid,
-                      ]}>
-                      Download Invoice
-                    </Text>
-                  </TouchableOpacity>
                 </View>
-                <Text style={styles.arrowIcon}>›</Text>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.exportButton,
+                  payment.status === 'Unpaid' ||
+                  payment.status === 'Belum Dibayar'
+                    ? styles.exportButtonUnpaid
+                    : payment.status === 'Cancelled' ||
+                      payment.status === 'Dibatalkan'
+                    ? styles.exportButtonCancelled
+                    : styles.exportButtonPaid,
+                ]}
+                onPress={() => {
+                  exportPDFInvoice(
+                    payment.id || payment.invoicenum || '',
+                    payment.status,
+                    payment, // Pass the payment object to exportPDFInvoice
+                  );
+                }}>
+                <Text
+                  style={[
+                    styles.exportButtonText,
+                    payment.status === 'Unpaid' ||
+                    payment.status === 'Belum Dibayar'
+                      ? styles.exportButtonTextUnpaid
+                      : payment.status === 'Cancelled' ||
+                        payment.status === 'Dibatalkan'
+                      ? styles.exportButtonTextCancelled
+                      : styles.exportButtonTextPaid,
+                  ]}>
+                  Download Invoice
+                </Text>
+              </TouchableOpacity>
+            </View>
           ))
         ) : (
           <View style={styles.noPaymentHistoryContainer}>
-            <Text style={styles.noPaymentHistoryText}>
-              Tidak ada tagihan di periode ini
-            </Text>
+            {isInitialLoading ? (
+              <View style={styles.noPaymentHistoryLoadingContainer}>
+                <ActivityIndicator size="large" color="#F26522" />
+                <Text style={styles.loadingText}>Memuat data tagihan...</Text>
+              </View>
+            ) : (
+              <Text style={styles.noPaymentHistoryText}>
+                {monthYearOptions.length > 0
+                  ? 'Tidak ada tagihan di periode ini'
+                  : 'Tidak ada data tagihan tersedia'}
+              </Text>
+            )}
           </View>
         )}
 
-        {/* Tambahkan tombol Detail Invoice */}
-        <View style={styles.detailInvoiceContainer}>
-          <TouchableOpacity
-            style={styles.detailInvoiceButton}
-            onPress={handleViewInvoiceDetails}>
-            <Text style={styles.detailInvoiceButtonText}>
-              Lihat Detail Invoice
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* Tambahkan tombol Detail Invoice - hanya tampilkan jika tidak loading dan ada data */}
+        {!isInitialLoading && paymentHistory.length > 0 && (
+          <View style={styles.detailInvoiceContainer}>
+            <TouchableOpacity
+              style={styles.detailInvoiceButton}
+              onPress={handleViewInvoiceDetails}>
+              <Text style={styles.detailInvoiceButtonText}>
+                Lihat Detail Invoice
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={[styles.bottomSpacer, {height: 100 + insets.bottom}]} />
       </ScrollView>
 
@@ -1352,9 +1479,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#e6f7ee',
-    borderRadius: 5,
+    borderRadius: 8,
     padding: 15,
     margin: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   paymentStatusIcon: {
     width: 24,
@@ -1368,6 +1500,7 @@ const styles = StyleSheet.create({
   checkIcon: {
     color: 'white',
     fontWeight: 'bold',
+    fontSize: 14,
   },
   paymentStatusText: {
     color: '#22325a',
@@ -1395,6 +1528,18 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
+    marginHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  paymentItemTouchable: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   paymentInfo: {
     flexDirection: 'column',
@@ -1429,8 +1574,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   paymentAmount: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    minWidth: 80,
   },
   amountRow: {
     flexDirection: 'row',
@@ -1441,7 +1588,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     fontWeight: '500',
-    marginBottom: 6,
+    marginBottom: 8,
+    textAlign: 'right',
   },
   arrowIcon: {
     fontSize: 24,
@@ -1495,10 +1643,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor: 'transparent', // Transparan
-    // shadowColor: '#000',
-    // shadowOffset: {width: 0, height: 2},
-    // shadowOpacity: 0.1,
+    backgroundColor: 'transparent', // Transparan
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
     shadowRadius: 2,
     // elevation: 3,
     marginBottom: 2,
@@ -1677,14 +1825,20 @@ const styles = StyleSheet.create({
   detailInvoiceContainer: {
     marginVertical: 20,
     alignItems: 'center',
+    paddingHorizontal: 15,
   },
   detailInvoiceButton: {
     backgroundColor: '#F26522',
-    paddingVertical: 12,
+    paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
-    width: '86%',
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   detailInvoiceButtonText: {
     color: '#ffffff',
@@ -1743,10 +1897,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 10,
+    marginHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   noPaymentHistoryText: {
-    fontSize: 14,
-    color: '#22325a',
+    fontSize: 16,
+    color: '#666',
     fontWeight: '400',
     textAlign: 'center',
   },
@@ -1958,25 +2118,27 @@ const styles = StyleSheet.create({
   },
   skeletonBillingHeader: {
     height: 20,
-    backgroundColor: '#eee',
+    backgroundColor: '#e0e0e0',
     borderRadius: 5,
     marginBottom: 10,
+    width: '60%',
   },
   skeletonBillingContent: {
-    height: 100,
-    backgroundColor: '#eee',
+    height: 80,
+    backgroundColor: '#e0e0e0',
     borderRadius: 5,
     marginBottom: 10,
+    width: '100%',
   },
   skeletonBillingButton: {
     height: 40,
-    backgroundColor: '#eee',
+    backgroundColor: '#e0e0e0',
     borderRadius: 8,
     marginTop: 10,
+    width: '100%',
   },
   skeletonPaymentContainer: {
     padding: 15,
-    backgroundColor: '#f5f5f5',
   },
   skeletonPaymentItem: {
     flexDirection: 'row',
@@ -1986,25 +2148,34 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
+    marginHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   skeletonPaymentInfo: {
     flexDirection: 'column',
+    flex: 1,
   },
   skeletonText: {
     height: 16,
-    backgroundColor: '#eee',
+    backgroundColor: '#e0e0e0',
     borderRadius: 5,
     marginBottom: 5,
+    width: '80%',
   },
   skeletonBadge: {
     height: 20,
-    backgroundColor: '#eee',
+    backgroundColor: '#e0e0e0',
     borderRadius: 5,
     width: '40%',
   },
   skeletonPaymentAmount: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '30%',
   },
   exportButton: {
     padding: 4,
@@ -2012,6 +2183,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     borderWidth: 1,
     borderColor: '#F26522',
+    alignSelf: 'flex-end',
+    marginLeft: 10,
   },
   exportButtonUnpaid: {
     backgroundColor: '#FFF3CD', // Light yellow untuk invoice belum dibayar
@@ -2041,21 +2214,23 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     marginBottom: 10,
-    marginHorizontal: 10,
+    marginHorizontal: 15,
   },
   pickerStyle: {
     backgroundColor: '#fff',
     borderRadius: 8,
     color: '#000',
     textAlign: 'center', // untuk iOS
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   pickerItemStyle: {
     textAlign: 'center',
-  },
-  paymentAmountColumn: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    flex: 1,
   },
   bottomSpacer: {
     // hanya sebagai penanda, height akan tetap dinamis
@@ -2087,6 +2262,27 @@ const styles = StyleSheet.create({
   invoiceNumber: {
     color: '#fd7e14',
     fontSize: 12,
+    fontWeight: 'bold',
+  },
+  loadingPaymentStatus: {
+    backgroundColor: '#f0f8ff',
+    borderColor: '#4CD964',
+    borderWidth: 1,
+  },
+  noPaymentHistoryLoadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  noBillingLoadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  noBillingLoadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#F26522',
     fontWeight: 'bold',
   },
 });

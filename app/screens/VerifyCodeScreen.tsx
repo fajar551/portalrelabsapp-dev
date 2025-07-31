@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Alert,
+  Animated,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -32,8 +33,18 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const inputRefs = useRef<Array<TextInput | null>>([null, null, null, null]);
+
+  useEffect(() => {
+    // Animate version text
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   const handleCodeChange = (text: string, index: number) => {
     if (text.length <= 1) {
@@ -218,7 +229,9 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
         <View style={styles.container}>
           <View style={styles.card}>
             <Image
-              source={require('../assets/logo.png')}
+              source={{
+                uri: 'https://portal.internetan.id/mobile/img/qwords.png',
+              }}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -302,6 +315,31 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
               <Text style={styles.submitButtonText}>Submit</Text>
             </TouchableOpacity>
           </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>PT Relabs Net DayaCipta 2025</Text>
+            <Text style={styles.footerText}>Relabs adalah anggota dari</Text>
+            <Text style={styles.footerText}>
+              PT Qwords Company International Group
+            </Text>
+            <Animated.Text
+              style={[
+                styles.versionText,
+                {
+                  opacity: fadeAnim,
+                  transform: [
+                    {
+                      translateY: fadeAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
+              Versi 1.4
+            </Animated.Text>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -325,27 +363,34 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 25,
+    borderRadius: 10,
+    padding: 28,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: {width: 0, height: 8},
+    elevation: 8,
     alignItems: 'center',
   },
   logo: {
-    width: 70,
-    height: 70,
-    marginBottom: 18,
+    width: 111,
+    height: 111,
+    marginTop: -15,
+    marginBottom: -10,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#22325a',
+    color: 'rgba(0, 0, 0, 1)',
     marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#a0aec0',
+    color: 'rgba(0, 0, 0, 1)',
     fontSize: 14,
     marginBottom: 25,
     textAlign: 'center',
+    lineHeight: 24,
   },
   codeContainer: {
     flexDirection: 'row',
@@ -357,7 +402,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderBottomWidth: 2,
-    borderBottomColor: '#a0aec0',
+    borderBottomColor: 'rgba(246, 138, 9, 1)',
     textAlign: 'center',
     fontSize: 20,
     color: '#000',
@@ -367,7 +412,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   resendText1: {
-    color: '#a0aec0',
+    color: 'rgba(0, 0, 0, 1)',
     fontSize: 14,
   },
   resendText2: {
@@ -376,33 +421,35 @@ const styles = StyleSheet.create({
   },
   label: {
     alignSelf: 'flex-start',
-    color: '#22325a',
+    color: 'rgba(0, 0, 0, 1)',
     fontWeight: '600',
     marginBottom: 8,
-    fontSize: 15,
+    fontSize: 14,
   },
   passwordContainer: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eaf2ff',
-    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: 8,
     marginBottom: 16,
+    borderColor: 'rgba(246, 138, 9, 1)',
+    borderWidth: 1,
   },
   passwordInput: {
     flex: 1,
     paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 7,
     fontSize: 16,
-    color: '#000',
+    color: 'rgba(0, 0, 0, 1)',
   },
   eyeButton: {
     padding: 10,
   },
   submitButton: {
-    backgroundColor: '#ffb444',
-    borderRadius: 8,
-    paddingVertical: 13,
+    backgroundColor: 'rgba(246, 138, 9, 1)',
+    borderRadius: 16,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
@@ -412,6 +459,26 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  footer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  footerText: {
+    fontSize: 12,
+    color: 'rgba(0, 0, 0, 1)',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  versionText: {
+    textAlign: 'center',
+    color: 'rgba(0, 0, 0, 1)',
+    fontSize: 11,
+    fontStyle: 'italic',
+    fontWeight: '400',
   },
 });
 

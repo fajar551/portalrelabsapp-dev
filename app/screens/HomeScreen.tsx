@@ -875,7 +875,7 @@ const HomeScreen = ({
         {/* For You Section */}
         <View style={styles.forYouSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>✨ Untukmu</Text>
+            <Text style={styles.sectionTitle}>Untukmu</Text>
           </View>
 
           {/* Promo Carousel */}
@@ -950,7 +950,7 @@ const HomeScreen = ({
           {/* Offers Section */}
           <View style={styles.offersSection}>
             <View style={styles.offerHeader}>
-              <Text style={styles.offersTitle}>Informasi Tagihan Anda 💫</Text>
+              <Text style={styles.offersTitle}>Informasi Tagihan Anda</Text>
               <Text style={styles.offersSubtitle}>
                 Silakan cek informasi tagihan Anda ...
               </Text>
@@ -1519,6 +1519,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E4571B',
     overflow: 'visible',
+    // marginBottom: 10,
   },
   bottomNavFixed: {
     position: 'absolute',

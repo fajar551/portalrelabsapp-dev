@@ -30,6 +30,7 @@ import SplashScreen from './app/screens/SplashScreen';
 import TicketDetailScreen from './app/screens/TicketDetailScreen';
 import VerifyCodeScreen from './app/screens/VerifyCodeScreen';
 import WhatsAppLoginScreen from './app/screens/WhatsAppLoginScreen';
+import WhatsAppVerifyScreen from './app/screens/WhatsAppVerifyScreen';
 import {checkLoginStatus, getFCMToken, logoutUser} from './src/services/api';
 
 // Type untuk props yang diteruskan ke screens
@@ -183,6 +184,8 @@ export default function App() {
     email: string;
   }>({token: '', email: ''});
   const [showWhatsAppLogin, setShowWhatsAppLogin] = useState(false);
+  const [showWhatsAppVerify, setShowWhatsAppVerify] = useState(false);
+  const [whatsAppPhoneNumber, setWhatsAppPhoneNumber] = useState('');
 
   // Menyimpan email yang dimasukkan di ForgotPasswordScreen
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
@@ -306,7 +309,19 @@ export default function App() {
     setShowWhatsAppLogin(false);
   };
 
+  const handleNavigateToWhatsAppVerify = (phoneNumber: string) => {
+    setShowWhatsAppLogin(false);
+    setShowWhatsAppVerify(true);
+    setWhatsAppPhoneNumber(phoneNumber);
+  };
+
+  const handleBackFromWhatsAppVerify = () => {
+    setShowWhatsAppVerify(false);
+    setShowWhatsAppLogin(true);
+  };
+
   const handleWhatsAppLoginSuccess = async () => {
+    setShowWhatsAppVerify(false);
     setShowWhatsAppLogin(false);
     await handleLoginSuccess();
   };
@@ -449,6 +464,13 @@ export default function App() {
               <WhatsAppLoginScreen
                 onBack={handleBackFromWhatsApp}
                 onLoginSuccess={handleWhatsAppLoginSuccess}
+                onNavigateToVerify={handleNavigateToWhatsAppVerify}
+              />
+            ) : showWhatsAppVerify ? (
+              <WhatsAppVerifyScreen
+                onBack={handleBackFromWhatsAppVerify}
+                onLoginSuccess={handleWhatsAppLoginSuccess}
+                route={{params: {phoneNumber: whatsAppPhoneNumber}}}
               />
             ) : currentScreen === 'ForgotPassword' ? (
               <ForgotPasswordScreen

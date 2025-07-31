@@ -17,11 +17,13 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 interface WhatsAppLoginScreenProps {
   onBack: () => void;
   onLoginSuccess: () => void;
+  onNavigateToVerify: (phoneNumber: string) => void;
 }
 
 const WhatsAppLoginScreen: React.FC<WhatsAppLoginScreenProps> = ({
   onBack,
-  onLoginSuccess,
+  onLoginSuccess: _onLoginSuccess,
+  onNavigateToVerify,
 }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [error, setError] = useState('');
@@ -53,8 +55,8 @@ const WhatsAppLoginScreen: React.FC<WhatsAppLoginScreenProps> = ({
 
       // Simulasi pengiriman OTP berhasil
       setError('');
-      // Redirect ke halaman verifikasi OTP atau langsung login
-      onLoginSuccess();
+      // Navigasi ke halaman verifikasi OTP
+      onNavigateToVerify(phoneNumber);
     } catch (err) {
       console.error('Error sending OTP:', err);
       setError('Gagal mengirim kode OTP. Silakan coba lagi.');

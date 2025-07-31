@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   },
   versionText: {
     position: 'absolute',
-    bottom: 50,
+    bottom: 80,
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 14,
     fontWeight: '500',

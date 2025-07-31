@@ -2364,6 +2364,13 @@ class MobileAuthController extends Controller
                 ->select('id', 'firstname', 'lastname', 'email', 'status')
                 ->first();
 
+            if (!$client) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Client tidak ditemukan'
+                ], 404);
+            }
+
             // 2. Ambil semua invoice dari client
             $invoices = DB::table('tblinvoices')
                 ->where('userid', $clientId)
@@ -2447,6 +2454,151 @@ class MobileAuthController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function normalizePhoneNumber($phoneNumber)
+    {
+        // Bersihkan dari karakter khusus
+        $clean = preg_replace('/[^0-9]/', '', $phoneNumber);
+
+        // Jika dimulai dengan 62, ubah ke format 0
+        if (substr($clean, 0, 2) === '62') {
+            return '0' . substr($clean, 2);
+        }
+
+        // Jika dimulai dengan +62, ubah ke format 0
+        if (substr($phoneNumber, 0, 3) === '+62') {
+            return '0' . substr($phoneNumber, 3);
+        }
+
+        // Jika sudah format 0, kembalikan as is
+        if (substr($clean, 0, 1) === '0') {
+            return $clean;
+        }
+
+        // Jika tidak ada prefix, tambahkan 0
+        return '0' . $clean;
+    }
+
+    public function whatsappLogin(Request $request)
+    {
+        try {
+            $request->validate([
+                'phone_number' => 'required|string',
+                'otp_code' => 'required|string|size:4',
+                'device_name' => 'required|string',
+            ]);
+
+            $phoneNumber = $request->phone_number;
+            $otpCode = $request->otp_code;
+            $deviceName = $request->device_name;
+
+            // Normalisasi nomor telepon
+            $normalizedPhone = $this->normalizePhoneNumber($phoneNumber);
+
+            // Cari client dengan berbagai kemungkinan format
+            $client = Client::where(function ($query) use ($phoneNumber, $normalizedPhone) {
+                // Format asli
+                $query->where('phonenumber', $phoneNumber)
+                    // Format yang sudah dinormalisasi
+                    ->orWhere('phonenumber', $normalizedPhone)
+                    // Format tanpa 0 di depan
+                    ->orWhere('phonenumber', ltrim($normalizedPhone, '0'))
+                    // Format dengan 62 di depan
+                    ->orWhere('phonenumber', '62' . ltrim($normalizedPhone, '0'))
+                    // Format dengan +62 di depan
+                    ->orWhere('phonenumber', '+62' . ltrim($normalizedPhone, '0'))
+                    // Format dengan spasi atau dash
+                    ->orWhere('phonenumber', str_replace([' ', '-', '_'], '', $phoneNumber))
+                    ->orWhere('phonenumber', str_replace([' ', '-', '_'], '', $normalizedPhone))
+                    // Format dengan 8 di depan (tanpa 0)
+                    ->orWhere('phonenumber', '8' . substr($normalizedPhone, 1))
+                    // Format dengan 628 di depan
+                    ->orWhere('phonenumber', '628' . substr($normalizedPhone, 1))
+                    // Format dengan +628 di depan
+                    ->orWhere('phonenumber', '+628' . substr($normalizedPhone, 1));
+            })->first();
+
+            if (!$client) {
+                // Debug: cek semua nomor telepon di database
+                $allPhones = Client::select('id', 'firstname', 'lastname', 'phonenumber')
+                    ->whereNotNull('phonenumber')
+                    ->where('phonenumber', '!=', '')
+                    ->limit(10)
+                    ->get();
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Nomor telepon tidak ditemukan dalam database. Nomor yang dicari: ' . $phoneNumber . ' (normalized: ' . $normalizedPhone . ')',
+                    'debug' => [
+                        'searched_formats' => [
+                            $phoneNumber,
+                            $normalizedPhone,
+                            ltrim($normalizedPhone, '0'),
+                            '62' . ltrim($normalizedPhone, '0'),
+                            '+62' . ltrim($normalizedPhone, '0'),
+                            '8' . substr($normalizedPhone, 1),
+                            '628' . substr($normalizedPhone, 1),
+                            '+628' . substr($normalizedPhone, 1)
+                        ],
+                        'sample_phones_in_db' => $allPhones
+                    ]
+                ], 404);
+            }
+
+            // Verifikasi OTP (hardcoded untuk testing)
+            if ($otpCode !== '1234') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Kode OTP tidak valid'
+                ], 400);
+            }
+
+            // Generate token sederhana seperti method login
+            $token = \Illuminate\Support\Str::random(60);
+
+            // Set token expiry menjadi 100 tahun dari sekarang (seumur hidup)
+            $expires_at = now()->addYears(100);
+
+            // Simpan token di tabel api_tokens seperti method login
+            DB::table('api_tokens')->updateOrInsert(
+                ['client_id' => $client->id],
+                [
+                    'token' => $token,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'expires_at' => $expires_at,
+                ]
+            );
+
+            // Update last login
+            $client->update(['lastlogin' => now()]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Login WhatsApp berhasil',
+                'data' => [
+                    'token' => $token,
+                    'expires_at' => $expires_at->toIso8601String(),
+                    'client' => [
+                        'id' => $client->id,
+                        'name' => $client->firstname . ' ' . $client->lastname,
+                        'email' => $client->email,
+                        'phone' => $client->phonenumber,
+                        'mobile' => $client->phonenumber,
+                        'company' => $client->companyname,
+                        'status' => $client->status,
+                        'created_at' => $client->datecreated,
+                        'updated_at' => $client->lastlogin
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat login WhatsApp: ' . $e->getMessage()
             ], 500);
         }
     }
