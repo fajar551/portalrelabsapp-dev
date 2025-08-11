@@ -88,7 +88,7 @@ const PaymentInstructionsScreen = ({
 
         // Hit endpoint untuk membuat VA
         const response = await fetch(
-          'https://portal.relabs.id/billinginfo/updatepayment',
+          'https://portal.internetan.id/billinginfo/updatepayment',
           {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -195,7 +195,7 @@ const PaymentInstructionsScreen = ({
         };
 
         const response = await fetch(
-          'https://portal.relabs.id/billinginfo/updatepayment',
+          'https://portal.internetan.id/billinginfo/updatepayment',
           {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -291,7 +291,7 @@ const PaymentInstructionsScreen = ({
         await updatePaymentMethod(invoiceId, paymentMethod);
 
         // Buka halaman invoice di website
-        const url = `https://portal.relabs.id/billing/invoices/view/${invoiceId}`;
+        const url = `https://portal.internetan.id/billing/invoices/view/${invoiceId}`;
         await Linking.openURL(url);
       } catch (err) {
         console.error('Error redirecting to web invoice:', err);
@@ -764,7 +764,7 @@ const PaymentInstructionsScreen = ({
       };
 
       const response = await fetch(
-        'https://portal.relabs.id/danaxendit/payNow',
+        'https://portal.internetan.id/danaxendit/payNow',
         {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
@@ -823,7 +823,7 @@ const PaymentInstructionsScreen = ({
         (updateRes.result && updateRes.result === 'success')
       ) {
         // Sukses update, buka halaman invoice web
-        const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+        const url = `https://portal.internetan.id/billinginfo/viewinvoice/web/${invoice.id}`;
         Linking.openURL(url);
       } else {
         Alert.alert('Error', 'Gagal update metode pembayaran ke Gopay');
@@ -851,7 +851,7 @@ const PaymentInstructionsScreen = ({
         (updateRes.result && updateRes.result === 'success')
       ) {
         // Setelah update berhasil, buka halaman invoice web
-        const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+        const url = `https://portal.internetan.id/billinginfo/viewinvoice/web/${invoice.id}`;
         Linking.openURL(url);
       } else {
         Alert.alert('Error', 'Gagal update metode pembayaran ke OVO');
@@ -882,7 +882,7 @@ const PaymentInstructionsScreen = ({
         (updateRes.result && updateRes.result === 'success')
       ) {
         // Setelah update berhasil, buka halaman invoice web
-        const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+        const url = `https://portal.internetan.id/billinginfo/viewinvoice/web/${invoice.id}`;
         Linking.openURL(url);
       } else {
         Alert.alert('Error', 'Gagal update metode pembayaran ke ShopeePay');
@@ -914,7 +914,7 @@ const PaymentInstructionsScreen = ({
         (updateRes.result && updateRes.result === 'success')
       ) {
         // Setelah update berhasil, buka halaman invoice web
-        const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+        const url = `https://portal.internetan.id/billinginfo/viewinvoice/web/${invoice.id}`;
         Linking.openURL(url);
       } else {
         Alert.alert('Error', 'Gagal update metode pembayaran ke LinkAja');
@@ -936,7 +936,7 @@ const PaymentInstructionsScreen = ({
       await updatePaymentMethod(_invoiceData.id, 'bni');
 
       // Buka halaman invoice di website
-      const url = `https://portal.relabs.id/billing/invoices/view/${_invoiceData.id}`;
+      const url = `https://portal.internetan.id/billing/invoices/view/${_invoiceData.id}`;
       await Linking.openURL(url);
     } catch (err) {
       console.error('Error in handleVAPayNow:', err);
@@ -1164,7 +1164,7 @@ const PaymentInstructionsScreen = ({
                         updateRes.status === 'success')
                     ) {
                       // Setelah update berhasil, buka halaman invoice web
-                      const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+                      const url = `https://portal.internetan.id/billinginfo/viewinvoice/web/${invoice.id}`;
                       Linking.openURL(url);
                     } else {
                       console.log('Response tidak sesuai:', updateRes);
@@ -1218,7 +1218,7 @@ const PaymentInstructionsScreen = ({
                         updateRes.status === 'success')
                     ) {
                       // Setelah update berhasil, buka halaman invoice web
-                      const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+                      const url = `https://portal.internetan.id/billinginfo/viewinvoice/web/${invoice.id}`;
                       Linking.openURL(url);
                     } else {
                       console.log('Response tidak sesuai:', updateRes);
@@ -1284,7 +1284,7 @@ const PaymentInstructionsScreen = ({
                         updateRes.status === 'success')
                     ) {
                       // Setelah update berhasil, buka halaman invoice web
-                      const url = `https://portal.relabs.id/billinginfo/viewinvoice/web/${invoice.id}`;
+                      const url = `https://portal.internetan.id/billinginfo/viewinvoice/web/${invoice.id}`;
                       Linking.openURL(url);
                     } else {
                       console.log('Response tidak sesuai:', updateRes);

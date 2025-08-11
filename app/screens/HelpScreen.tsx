@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -12,10 +12,10 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon2 from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { getTicketsByUserId } from '../../src/services/api';
+import {getTicketsByUserId} from '../../src/services/api';
 
 const HelpScreen = ({
   navigateTo,
@@ -147,7 +147,7 @@ const HelpScreen = ({
                 <View style={styles.illustrationWrapper}>
                   <Image
                     source={{
-                      uri: 'https://portal.relabs.id/mobile/img/helps.png',
+                      uri: 'https://portal.internetan.id/mobile/img/helps.png',
                     }}
                     style={styles.illustrationImage}
                     resizeMode="contain"

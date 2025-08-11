@@ -44,7 +44,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
     try {
       // Kirim request forgot password
       const response = await axios.post(
-        'https://portal.relabs.id/mobile/forgot-password',
+        'https://portal.internetan.id/mobile/forgot-password',
         {
           email: email,
         },

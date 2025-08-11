@@ -24,7 +24,7 @@ import {
 
 // Konfigurasi API
 const CONFIG = {
-  API_URL: 'https://portal.relabs.id',
+  API_URL: 'https://portal.internetan.id',
 };
 
 interface TicketDetailScreenProps {

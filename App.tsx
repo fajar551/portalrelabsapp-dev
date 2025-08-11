@@ -378,7 +378,7 @@ export default function App() {
       }
     }
 
-    // Handle https://portal.relabs.id/reset-redirect deep link
+    // Handle https://portal.internetan.id/reset-redirect deep link
     if (url.includes('/reset-redirect')) {
       try {
         const urlObj = new URL(url);

@@ -89,7 +89,7 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
     try {
       // Kirim permintaan reset password ke API
       const response = await axios.post(
-        'https://portal.relabs.id/mobile/reset-password',
+        'https://portal.internetan.id/mobile/reset-password',
         {
           email,
           token: verificationCode,
@@ -103,7 +103,7 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
         try {
           // Panggil API login dengan email dan password baru
           const loginResponse = await axios.post(
-            'https://portal.relabs.id/mobile/login',
+            'https://portal.internetan.id/mobile/login',
             {
               identifier: email,
               password: newPassword,
@@ -189,7 +189,7 @@ const VerifyCodeScreen: React.FC<VerifyCodeScreenProps> = ({
     try {
       // Kirim ulang permintaan kode
       const response = await axios.post(
-        'https://portal.relabs.id/mobile/forgot-password',
+        'https://portal.internetan.id/mobile/forgot-password',
         {
           email,
         },

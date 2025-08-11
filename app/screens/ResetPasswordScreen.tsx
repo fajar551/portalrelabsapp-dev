@@ -66,7 +66,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
     try {
       // Ganti dengan URL API Anda
       const response = await axios.post(
-        'https://portal.relabs.id/mobile/reset-password',
+        'https://portal.internetan.id/mobile/reset-password',
         {
           email,
           token,

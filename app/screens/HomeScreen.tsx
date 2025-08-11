@@ -511,17 +511,6 @@ const HomeScreen = ({
     return {day, month};
   };
 
-  // Fungsi untuk memformat angka ke dalam format Rupiah
-  const formatRupiah = (amount: number) => {
-    // Gunakan NumberFormat dari Intl untuk format yang benar sesuai standar Indonesia
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
-
   // Menghitung hari tersisa dan progress
   useEffect(() => {
     const calculateProgress = () => {
@@ -607,16 +596,16 @@ const HomeScreen = ({
 
   // Data promo
   const promoItems = [
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner1.webp'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner2.webp'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner3.webp'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner4.webp'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner5.webp'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner6.webp'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner7.webp'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner8.webp'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner9.webp'},
-    {imageUrl: 'https://portal.relabs.id/mobile/banner/banner10.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner1.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner2.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner3.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner4.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner5.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner6.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner7.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner8.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner9.webp'},
+    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner10.webp'},
   ];
 
   // State untuk banner yang berhasil dimuat
@@ -807,18 +796,18 @@ const HomeScreen = ({
             />
             {notifCount > 0 && (
               <View style={styles.notifBadge}>
-                <Text style={styles.notifBadgeText}>{notifCount}</Text>
+                {/* Dot orange tanpa text */}
               </View>
             )}
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.notifIcon2}
             onPress={() => setShowLogoutModal(true)}>
             <Image
               source={require('../assets/logoutt.png')}
               style={styles.logoutImage}
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </LinearGradient>
 
@@ -952,7 +941,7 @@ const HomeScreen = ({
             <View style={styles.offerHeader}>
               <Text style={styles.offersTitle}>Informasi Tagihan Anda</Text>
               <Text style={styles.offersSubtitle}>
-                Silakan cek informasi tagihan Anda ...
+                Silakan cek informasi tagihan Anda!
               </Text>
             </View>
           </View>
@@ -984,12 +973,6 @@ const HomeScreen = ({
                     </View>
                   </View>
                 )}
-                <View style={styles.amountContainer}>
-                  <Text style={styles.amountLabel}>Total Tagihan</Text>
-                  <Text style={styles.amountValue}>
-                    {formatRupiah(billingPeriod.amount)}
-                  </Text>
-                </View>
               </View>
 
               <View style={styles.periodProgressContainer}>
@@ -1044,6 +1027,17 @@ const HomeScreen = ({
                   </Text>
                   <Text style={styles.dateMonth}>
                     {formatDate(billingPeriod.dueDate).month}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.separatorLine} />
+
+              <View style={styles.totalBillingContainer}>
+                <View style={styles.amountRow}>
+                  <Text style={styles.amountLabel}>Total Tagihan</Text>
+                  <Text style={styles.amountValue}>
+                    Rp {billingPeriod.amount.toLocaleString('id-ID')}
                   </Text>
                 </View>
               </View>
@@ -1211,7 +1205,7 @@ const styles = StyleSheet.create({
   onlineStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 1)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -1225,7 +1219,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   onlineText: {
-    color: 'white',
+    color: 'rgba(0, 0, 0, 1)',
     fontSize: 12,
   },
   notifIcon: {
@@ -1360,7 +1354,7 @@ const styles = StyleSheet.create({
     // color: '#999',
     color: '#22325a',
     fontWeight: '600',
-    marginLeft: 3,
+    marginLeft: 10,
   },
   promoScrollContent: {
     paddingVertical: 10,
@@ -1637,20 +1631,30 @@ const styles = StyleSheet.create({
   dueCardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000',
     marginBottom: 8,
+    textDecorationLine: 'underline',
+    textDecorationColor: '#fd7e14',
   },
   amountContainer: {
-    marginTop: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  amountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    // alignItems: 'center',
+    width: '100%',
   },
   amountLabel: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 12,
+    color: '#000',
+    marginBottom: 4,
   },
   amountValue: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#fd7e14',
+    color: '#000',
   },
   periodProgressContainer: {
     flexDirection: 'row',
@@ -1687,24 +1691,26 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   progressText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 5,
+    fontSize: 14,
+    color: '#333',
+    marginTop: 8,
+    fontWeight: '500',
   },
   dueCardFooter: {
     alignItems: 'center',
   },
   duePayButton: {
-    backgroundColor: '#F26522',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#fd7e14',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
     width: '100%',
-    marginBottom: 40,
   },
   duePayButtonText: {
-    color: '#ffffff',
+    color: '#fd7e14',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -1717,15 +1723,15 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   progressLineBg: {
-    height: 2,
+    height: 3,
     backgroundColor: 'rgba(0,0,0,0.1)',
     width: '100%',
-    borderRadius: 1,
+    borderRadius: 2,
     overflow: 'hidden',
   },
   progressLine: {
-    height: 2,
-    borderRadius: 1,
+    height: 3,
+    borderRadius: 2,
   },
   progressDot: {
     width: 8,
@@ -1776,15 +1782,12 @@ const styles = StyleSheet.create({
   },
   notifBadge: {
     position: 'absolute',
-    top: 10,
-    right: 2,
-    backgroundColor: '#fd7e14',
-    borderRadius: 7,
-    minWidth: 14,
-    height: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
+    top: 16,
+    right: 6,
+    backgroundColor: 'rgba(246, 138, 9, 1)',
+    borderRadius: 6,
+    width: 12,
+    height: 12,
     zIndex: 10,
   },
   notifBadgeText: {
@@ -1883,6 +1886,16 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  separatorLine: {
+    height: 1,
+    backgroundColor: '#fd7e14',
+    marginVertical: 15,
+  },
+  totalBillingContainer: {
+    marginTop: 5,
+    marginBottom: 10,
+    alignItems: 'center',
   },
 });
 

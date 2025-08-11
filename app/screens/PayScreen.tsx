@@ -470,7 +470,7 @@ const PayScreen = ({
       }
 
       // Buat URL dengan token autentikasi
-      const pdfUrl = `https://portal.relabs.id/dl.php?type=i&id=${invoiceId}&token=${token}`;
+      const pdfUrl = `https://portal.internetan.id/dl.php?type=i&id=${invoiceId}&token=${token}`;
 
       console.log('Exporting PDF with URL:', pdfUrl);
 

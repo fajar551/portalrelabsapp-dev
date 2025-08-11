@@ -4,7 +4,7 @@ import messaging from '@react-native-firebase/messaging';
 // Konfigurasi API
 const CONFIG = {
   // URL backend Laravel
-  API_URL: 'https://portal.relabs.id',
+  API_URL: 'https://portal.internetan.id',
 
   // Nonaktifkan mode demo untuk menggunakan API sebenarnya
   USE_DEMO_MODE: true,
@@ -258,7 +258,7 @@ export const logoutUser = async (): Promise<boolean> => {
 // Ambil semua data client
 export const getAllClients = async () => {
   try {
-    console.log('Mengambil data dari API: https://portal.relabs.id/mobile/all-clients');
+    console.log('Mengambil data dari API: https://portal.internetan.id/mobile/all-clients');
 
     const response = await fetch(`${CONFIG.API_URL}/mobile/all-clients`, {
       method: 'GET',
