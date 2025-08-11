@@ -1,97 +1,263 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 🚀 PortalRelabsApp-Dev
 
-# Getting Started
+<div align="center">
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+![React Native](https://img.shields.io/badge/React%20Native-0.79.2-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0.4-blue?style=for-the-badge&logo=typescript)
+![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green?style=for-the-badge&logo=node.js)
+![Firebase](https://img.shields.io/badge/Firebase-22.2.0-orange?style=for-the-badge&logo=firebase)
 
-## Step 1: Start Metro
+**Modern and Integrated Relabs Portal Application** 📱
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+</div>
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+---
 
-```sh
-# Using npm
+## 📋 About the Application
+
+**PortalRelabsApp-Dev** is a mobile application built with React Native for managing the Relabs portal. This application provides various features for account management, payments, support tickets, and real-time notifications.
+
+### ✨ Key Features
+
+- 🔐 **Multi-Platform Authentication**
+
+  - Email/password login
+  - WhatsApp login
+  - OTP code verification
+  - Password reset
+
+- 💳 **Payment System**
+
+  - Invoice details
+  - Payment instructions
+  - Payment confirmation
+  - Payment status
+
+- 🎫 **Ticket Management**
+
+  - Create new tickets
+  - Ticket details
+  - Ticket status tracking
+
+- 🔔 **Real-time Notifications**
+
+  - Push notifications with Firebase
+  - Email notifications
+  - Custom notification channels
+
+- 👤 **Account Management**
+  - User profile
+  - Account settings
+  - Auto logout
+
+## 🛠️ Technologies Used
+
+### Frontend
+
+- **React Native** 0.79.2 - Cross-platform mobile framework
+- **TypeScript** 5.0.4 - Type safety and developer experience
+- **React Navigation** 7.x - Page navigation
+- **React Native Vector Icons** - Icon library
+
+### Backend & Services
+
+- **Firebase** - Push notifications and messaging
+- **Axios** - HTTP client for API calls
+- **AsyncStorage** - Local storage
+
+### Development Tools
+
+- **ESLint** - Code linting
+- **Prettier** - Code formatting
+- **Jest** - Unit testing
+- **Metro** - JavaScript bundler
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Before running the application, make sure you have installed:
+
+- **Node.js** (version 18 or higher)
+- **React Native CLI**
+- **Android Studio** (for Android)
+- **Xcode** (for iOS - macOS only)
+- **Java Development Kit (JDK)**
+
+### 📦 Installation
+
+1. **Clone repository**
+
+   ```bash
+   git clone [REPOSITORY_URL]
+   cd PortalRelabsApps
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   # Using npm
+   npm install
+
+   # Or using Yarn
+   yarn install
+   ```
+
+3. **Setup iOS (macOS only)**
+   ```bash
+   # Install CocoaPods dependencies
+   bundle install
+   bundle exec pod install
+   ```
+
+### 🏃‍♂️ Running the Application
+
+#### Android
+
+```bash
+# Start Metro bundler
 npm start
 
-# OR using Yarn
-yarn start
+# In a new terminal, run Android app
+npm run android
 ```
 
-## Step 2: Build and run your app
+#### iOS
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+```bash
+# Start Metro bundler
+npm start
+
+# In a new terminal, run iOS app
+npm run ios
+```
+
+## 📱 Application Structure
+
+```
+PortalRelabsApps/
+├── app/
+│   ├── components/          # Reusable components
+│   └── screens/            # Application pages
+│       ├── LoginScreen.tsx
+│       ├── HomeScreen.tsx
+│       ├── PayScreen.tsx
+│       ├── AccountScreen.tsx
+│       └── ...
+├── src/
+│   └── services/           # API services
+├── android/               # Android configuration
+├── ios/                   # iOS configuration
+└── config/               # Configuration files
+```
+
+## 🔧 Available Scripts
+
+| Script            | Description              |
+| ----------------- | ------------------------ |
+| `npm start`       | Run Metro bundler        |
+| `npm run android` | Build and run on Android |
+| `npm run ios`     | Build and run on iOS     |
+| `npm run lint`    | Run ESLint               |
+| `npm test`        | Run unit tests           |
+
+## 🔐 Firebase Configuration
+
+The application uses Firebase for push notifications. Make sure the Firebase configuration files are properly set up:
+
+1. Download `google-services.json` for Android
+2. Download `GoogleService-Info.plist` for iOS
+3. Place the files in the appropriate folders
+
+## 📱 Screen Features
+
+### Authentication
+
+- **LoginScreen** - Email/password login
+- **WhatsAppLoginScreen** - WhatsApp login
+- **VerifyCodeScreen** - OTP verification
+- **ForgotPasswordScreen** - Password reset
+- **ResetPasswordScreen** - Set new password
+
+### Main Features
+
+- **HomeScreen** - Main dashboard
+- **PayScreen** - Payment page
+- **InvoiceDetailScreen** - Invoice details
+- **PaymentInstructionsScreen** - Payment instructions
+- **PaymentSuccessScreen** - Success confirmation
+
+### Support & Account
+
+- **OpenTicketScreen** - Create new ticket
+- **TicketDetailScreen** - Ticket details
+- **NotificationScreen** - Notifications
+- **AccountScreen** - Account management
+- **HelpScreen** - Help and support
+
+## 🔔 Push Notifications
+
+The application supports push notifications with features:
+
+- **Background messaging** - Notifications when app is closed
+- **Foreground messaging** - Notifications when app is open
+- **Custom notification channels** - Special channels for Android
+- **Deep linking** - Direct navigation to specific pages
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm test -- --coverage
+```
+
+## 📦 Production Build
 
 ### Android
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+cd android
+./gradlew assembleRelease
 ```
 
 ### iOS
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```bash
+cd ios
+xcodebuild -workspace PortalRelabsApps.xcworkspace -scheme PortalRelabsApps -configuration Release archive
 ```
 
-Then, and every time you update your native dependencies, run:
+## 🤝 Contributing
 
-```sh
-bundle exec pod install
-```
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Create Pull Request
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## 📄 License
 
-```sh
-# Using npm
-npm run ios
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-# OR using Yarn
-yarn ios
-```
+## 📞 Support
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+If you encounter issues or have questions:
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+- 📧 Email: [support@relabs.com]
+- 📱 WhatsApp: [+62 xxx-xxxx-xxxx]
+- 🐛 Issues: [GitHub Issues]
 
-## Step 3: Modify your app
+---
 
-Now that you have successfully run the app, let's make changes!
+<div align="center">
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+**Made with ❤️ by Relabs Team**
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+[![React Native](https://img.shields.io/badge/React%20Native-0.79.2-blue?style=flat-square&logo=react)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0.4-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-22.2.0-orange?style=flat-square&logo=firebase)](https://firebase.google.com/)
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+</div>
