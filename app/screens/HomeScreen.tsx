@@ -600,12 +600,12 @@ const HomeScreen = ({
     {imageUrl: 'https://portal.internetan.id/mobile/banner/banner2.webp'},
     {imageUrl: 'https://portal.internetan.id/mobile/banner/banner3.webp'},
     {imageUrl: 'https://portal.internetan.id/mobile/banner/banner4.webp'},
-    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner5.webp'},
-    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner6.webp'},
-    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner7.webp'},
-    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner8.webp'},
-    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner9.webp'},
-    {imageUrl: 'https://portal.internetan.id/mobile/banner/banner10.webp'},
+    // {imageUrl: 'https://portal.internetan.id/mobile/banner/banner5.webp'},
+    // {imageUrl: 'https://portal.internetan.id/mobile/banner/banner6.webp'},
+    // {imageUrl: 'https://portal.internetan.id/mobile/banner/banner7.webp'},
+    // {imageUrl: 'https://portal.internetan.id/mobile/banner/banner8.webp'},
+    // {imageUrl: 'https://portal.internetan.id/mobile/banner/banner9.webp'},
+    // {imageUrl: 'https://portal.internetan.id/mobile/banner/banner10.webp'},
   ];
 
   // State untuk banner yang berhasil dimuat

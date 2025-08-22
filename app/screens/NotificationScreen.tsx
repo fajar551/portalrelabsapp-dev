@@ -3,7 +3,6 @@ import messaging from '@react-native-firebase/messaging';
 import {useFocusEffect} from '@react-navigation/native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {
-  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -85,10 +84,13 @@ const NotificationScreen = ({
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const [readBills, setReadBills] = useState<number[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 5000; // 5 detik
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -98,12 +100,40 @@ const NotificationScreen = ({
   );
 
   useEffect(() => {
-    setLoading(true);
     getNotifications()
-      .then(data => setNotifications(data))
-      .catch(() => setNotifications([]))
-      .finally(() => setLoading(false));
-  }, []);
+      .then(data => {
+        setNotifications(data);
+      })
+      .catch(() => {
+        setNotifications([]);
+      });
+  }, [itemsPerPage]);
+
+  // Fungsi untuk load more data
+  const loadMoreData = () => {
+    setCurrentPage(prev => prev + 1);
+  };
+
+  // Reset pagination ketika tab berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  // Fungsi untuk menghitung hasMoreData berdasarkan data yang aktif
+  const calculateHasMoreData = useCallback(
+    (data: any[]) => {
+      return data.length > currentPage * itemsPerPage;
+    },
+    [currentPage, itemsPerPage],
+  );
+
+  // Fungsi untuk mendapatkan data yang sudah dipaginasi
+  const getPaginatedData = (data: any[]) => {
+    const startIndex = 0;
+    const endIndex = currentPage * itemsPerPage;
+    const paginatedData = data.slice(startIndex, endIndex);
+    return paginatedData;
+  };
 
   // Pindahkan fungsi ini ke dalam komponen
   // const resetReadNotifications = async () => {
@@ -373,44 +403,49 @@ const NotificationScreen = ({
             styles.notificationsList,
             {paddingBottom: 80 + insets.bottom},
           ]}>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#fd7e14" />
-              <Text style={styles.loadingText}>Memuat notifikasi...</Text>
-            </View>
-          ) : notifications.length === 0 ? (
-            <Text style={[styles.ta, styles.mt20]}>Tidak ada notifikasi</Text>
+          {notifications.length === 0 ? (
+            <Text style={[styles.ta, styles.mt20]}>Sedang memuat...</Text>
           ) : (
-            notifications.map(notification => (
-              <TouchableOpacity
-                key={notification.id}
-                onPress={async () => {
-                  try {
-                    const updated = [
-                      ...new Set([...readNotifications, notification.id]),
-                    ];
-                    await saveReadNotifications(updated);
-                    setReadNotifications(updated);
-                    setSelectedNotification(notification);
-                  } catch (error) {
-                    console.error('Error saving read notification:', error);
-                  }
-                }}>
-                <View style={styles.notificationItem}>
-                  {!readNotifications.includes(notification.id) && (
-                    <View style={styles.notificationDot} />
-                  )}
-                  <View style={styles.notificationContent}>
-                    <Text style={styles.notificationTitle}>
-                      {notification.subject}
+            <>
+              {getPaginatedData(notifications).map(notification => (
+                <TouchableOpacity
+                  key={notification.id}
+                  onPress={async () => {
+                    try {
+                      const updated = [
+                        ...new Set([...readNotifications, notification.id]),
+                      ];
+                      await saveReadNotifications(updated);
+                      setReadNotifications(updated);
+                      setSelectedNotification(notification);
+                    } catch (error) {
+                      console.error('Error saving read notification:', error);
+                    }
+                  }}>
+                  <View style={styles.notificationItem}>
+                    {!readNotifications.includes(notification.id) && (
+                      <View style={styles.notificationDot} />
+                    )}
+                    <View style={styles.notificationContent}>
+                      <Text style={styles.notificationTitle}>
+                        {notification.subject}
+                      </Text>
+                    </View>
+                    <Text style={styles.notificationTime}>
+                      {notification.date}
                     </Text>
                   </View>
-                  <Text style={styles.notificationTime}>
-                    {notification.date}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))
+                </TouchableOpacity>
+              ))}
+              {calculateHasMoreData(notifications) && (
+                <TouchableOpacity
+                  style={styles.loadMoreContainer}
+                  onPress={loadMoreData}>
+                  <Text style={styles.loadMoreText}>Show More</Text>
+                  <Icon name="chevron-down" size={20} color="#fd7e14" />
+                </TouchableOpacity>
+              )}
+            </>
           )}
           <View style={{height: 100 + insets.bottom}} />
         </ScrollView>
@@ -420,51 +455,51 @@ const NotificationScreen = ({
             styles.notificationsList,
             {paddingBottom: 80 + insets.bottom},
           ]}>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#fd7e14" />
-              <Text style={styles.loadingText}>Memuat tagihan...</Text>
-            </View>
-          ) : notifications.filter(
+          {(() => {
+            const filteredData = notifications.filter(
               n =>
                 n.subject &&
                 n.subject.includes(
                   '[Tagihan] Pembayaran Layanan Internet Qwords',
                 ),
-            ).length === 0 ? (
-            <Text style={[styles.ta, styles.mt20]}>Tidak ada tagihan</Text>
-          ) : (
-            notifications
-              .filter(
-                n =>
-                  n.subject &&
-                  n.subject.includes(
-                    '[Tagihan] Pembayaran Layanan Internet Qwords',
-                  ),
-              )
-              .map(tagihan => (
-                <TouchableOpacity
-                  key={tagihan.id}
-                  onPress={() => {
-                    setReadBills(prev => {
-                      const updated = [...new Set([...prev, tagihan.id])];
-                      saveReadBills(updated);
-                      return updated;
-                    });
-                    setSelectedNotification(tagihan);
-                  }}>
-                  <View style={styles.billItem}>
-                    {!readBills.includes(tagihan.id) && (
-                      <View style={styles.notificationDotTagihan} />
-                    )}
-                    <View style={styles.billInfo}>
-                      <Text style={styles.billTitle}>{tagihan.subject}</Text>
-                      <Text style={styles.billLabel}>{tagihan.date}</Text>
+            );
+            return filteredData.length === 0 ? (
+              <Text style={[styles.ta, styles.mt20]}>Sedang memuat...</Text>
+            ) : (
+              <>
+                {getPaginatedData(filteredData).map(tagihan => (
+                  <TouchableOpacity
+                    key={tagihan.id}
+                    onPress={() => {
+                      setReadBills(prev => {
+                        const updated = [...new Set([...prev, tagihan.id])];
+                        saveReadBills(updated);
+                        return updated;
+                      });
+                      setSelectedNotification(tagihan);
+                    }}>
+                    <View style={styles.billItem}>
+                      {!readBills.includes(tagihan.id) && (
+                        <View style={styles.notificationDotTagihan} />
+                      )}
+                      <View style={styles.billInfo}>
+                        <Text style={styles.billTitle}>{tagihan.subject}</Text>
+                        <Text style={styles.billLabel}>{tagihan.date}</Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))
-          )}
+                  </TouchableOpacity>
+                ))}
+                {calculateHasMoreData(filteredData) && (
+                  <TouchableOpacity
+                    style={styles.loadMoreContainer}
+                    onPress={loadMoreData}>
+                    <Text style={styles.loadMoreText}>Show More</Text>
+                    <Icon name="chevron-down" size={20} color="#fd7e14" />
+                  </TouchableOpacity>
+                )}
+              </>
+            );
+          })()}
           <View style={{height: 100 + insets.bottom}} />
         </ScrollView>
       )}
@@ -835,18 +870,6 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    minHeight: 200,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
   bottomNav: {
     flexDirection: 'row',
     backgroundColor: 'white',
@@ -864,6 +887,19 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  loadMoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 15,
+    marginVertical: 10,
+  },
+  loadMoreText: {
+    color: '#fd7e14',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginRight: 5,
   },
 });
 
