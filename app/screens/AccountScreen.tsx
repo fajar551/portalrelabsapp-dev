@@ -127,7 +127,7 @@ const AccountScreen = ({
           style={styles.mainProfile}>
           {/* Profile Title */}
           <View style={styles.profileTitleContainer}>
-            <Text style={styles.profileTitleText}>Profile</Text>
+            <Text style={styles.profileTitleText}>Akun</Text>
           </View>
 
           {/* Profile Content */}
@@ -182,9 +182,6 @@ const AccountScreen = ({
               <Text style={styles.contactTitle}>Email</Text>
               {clientData ? (
                 <>
-                  <Text style={styles.contactLabel}>Official</Text>
-                  <Text style={styles.contactValue}>{clientData?.email}</Text>
-                  <Text style={styles.contactLabel}>Personal</Text>
                   <Text style={styles.contactValue}>{clientData?.email}</Text>
                 </>
               ) : (
@@ -426,7 +423,7 @@ const styles = StyleSheet.create({
   },
   profileTitleText: {
     color: '#f0f0f0',
-    fontSize: 16,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   profileContent: {
@@ -554,7 +551,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   skeletonText: {
-    backgroundColor: '#444',
+    backgroundColor: '#e0e0e0',
     height: 15,
     borderRadius: 5,
     width: 120,

@@ -1292,17 +1292,20 @@ const styles = StyleSheet.create({
   },
   accountInfoItem: {
     flex: 1,
+    alignItems: 'center',
   },
   accountLabel: {
     color: '#22325a',
     fontWeight: '400',
     fontSize: 12,
     marginBottom: 5,
+    textAlign: 'center',
   },
   accountValue: {
     color: '#222',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   accountInfoDivider: {
     width: 1,

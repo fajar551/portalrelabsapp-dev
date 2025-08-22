@@ -1531,6 +1531,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    minHeight: 80, // Tambahkan minHeight untuk konsistensi tinggi
   },
   paymentItemTouchable: {
     flex: 1,
@@ -1539,6 +1540,8 @@ const styles = StyleSheet.create({
   },
   paymentInfo: {
     flexDirection: 'column',
+    flex: 1, // Tambahkan flex: 1 agar mengambil ruang yang tersedia
+    minWidth: 0, // Tambahkan minWidth: 0 agar flexShrink bisa bekerja
   },
   paymentPeriod: {
     fontSize: 16,
@@ -1546,6 +1549,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
     marginLeft: 13,
+    flexShrink: 1, // Tambahkan flexShrink agar text bisa menyusut jika perlu
+    maxWidth: '70%', // Tambahkan maxWidth untuk membatasi lebar text
   },
   paymentStatusBadge: {
     backgroundColor: '#4CD964',
@@ -1554,6 +1559,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignSelf: 'flex-start',
     marginLeft: 12,
+    maxWidth: '80%', // Tambahkan maxWidth untuk membatasi lebar badge
   },
   paymentStatusBadgeUnpaid: {
     backgroundColor: '#FFCC00', // Kuning untuk status Belum Dibayar
@@ -1568,13 +1574,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
+    textAlign: 'center', // Tambahkan textAlign center
+    flexShrink: 1, // Tambahkan flexShrink agar text bisa menyusut jika perlu
   },
   paymentAmount: {
     flexDirection: 'column',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    minWidth: 120,
-    marginRight: 10,
+    minWidth: 120, // Kurangi dari 155 menjadi 120
+    maxWidth: 140, // Tambahkan maxWidth untuk membatasi lebar
+    marginRight: -110, // Kurangi dari -100 menjadi -60
   },
   amountRow: {
     flexDirection: 'row',
@@ -1585,22 +1594,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     fontWeight: '500',
-    marginBottom:32,
-    marginRight: -100,
+    marginBottom: 32,
+    marginRight: -40, // Kurangi dari -80 menjadi -40
     textAlign: 'right',
     width: '100%',
+    flexShrink: 1, // Tambahkan flexShrink agar text bisa menyusut jika perlu
   },
   arrowIcon: {
     fontSize: 24,
     color: '#fd7e14',
     marginRight: 15,
-    marginLeft: 20,
+    marginLeft: 10, // Kurangi dari 20 menjadi 10
     fontWeight: 500,
     alignSelf: 'center',
   },
   arrowContainer: {
     // justifyContent: 'center',
-    marginRight: 130,
+    marginRight: 80, // Kurangi dari 130 menjadi 80
     // alignItems: 'center',
   },
   bottomNav: {
@@ -2183,23 +2193,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F26522',
     alignSelf: 'flex-end',
+    marginLeft: 60, // Ubah dari -40 menjadi 60 untuk posisi yang lebih konsisten
+    minWidth: 80, // Tambahkan minWidth untuk konsistensi lebar button
+    maxWidth: 100, // Tambahkan maxWidth untuk membatasi lebar button
   },
   exportButtonUnpaid: {
     backgroundColor: '#FFF3CD', // Light yellow untuk invoice belum dibayar
     borderColor: '#FFCC00',
+    marginLeft: 60, // Ubah dari 90 menjadi 60
   },
   exportButtonPaid: {
     backgroundColor: '#D4F5D4', // Light green untuk invoice sudah dibayar
     borderColor: '#4CD964',
+    marginLeft: 60, // Ubah dari 90 menjadi 60
   },
   exportButtonCancelled: {
     backgroundColor: '#FFE4E1', // Light red untuk invoice dibatalkan
     borderColor: '#FF3B30',
+    marginLeft: 60, // Ubah dari 90 menjadi 60
   },
   exportButtonText: {
     fontSize: 10,
     color: '#F26522',
     fontWeight: 'bold',
+    textAlign: 'center', // Tambahkan textAlign center
+    flexShrink: 1, // Tambahkan flexShrink agar text bisa menyusut jika perlu
   },
   exportButtonTextUnpaid: {
     color: '#B8860B', // Dark yellow text

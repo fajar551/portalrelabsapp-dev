@@ -27,6 +27,14 @@ const CONFIG = {
   API_URL: 'https://portal.internetan.id',
 };
 
+// Padding khusus untuk Android dengan 3 button navigation
+const getBottomPadding = () => {
+  if (Platform.OS === 'android') {
+    return 70; // Padding yang cukup besar untuk menghindari 3 button navigation
+  }
+  return 20;
+};
+
 interface TicketDetailScreenProps {
   navigateTo: (screen: string, params?: any) => void;
   route?: {params?: {tid?: string}};
@@ -255,92 +263,137 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
   };
 
   return (
-    <LinearGradient colors={['#e0e7ff', '#fff']} style={styles.container}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity
-          onPress={() => navigateTo('Help')}
-          style={styles.backBtn}>
-          <Icon name="arrow-back" size={26} color="#22325a" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detail Tiket</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-      {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color="#F26522" />
-          <Text style={styles.loadingText}>Memuat Detail Tiket</Text>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#e0e7ff', '#fff']}
+        style={styles.gradientContainer}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            onPress={() => navigateTo('Help')}
+            style={styles.backBtn}>
+            <Icon name="arrow-back" size={26} color="#22325a" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Detail Tiket</Text>
+          <View style={styles.headerSpacer} />
         </View>
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : (
-        <>
-          <LinearGradient
-            colors={['#e0e7ff', '#fff']}
-            style={styles.ticketInfoCard}>
-            <View style={styles.ticketInfoRow}>
-              <Icon
-                name="info"
-                size={24}
-                color="#4F8EF7"
-                style={styles.iconInfo}
-              />
-              <Text style={styles.ticketTitle}>{ticket?.title}</Text>
-            </View>
-            <Text style={styles.ticketStatus}>Status: {ticket?.status}</Text>
-            <Text style={styles.ticketDate}>Tanggal: {ticket?.date}</Text>
-            <Text style={styles.ticketUrgency}>Urgency: {ticket?.urgency}</Text>
-            {ticket?.attachment && (
-              <View style={styles.ticketAttachmentContainer}>
-                <Text style={styles.attachmentLabel}>Attachment:</Text>
-                {(() => {
-                  const getFileType = (filename: string) => {
-                    if (!filename) {
+        {loading ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator size="large" color="#F26522" />
+            <Text style={styles.loadingText}>Memuat Detail Tiket</Text>
+          </View>
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : (
+          <>
+            <LinearGradient
+              colors={['#e0e7ff', '#fff']}
+              style={styles.ticketInfoCard}>
+              <View style={styles.ticketInfoRow}>
+                <Icon
+                  name="info"
+                  size={24}
+                  color="#4F8EF7"
+                  style={styles.iconInfo}
+                />
+                <Text style={styles.ticketTitle}>{ticket?.title}</Text>
+              </View>
+              <Text style={styles.ticketStatus}>Status: {ticket?.status}</Text>
+              <Text style={styles.ticketDate}>Tanggal: {ticket?.date}</Text>
+              <Text style={styles.ticketUrgency}>
+                Urgency: {ticket?.urgency}
+              </Text>
+              {ticket?.attachment && (
+                <View style={styles.ticketAttachmentContainer}>
+                  <Text style={styles.attachmentLabel}>Attachment:</Text>
+                  {(() => {
+                    const getFileType = (filename: string) => {
+                      if (!filename) {
+                        return '';
+                      }
+                      const ext = filename.toLowerCase().split('.').pop();
+                      if (
+                        ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
+                          ext || '',
+                        )
+                      ) {
+                        return 'image';
+                      }
                       return '';
-                    }
-                    const ext = filename.toLowerCase().split('.').pop();
-                    if (
-                      ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
-                        ext || '',
-                      )
-                    ) {
-                      return 'image';
-                    }
-                    return '';
-                  };
+                    };
 
-                  const fileType = getFileType(ticket.attachment);
-                  const attachmentUrl = `${CONFIG.API_URL}/attachments/mobilerelabs/${ticket.attachment}`;
+                    const fileType = getFileType(ticket.attachment);
+                    const attachmentUrl = `${CONFIG.API_URL}/attachments/mobilerelabs/${ticket.attachment}`;
 
-                  return fileType === 'image' ? (
-                    <Image
-                      source={{
-                        uri:
-                          ticket.attachment && ticket.attachment.uri
-                            ? ticket.attachment.uri
-                            : attachmentUrl,
-                      }}
-                      style={styles.ticketAttachmentImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.ticketFileAttachmentContainer}
-                      onPress={() => openFile(attachmentUrl)}>
-                      <View style={styles.ticketFileIconContainer}>
-                        <Icon name={'description'} size={24} color="#F26522" />
-                      </View>
-                      <View style={styles.fileInfoRow}>
-                        <Text style={styles.ticketFileName}>
-                          {ticket.attachment}
-                        </Text>
-                      </View>
-                      {/* <Text style={styles.ticketFileTypeText}></Text> */}
-                    </TouchableOpacity>
-                  );
-                })()}
+                    return fileType === 'image' ? (
+                      <Image
+                        source={{
+                          uri:
+                            ticket.attachment && ticket.attachment.uri
+                              ? ticket.attachment.uri
+                              : attachmentUrl,
+                        }}
+                        style={styles.ticketAttachmentImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.ticketFileAttachmentContainer}
+                        onPress={() => openFile(attachmentUrl)}>
+                        <View style={styles.ticketFileIconContainer}>
+                          <Icon
+                            name={'description'}
+                            size={24}
+                            color="#F26522"
+                          />
+                        </View>
+                        <View style={styles.fileInfoRow}>
+                          <Text style={styles.ticketFileName}>
+                            {ticket.attachment}
+                          </Text>
+                        </View>
+                        {/* <Text style={styles.ticketFileTypeText}></Text> */}
+                      </TouchableOpacity>
+                    );
+                  })()}
+                </View>
+              )}
+            </LinearGradient>
+            {attachment && (
+              <View style={styles.previewAttachment}>
+                <Image
+                  source={{uri: attachment.uri}}
+                  style={styles.previewImage}
+                  resizeMode="cover"
+                />
               </View>
             )}
-          </LinearGradient>
+            <KeyboardAvoidingView
+              style={styles.flex1}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              keyboardVerticalOffset={80}>
+              <ScrollView
+                style={styles.chatWrap}
+                contentContainerStyle={styles.scrollContentBottom}
+                keyboardShouldPersistTaps="handled">
+                {conversation.map(renderBubble)}
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </>
+        )}
+      </LinearGradient>
+      {!loading && !error && (
+        <View style={[styles.replyBar, {paddingBottom: getBottomPadding()}]}>
+          <TextInput
+            style={styles.replyInput}
+            placeholder="Tulis balasan atau pilih gambar..."
+            value={replyMsg}
+            onChangeText={setReplyMsg}
+            editable={!sending}
+            multiline
+          />
+          <TouchableOpacity onPress={pickImage} style={styles.imageBtn}>
+            <Icon name="image" size={32} color="#F26522" />
+          </TouchableOpacity>
           {attachment && (
             <View style={styles.previewAttachment}>
               <Image
@@ -348,58 +401,31 @@ const TicketDetailScreen = ({navigateTo, route}: TicketDetailScreenProps) => {
                 style={styles.previewImage}
                 resizeMode="cover"
               />
+              <TouchableOpacity onPress={() => setAttachment(null)}>
+                <Text style={styles.previewDelete}>Hapus</Text>
+              </TouchableOpacity>
             </View>
           )}
-          <KeyboardAvoidingView
-            style={styles.flex1}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={80}>
-            <ScrollView
-              style={styles.chatWrap}
-              contentContainerStyle={styles.scrollContentBottom}
-              keyboardShouldPersistTaps="handled">
-              {conversation.map(renderBubble)}
-            </ScrollView>
-            <View style={styles.replyBar}>
-              <TextInput
-                style={styles.replyInput}
-                placeholder="Tulis balasan atau pilih gambar..."
-                value={replyMsg}
-                onChangeText={setReplyMsg}
-                editable={!sending}
-                multiline
-              />
-              <TouchableOpacity onPress={pickImage} style={styles.imageBtn}>
-                <Icon name="image" size={32} color="#F26522" />
-              </TouchableOpacity>
-              {attachment && (
-                <View style={styles.previewAttachment}>
-                  <Image
-                    source={{uri: attachment.uri}}
-                    style={styles.previewImage}
-                    resizeMode="cover"
-                  />
-                  <TouchableOpacity onPress={() => setAttachment(null)}>
-                    <Text style={styles.previewDelete}>Hapus</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              <TouchableOpacity
-                onPress={handleSendReply}
-                disabled={sending || (!replyMsg.trim() && !attachment)}
-                style={styles.replyButton}>
-                <Icon name="send" size={22} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
-        </>
+          <TouchableOpacity
+            onPress={handleSendReply}
+            disabled={sending || (!replyMsg.trim() && !attachment)}
+            style={styles.replyButton}>
+            <Icon name="send" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
       )}
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1},
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  gradientContainer: {
+    flex: 1,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -497,10 +523,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderColor: '#eee',
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
@@ -618,7 +640,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContentBottom: {
-    paddingBottom: 80,
+    paddingBottom: 20,
   },
   fileAttachmentContainer: {
     flexDirection: 'row',

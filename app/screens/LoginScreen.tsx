@@ -46,6 +46,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   const [error, setError] = useState('');
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Memeriksa dan mengambil data yang tersimpan saat komponen dimuat
@@ -129,6 +130,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
       return;
     }
 
+    setIsLoading(true);
+    setError('');
+
     try {
       const response = await loginUser(identifier, password);
 
@@ -144,6 +148,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
       setError(
         err instanceof Error ? err.message : 'Terjadi kesalahan saat login',
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -239,9 +245,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
               <TouchableOpacity
-                style={styles.loginButton}
-                onPress={handleLogin}>
-                <Text style={styles.loginButtonText}>Masuk</Text>
+                style={[
+                  styles.loginButton,
+                  isLoading && styles.loginButtonDisabled,
+                ]}
+                onPress={handleLogin}
+                disabled={isLoading}>
+                <Text style={styles.loginButtonText}>
+                  {isLoading ? 'Memproses...' : 'Masuk'}
+                </Text>
               </TouchableOpacity>
 
               {/* Separator */}
@@ -478,6 +490,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  loginButtonDisabled: {
+    backgroundColor: '#cccccc',
+    opacity: 0.6,
   },
   separator: {
     width: '100%',
