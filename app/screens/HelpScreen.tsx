@@ -264,7 +264,7 @@ const HelpScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="home" size={24} color="#fff" />
+            <Icon name="home" size={24} color="#F26522" />
           </View>
           <Text style={styles.navTextInactive}>Beranda</Text>
         </TouchableOpacity>
@@ -272,13 +272,13 @@ const HelpScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="receipt" size={24} color="#fff" />
+            <Icon name="receipt" size={24} color="#F26522" />
           </View>
           <Text style={styles.navTextInactive}>Tagihan</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
           <View style={styles.navIconContainerActive}>
-            <Icon name="help" size={25} color="#F26522" />
+            <Icon name="help" size={25} color="#fff" />
           </View>
           <Text style={styles.navTextActive}>Bantuan</Text>
         </TouchableOpacity>
@@ -286,7 +286,7 @@ const HelpScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon2 name="person" size={24} color="#fff" />
+            <Icon2 name="person" size={24} color="#F26522" />
           </View>
           <Text style={styles.navTextInactive}>Akun</Text>
         </TouchableOpacity>
@@ -303,6 +303,8 @@ const styles = StyleSheet.create({
   header: {
     paddingVertical: 15,
     paddingHorizontal: 15,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
   },
   headerContent: {
     flexDirection: 'row',
@@ -409,7 +411,7 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: '#F26522',
+    backgroundColor: '#fff',
     paddingTop: 1,
     borderTopWidth: 1,
     borderTopColor: '#E4571B',
@@ -460,7 +462,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: '#F26522',
     marginBottom: 5,
     marginTop: -25,
     shadowColor: '#000',
@@ -475,11 +477,11 @@ const styles = StyleSheet.create({
   },
   navTextInactive: {
     fontSize: 9,
-    color: '#fff',
+    color: '#F26522',
   },
   navTextActive: {
     fontSize: 10,
-    color: '#fff',
+    color: '#F26522',
     fontWeight: 'bold',
   },
   activeNavText: {

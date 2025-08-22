@@ -100,7 +100,7 @@ const AccountScreen = ({
         start={{x: 0, y: 0}}
         end={{x: 0, y: 1}}
         style={styles.header}>
-        <Text style={styles.headerTitle}>Akun</Text>
+        {/* <Text style={styles.headerTitle}>Akun</Text> */}
       </LinearGradient>
 
       <ScrollView
@@ -125,177 +125,192 @@ const AccountScreen = ({
           start={{x: 0, y: 0}}
           end={{x: 0, y: 1}}
           style={styles.mainProfile}>
-          <View style={styles.profileInfo}>
-            {clientData ? (
-              <>
+          {/* Profile Title */}
+          <View style={styles.profileTitleContainer}>
+            <Text style={styles.profileTitleText}>Profile</Text>
+          </View>
+
+          {/* Profile Content */}
+          <View style={styles.profileContent}>
+            <View style={styles.profileImageContainer}>
+              <View style={styles.profileImageWrapper}>
+                <Image
+                  source={require('../assets/usericon.png')}
+                  style={styles.profileImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+            <View style={styles.profileInfo}>
+              {clientData ? (
                 <Text style={styles.userName}>
                   {clientData?.firstname} {clientData?.lastname}
                 </Text>
-                <Text style={styles.userEmail}>{clientData?.email}</Text>
-              </>
-            ) : (
-              <>
+              ) : (
                 <View style={styles.skeletonText} />
-                <View
-                  style={[styles.skeletonText, {width: 150, marginTop: 5}]}
-                />
-              </>
-            )}
-          </View>
-          <View style={styles.profileImageContainer}>
-            <View style={styles.profileImageWrapper}>
-              <Image
-                source={require('../assets/usericon.png')}
-                style={styles.profileImage}
-                resizeMode="contain"
-              />
+              )}
             </View>
           </View>
         </LinearGradient>
 
-        {/* First ID */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>ID Relabs</Text>
-          <View style={styles.infoCard}>
-            {clientData ? (
-              <>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>ID Relabs</Text>
-                  <Text style={styles.infoValue}>{clientData?.id}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Nama</Text>
-                  <Text style={styles.infoValue}>
-                    {clientData?.firstname} {clientData?.lastname}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Email</Text>
-                  <Text style={styles.infoValue}>{clientData?.email}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>No. Telepon</Text>
-                  <Text style={styles.infoValue}>
+        {/* Contact Information Section */}
+        <View style={styles.contactSection}>
+          {/* ID Relabs Section */}
+          <View style={styles.contactItem}>
+            <View style={styles.contactIconContainer}>
+              <Icon name="badge" size={20} color="#F26522" />
+            </View>
+            <View style={styles.contactContent}>
+              <Text style={styles.contactTitle}>ID Relabs</Text>
+              {clientData ? (
+                <Text style={styles.contactValue}>
+                  {clientData?.id || 'Tidak ada data'}
+                </Text>
+              ) : (
+                <View
+                  style={[styles.contactSkeletonText, {width: 120, height: 14}]}
+                />
+              )}
+            </View>
+          </View>
+          {/* Email Section */}
+          <View style={styles.contactItem}>
+            <View style={styles.contactIconContainer}>
+              <Icon name="email" size={20} color="#F26522" />
+            </View>
+            <View style={styles.contactContent}>
+              <Text style={styles.contactTitle}>Email</Text>
+              {clientData ? (
+                <>
+                  <Text style={styles.contactLabel}>Official</Text>
+                  <Text style={styles.contactValue}>{clientData?.email}</Text>
+                  <Text style={styles.contactLabel}>Personal</Text>
+                  <Text style={styles.contactValue}>{clientData?.email}</Text>
+                </>
+              ) : (
+                <>
+                  <View
+                    style={[
+                      styles.contactSkeletonText,
+                      {width: 60, height: 12, marginBottom: 5},
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.contactSkeletonText,
+                      {width: 200, height: 14, marginBottom: 10},
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.contactSkeletonText,
+                      {width: 60, height: 12, marginBottom: 5},
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.contactSkeletonText,
+                      {width: 200, height: 14},
+                    ]}
+                  />
+                </>
+              )}
+            </View>
+          </View>
+
+          {/* Phone Section */}
+          <View style={styles.contactItem}>
+            <View style={styles.contactIconContainer}>
+              <Icon name="phone" size={20} color="#F26522" />
+            </View>
+            <View style={styles.contactContent}>
+              <Text style={styles.contactTitle}>Nomor Telepon</Text>
+              {clientData ? (
+                <>
+                  <Text style={styles.contactLabel}>Mobile</Text>
+                  <Text style={styles.contactValue}>
                     {clientData?.phonenumber}
                   </Text>
-                </View>
-              </>
-            ) : (
-              <>
-                <View
-                  style={[
-                    styles.skeletonText,
-                    {width: '80%', height: 18, marginBottom: 15},
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.skeletonText,
-                    {width: '60%', height: 18, marginBottom: 15},
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.skeletonText,
-                    {width: '70%', height: 18, marginBottom: 15},
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.skeletonText,
-                    {width: '50%', height: 18, marginBottom: 0},
-                  ]}
-                />
-              </>
-            )}
+                </>
+              ) : (
+                <>
+                  <View
+                    style={[
+                      styles.contactSkeletonText,
+                      {width: 60, height: 12, marginBottom: 5},
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.contactSkeletonText,
+                      {width: 150, height: 14},
+                    ]}
+                  />
+                </>
+              )}
+            </View>
           </View>
-        </View>
 
-        {/* Portal Relabs Account */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Akun Portal Relabs</Text>
-          <View style={styles.activeAccountBadge}>
-            {clientData ? (
-              <>
-                <View style={styles.activeAccountRow}>
-                  <Text style={styles.activeAccountText}>
-                    {clientData?.id}{' '}
-                  </Text>
-                  <Text style={styles.activeAccountText2}>
-                    ID Pelanggan Anda
-                  </Text>
-                </View>
-                <View style={styles.checkIcon}>
-                  <Text>✓</Text>
-                </View>
-              </>
-            ) : (
-              <View style={[styles.skeletonText, {width: '40%', height: 16}]} />
-            )}
+          {/* Company Section */}
+          <View style={styles.contactItem}>
+            <View style={styles.contactIconContainer}>
+              <Icon name="business" size={20} color="#F26522" />
+            </View>
+            <View style={styles.contactContent}>
+              <Text style={styles.contactTitle}>Perusahaan</Text>
+              {clientData ? (
+                <Text style={styles.contactValue}>
+                  {clientData?.company || 'Tidak ada data'}
+                </Text>
+              ) : (
+                <View
+                  style={[styles.contactSkeletonText, {width: 120, height: 14}]}
+                />
+              )}
+            </View>
           </View>
-          <View style={styles.infoCard}>
-            {clientData ? (
-              <>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Nama</Text>
-                  <Text style={styles.infoValue}>
-                    {clientData?.firstname} {clientData?.lastname}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Status Akun</Text>
-                  <Text style={styles.infoValue}>{clientData?.status}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Perusahaan</Text>
-                  <Text style={styles.infoValue}>{clientData?.company}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Email</Text>
-                  <Text style={styles.infoValue}>{clientData?.email}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Alamat</Text>
-                  <Text style={styles.infoValue}>
-                    {clientData?.address1} {clientData?.city}{' '}
-                    {clientData?.postcode}
-                  </Text>
-                </View>
-              </>
-            ) : (
-              <>
+
+          {/* Status Section */}
+          <View style={styles.contactItem}>
+            <View style={styles.contactIconContainer}>
+              <Icon name="person" size={20} color="#F26522" />
+            </View>
+            <View style={styles.contactContent}>
+              <Text style={styles.contactTitle}>Status Akun</Text>
+              {clientData ? (
+                <Text style={styles.contactValue}>
+                  {clientData?.status || 'Tidak ada data'}
+                </Text>
+              ) : (
                 <View
-                  style={[
-                    styles.skeletonText,
-                    {width: '80%', height: 18, marginBottom: 15},
-                  ]}
+                  style={[styles.contactSkeletonText, {width: 100, height: 14}]}
                 />
+              )}
+            </View>
+          </View>
+
+          {/* Address Section */}
+          <View
+            style={[
+              styles.contactItem,
+              {borderBottomWidth: 0, marginBottom: 0},
+            ]}>
+            <View style={styles.contactIconContainer}>
+              <Icon name="location-on" size={20} color="#F26522" />
+            </View>
+            <View style={styles.contactContent}>
+              <Text style={styles.contactTitle}>Alamat</Text>
+              {clientData ? (
+                <Text style={styles.contactValue}>
+                  {clientData?.address1} {clientData?.city}{' '}
+                  {clientData?.postcode}
+                </Text>
+              ) : (
                 <View
-                  style={[
-                    styles.skeletonText,
-                    {width: '60%', height: 18, marginBottom: 15},
-                  ]}
+                  style={[styles.contactSkeletonText, {width: 200, height: 14}]}
                 />
-                <View
-                  style={[
-                    styles.skeletonText,
-                    {width: '70%', height: 18, marginBottom: 15},
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.skeletonText,
-                    {width: '50%', height: 18, marginBottom: 15},
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.skeletonText,
-                    {width: '90%', height: 18, marginBottom: 0},
-                  ]}
-                />
-              </>
-            )}
+              )}
+            </View>
           </View>
         </View>
 
@@ -320,7 +335,7 @@ const AccountScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="home" size={24} color="#fff" />
+            <Icon name="home" size={24} color="#F26522" />
           </View>
           <Text style={styles.navTextInactive}>Beranda</Text>
         </TouchableOpacity>
@@ -328,7 +343,7 @@ const AccountScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Pay')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="receipt" size={24} color="#fff" />
+            <Icon name="receipt" size={24} color="#F26522" />
           </View>
           <Text style={styles.navTextInactive}>Tagihan</Text>
         </TouchableOpacity>
@@ -336,13 +351,13 @@ const AccountScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Help')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="help" size={24} color="#fff" />
+            <Icon name="help" size={24} color="#F26522" />
           </View>
           <Text style={styles.navTextInactive}>Bantuan</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
           <View style={styles.navIconContainerActive}>
-            <Icon2 name="person" size={25} color="#F26522" />
+            <Icon2 name="person" size={25} color="#fff" />
           </View>
           <Text style={styles.navTextActive}>Akun</Text>
         </TouchableOpacity>
@@ -395,45 +410,39 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  // settingsButton: {
-  //   width: 40,
-  //   height: 40,
-  //   alignItems: 'center',
-  //   justifyContent: 'center',
-  // },
-  settingsIcon: {
-    fontSize: 20,
-  },
   scrollView: {
     flex: 1,
-  },
-  profileSection: {
-    backgroundColor: '#fd7e14',
-    padding: 15,
-  },
-  profileTitle: {
-    color: '#f0f0f0',
-    fontSize: 16,
   },
   mainProfile: {
     paddingHorizontal: 15,
     paddingBottom: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+  },
+  profileTitleContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  profileTitleText: {
+    color: '#f0f0f0',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  profileContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileInfo: {
-    flex: 1,
-    marginTop: 35,
+    alignItems: 'center',
+    marginTop: 10,
   },
   userName: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  userEmail: {
-    color: 'white',
-    fontSize: 14,
+    textAlign: 'center',
   },
   profileImageContainer: {
     backgroundColor: 'white',
@@ -443,7 +452,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 80,
     height: 80,
-    marginTop: 25,
+    marginBottom: 10,
   },
   profileImageWrapper: {
     width: 76,
@@ -459,80 +468,9 @@ const styles = StyleSheet.create({
     height: 50,
     tintColor: '#fd7e14',
   },
-  sectionContainer: {
-    marginTop: 15,
-    paddingHorizontal: 15,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    color: '#22325a',
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  infoCard: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    marginBottom: 15,
-    width: '100%',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    marginBottom: 15,
-  },
-  infoLabel: {
-    width: 100,
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-  },
-  infoValue: {
-    flex: 1,
-    fontSize: 14,
-    color: '#fd7e14',
-    fontWeight: 'bold',
-  },
-  activeAccountBadge: {
-    backgroundColor: '#fff',
-    borderRadius: 5,
-    padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    width: '100%',
-  },
-  activeAccountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  activeAccountText: {
-    color: '#fd7e14',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  activeAccountText2: {
-    color: '#666',
-    fontWeight: '500',
-    fontSize: 14,
-  },
-  checkIcon: {
-    backgroundColor: '#f0a838',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: '#F26522',
+    backgroundColor: '#fff',
     paddingTop: 1,
     borderTopWidth: 1,
     borderTopColor: '#E4571B',
@@ -550,31 +488,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  navIconContainer: {
-    width: 35,
-    height: 35,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#fd7e14',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-    marginBottom: 2,
-  },
   navIconContainerInactive: {
     width: 35,
     height: 35,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent', // Changed to transparent
+    backgroundColor: 'transparent',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    // elevation: 3,
     marginBottom: 2,
   },
   navIconContainerActive: {
@@ -583,7 +507,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: '#F26522',
     marginBottom: 5,
     marginTop: -25,
     shadowColor: '#000',
@@ -592,21 +516,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 10,
   },
-  navText: {
-    fontSize: 9,
-    color: '#666',
-  },
   navTextInactive: {
     fontSize: 9,
-    color: '#fff',
+    color: '#F26522',
   },
   navTextActive: {
     fontSize: 10,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  activeNavText: {
-    color: '#fd7e14',
+    color: '#F26522',
     fontWeight: 'bold',
   },
   retryButton: {
@@ -637,22 +553,63 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  personIcon: {
-    width: 24,
-    height: 24,
-    marginTop: 7.5,
-    borderRadius: 12,
-    backgroundColor: '#fd7e14',
-    alignItems: 'center',
-    justifyContent: 'center',
-    // marginBottom: 3,
-  },
-  iconImage: {
-    width: 14,
-    height: 14,
-    tintColor: 'white',
-  },
   skeletonText: {
+    backgroundColor: '#444',
+    height: 15,
+    borderRadius: 5,
+    width: 120,
+  },
+  contactSection: {
+    marginTop: 15,
+    paddingHorizontal: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    width: '100%',
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 15,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  contactIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  contactContent: {
+    flex: 1,
+  },
+  contactTitle: {
+    fontSize: 16,
+    color: '#22325a',
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  contactLabel: {
+    fontSize: 12,
+    color: '#666666',
+    marginBottom: 2,
+  },
+  contactValue: {
+    fontSize: 14,
+    color: '#fd7e14',
+    marginBottom: 8,
+    fontWeight: 'bold',
+  },
+  contactSkeletonText: {
     backgroundColor: '#e0e0e0',
     height: 15,
     borderRadius: 5,

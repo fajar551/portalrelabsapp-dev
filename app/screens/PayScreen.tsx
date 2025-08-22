@@ -1058,35 +1058,31 @@ const PayScreen = ({
         ) : filteredHistory.length > 0 ? (
           filteredHistory.map((payment, index) => (
             <View key={index} style={styles.paymentItem}>
-              <TouchableOpacity
-                style={styles.paymentItemTouchable}
-                onPress={() => showPaymentDetail(payment)}>
-                <View style={styles.paymentInfo}>
-                  <Text style={styles.paymentPeriod}>
-                    {payment.month} {payment.year}
-                  </Text>
-                  <View
-                    style={[
-                      styles.paymentStatusBadge,
-                      payment.status === 'Unpaid' ||
-                      payment.status === 'Belum Dibayar'
-                        ? styles.paymentStatusBadgeUnpaid
-                        : payment.status === 'Cancelled' ||
-                          payment.status === 'Dibatalkan'
-                        ? styles.paymentStatusBadgeCancelled
-                        : styles.paymentStatusBadgePaid,
-                    ]}>
-                    <Text style={styles.paymentStatusBadgeText}>
-                      {payment.status}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.paymentAmount}>
-                  <Text style={styles.paymentAmountText}>
-                    {formatRupiah(payment.amount)}
+              <View style={styles.paymentInfo}>
+                <Text style={styles.paymentPeriod}>
+                  {payment.month} {payment.year}
+                </Text>
+                <View
+                  style={[
+                    styles.paymentStatusBadge,
+                    payment.status === 'Unpaid' ||
+                    payment.status === 'Belum Dibayar'
+                      ? styles.paymentStatusBadgeUnpaid
+                      : payment.status === 'Cancelled' ||
+                        payment.status === 'Dibatalkan'
+                      ? styles.paymentStatusBadgeCancelled
+                      : styles.paymentStatusBadgePaid,
+                  ]}>
+                  <Text style={styles.paymentStatusBadgeText}>
+                    {payment.status}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </View>
+              <View style={styles.paymentAmount}>
+                <Text style={styles.paymentAmountText}>
+                  {formatRupiah(payment.amount)}
+                </Text>
+              </View>
               <TouchableOpacity
                 style={[
                   styles.exportButton,
@@ -1102,7 +1098,7 @@ const PayScreen = ({
                   exportPDFInvoice(
                     payment.id || payment.invoicenum || '',
                     payment.status,
-                    payment, // Pass the payment object to exportPDFInvoice
+                    payment,
                   );
                 }}>
                 <Text
@@ -1163,13 +1159,13 @@ const PayScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Home')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="home" size={24} color="#fff" />
+            <Icon name="home" size={24} color="#F26522" />
           </View>
           <Text style={styles.navTextInactive}>Beranda</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem}>
           <View style={styles.navIconContainerActive}>
-            <Icon name="receipt" size={25} color="#F26522" />
+            <Icon name="receipt" size={25} color="#fff" />
           </View>
           <Text style={styles.navTextActive}>Tagihan</Text>
         </TouchableOpacity>
@@ -1177,7 +1173,7 @@ const PayScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Help')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon name="help" size={24} color="#fff" />
+            <Icon name="help" size={24} color="#F26522" />
           </View>
           <Text style={styles.navTextInactive}>Bantuan</Text>
         </TouchableOpacity>
@@ -1185,7 +1181,7 @@ const PayScreen = ({
           style={styles.navItem}
           onPress={() => navigateTo('Account')}>
           <View style={styles.navIconContainerInactive}>
-            <Icon2 name="person" size={24} color="#fff" />
+            <Icon2 name="person" size={24} color="#F26522" />
           </View>
           <Text style={styles.navTextInactive}>Akun</Text>
         </TouchableOpacity>
@@ -1466,6 +1462,8 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 15,
     alignItems: 'center',
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
   },
   headerTitle: {
     color: '#f0f0f0',
@@ -1522,7 +1520,6 @@ const styles = StyleSheet.create({
   },
   paymentItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: 'white',
     padding: 15,
@@ -1538,7 +1535,6 @@ const styles = StyleSheet.create({
   paymentItemTouchable: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   paymentInfo: {
@@ -1577,7 +1573,8 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    minWidth: 80,
+    minWidth: 120,
+    marginRight: 10,
   },
   amountRow: {
     flexDirection: 'row',
@@ -1588,8 +1585,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     fontWeight: '500',
-    marginBottom: 8,
+    marginBottom:32,
+    marginRight: -100,
     textAlign: 'right',
+    width: '100%',
   },
   arrowIcon: {
     fontSize: 24,
@@ -1606,7 +1605,7 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: '#F26522',
+    backgroundColor: '#fff',
     paddingTop: 1,
     borderTopWidth: 1,
     borderTopColor: '#E4571B',
@@ -1657,7 +1656,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: '#F26522',
     marginBottom: 5,
     marginTop: -25,
     shadowColor: '#000',
@@ -1672,11 +1671,11 @@ const styles = StyleSheet.create({
   },
   navTextInactive: {
     fontSize: 9,
-    color: '#fff',
+    color: '#F26522',
   },
   navTextActive: {
     fontSize: 10,
-    color: '#fff',
+    color: '#F26522',
     fontWeight: 'bold',
   },
   activeNavText: {
@@ -2184,7 +2183,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F26522',
     alignSelf: 'flex-end',
-    marginLeft: 10,
   },
   exportButtonUnpaid: {
     backgroundColor: '#FFF3CD', // Light yellow untuk invoice belum dibayar
