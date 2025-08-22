@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -246,15 +246,16 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 1)',
-    borderRadius: 8,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: Platform.OS === 'ios' ? 8 : 7,
     fontSize: 16,
     marginBottom: 20,
     borderColor: 'rgba(246, 138, 9, 1)',
-    borderWidth: 1,
-    color: 'rgba(0, 0, 0, 1)r5',
+    borderWidth: 0,
+    borderBottomWidth: 1.5,
+    color: 'rgba(0, 0, 0, 1)',
   },
   resetButton: {
     backgroundColor: 'rgba(246, 138, 9, 1)',

@@ -154,11 +154,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   return (
     <LinearGradient
       colors={[
-        'rgba(231, 107, 56, 1)',
-        'rgba(245, 143, 91, 1)',
-        'rgba(248, 157, 48, 1)',
-        'rgba(248, 166, 68, 1)',
-        'rgba(249, 176, 88, 1)',
+        'rgba(255, 255, 255, 1)',
+        'rgba(255, 255, 255, 1)',
+        'rgba(255, 255, 255, 1)',
+        'rgba(255, 255, 255, 1)',
+        'rgba(255, 255, 255, 1)',
       ]}
       style={styles.mainContainer}>
       <KeyboardAvoidingView
@@ -362,6 +362,14 @@ const styles = StyleSheet.create({
     padding: 25,
     alignItems: 'center',
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 4,
+      height: 0,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   logo: {
     width: 111,
@@ -394,14 +402,15 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 318,
     height: 40,
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
     paddingHorizontal: 8,
     paddingVertical: 8,
     fontSize: 14,
     marginBottom: 15,
     color: '#000',
-    borderWidth: 1,
+    borderWidth: 0,
+    borderBottomWidth: 1.5,
     borderColor: 'rgba(246, 138, 9, 1)',
   },
   passwordContainer: {
@@ -410,10 +419,11 @@ const styles = StyleSheet.create({
     height: 40,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
     marginBottom: 15,
-    borderWidth: 1,
+    borderWidth: 0,
+    borderBottomWidth: 1.5,
     borderColor: 'rgba(246, 138, 9, 1)',
   },
   passwordInput: {

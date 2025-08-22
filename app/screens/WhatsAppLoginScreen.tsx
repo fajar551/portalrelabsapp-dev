@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface WhatsAppLoginScreenProps {
   onBack: () => void;
@@ -66,11 +65,11 @@ const WhatsAppLoginScreen: React.FC<WhatsAppLoginScreenProps> = ({
   return (
     <LinearGradient
       colors={[
-        'rgba(231, 107, 56, 1)',
-        'rgba(245, 143, 91, 1)',
-        'rgba(248, 157, 48, 1)',
-        'rgba(248, 166, 68, 1)',
-        'rgba(249, 176, 88, 1)',
+        'rgba(255, 255, 255, 1)',
+        'rgba(255, 255, 255, 1)',
+        'rgba(255, 255, 255, 1)',
+        'rgba(255, 255, 255, 1)',
+        'rgba(255, 255, 255, 1)',
       ]}
       style={styles.mainContainer}>
       <KeyboardAvoidingView
@@ -82,13 +81,14 @@ const WhatsAppLoginScreen: React.FC<WhatsAppLoginScreenProps> = ({
           style={styles.scrollView}>
           <View style={styles.root}>
             <View style={styles.card}>
-              {/* Logo Qwords dengan key icon */}
-              <View style={styles.logoContainer}>
-                <Text style={styles.qwordsText}>Qwords</Text>
-                <View style={styles.keyIcon}>
-                  <Icon name="vpn-key" size={18} color="rgba(246, 138, 9, 1)" />
-                </View>
-              </View>
+              {/* Logo Qwords */}
+              <Image
+                source={{
+                  uri: 'https://portal.internetan.id/mobile/img/qwords.png',
+                }}
+                style={styles.logo}
+                resizeMode="contain"
+              />
 
               <Text style={styles.title}>Masuk dengan WhatsApp</Text>
               <Text style={styles.subtitle}>
@@ -198,20 +198,20 @@ const styles = StyleSheet.create({
     padding: 25,
     alignItems: 'center',
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 4,
+      height: 0,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  qwordsText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
-    marginRight: 6,
-  },
-  keyIcon: {
-    transform: [{rotate: '15deg'}],
+  logo: {
+    width: 111,
+    height: 111,
+    marginTop: -15,
+    marginBottom: -10,
   },
   title: {
     fontSize: 22,
@@ -255,14 +255,15 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 318,
     height: 40,
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
     paddingHorizontal: 8,
     paddingVertical: 8,
     fontSize: 14,
     marginBottom: 15,
     color: '#000',
-    borderWidth: 1,
+    borderWidth: 0,
+    borderBottomWidth: 1.5,
     borderColor: 'rgba(246, 138, 9, 1)',
   },
   sendOTPButton: {
