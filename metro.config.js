@@ -1,4 +1,12 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const os = require('os');
+
+// Polyfill untuk os.availableParallelism() jika tidak tersedia
+if (typeof os.availableParallelism !== 'function') {
+  os.availableParallelism = () => {
+    return os.cpus().length || 1;
+  };
+}
 
 /**
  * Metro configuration
