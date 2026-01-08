@@ -111,65 +111,36 @@ const checkAndRequestNotificationPermission = async () => {
 };
 
 const checkAndRequestStoragePermission = async () => {
-  if (Platform.OS === 'android') {
+  // Untuk Android 13+ (API 33+), kita menggunakan Photo Picker yang tidak memerlukan permission
+  // Untuk Android 12 dan di bawahnya, tetap perlu READ_EXTERNAL_STORAGE
+  if (Platform.OS === 'android' && Platform.Version < 33) {
     try {
-      if (Platform.Version >= 33) {
-        // Android 13+ (API 33+)
-        const permissions = [
-          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-          PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
-        ];
-
-        const results = await Promise.all(
-          permissions.map(permission =>
-            PermissionsAndroid.request(permission, {
-              title: 'Izin Akses File',
-              message: 'Aplikasi membutuhkan izin untuk mengakses file',
-              buttonNeutral: 'Tanya Nanti',
-              buttonNegative: 'Tolak',
-              buttonPositive: 'Izinkan',
-            }),
-          ),
+      const granted = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      );
+      if (!granted) {
+        const result = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          {
+            title: 'Izin Akses File',
+            message: 'Aplikasi membutuhkan izin untuk mengakses file',
+            buttonNeutral: 'Tanya Nanti',
+            buttonNegative: 'Tolak',
+            buttonPositive: 'Izinkan',
+          },
         );
-
-        const allGranted = results.every(
-          result => result === PermissionsAndroid.RESULTS.GRANTED,
-        );
-
-        if (!allGranted) {
+        if (result !== PermissionsAndroid.RESULTS.GRANTED) {
           Alert.alert(
             'Izin Akses File',
             'Aplikasi tidak dapat mengakses file tanpa izin. Silakan aktifkan izin di pengaturan.',
           );
-        }
-      } else {
-        // Android 12 dan di bawahnya
-        const granted = await PermissionsAndroid.check(
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        );
-        if (!granted) {
-          const result = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-            {
-              title: 'Izin Akses File',
-              message: 'Aplikasi membutuhkan izin untuk mengakses file',
-              buttonNeutral: 'Tanya Nanti',
-              buttonNegative: 'Tolak',
-              buttonPositive: 'Izinkan',
-            },
-          );
-          if (result !== PermissionsAndroid.RESULTS.GRANTED) {
-            Alert.alert(
-              'Izin Akses File',
-              'Aplikasi tidak dapat mengakses file tanpa izin. Silakan aktifkan izin di pengaturan.',
-            );
-          }
         }
       }
     } catch (error) {
       console.log('Error checking/requesting storage permission:', error);
     }
   }
+  // Android 13+ menggunakan Photo Picker yang tidak memerlukan permission
 };
 
 export default function App() {
@@ -257,36 +228,6 @@ export default function App() {
     };
   }, []);
 
-  const showNotificationPrompt = () => {
-    Alert.alert(
-      'Izinkan Notifikasi',
-      'Aplikasi membutuhkan izin untuk mengirim notifikasi. Aktifkan sekarang?',
-      [
-        {
-          text: 'Tidak',
-          style: 'cancel',
-        },
-        {
-          text: 'Izinkan',
-          onPress: () => messaging().requestPermission(),
-        },
-      ],
-      {cancelable: false},
-    );
-  };
-
-  useEffect(() => {
-    messaging()
-      .hasPermission()
-      .then(status => {
-        if (
-          status === messaging.AuthorizationStatus.NOT_DETERMINED ||
-          status === messaging.AuthorizationStatus.DENIED
-        ) {
-          showNotificationPrompt();
-        }
-      });
-  }, []);
 
   // Handler ketika animasi splash screen selesai
   const handleSplashComplete = () => {

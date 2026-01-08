@@ -5,8 +5,6 @@ import {
   Alert,
   Dimensions,
   Modal,
-  PermissionsAndroid,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -140,26 +138,16 @@ const OpenTicketScreen = ({navigateTo, route}: OpenTicketScreenProps) => {
   //   }
   // };
 
-  const requestGalleryPermission = async () => {
-    if (Platform.OS === 'android' && Platform.Version >= 33) {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    }
-    return true;
-  };
-
   const pickImage = async () => {
-    const hasPermission = await requestGalleryPermission();
-    if (!hasPermission) {
-      Alert.alert('Izin galeri ditolak');
-      return;
-    }
+    // Untuk Android 13+ (API 33+), react-native-image-picker otomatis menggunakan Photo Picker
+    // yang tidak memerlukan permission. Untuk Android 12 dan di bawahnya, masih perlu
+    // READ_EXTERNAL_STORAGE yang sudah dihandle di App.tsx
     launchImageLibrary(
       {
         mediaType: 'mixed',
         selectionLimit: 1,
+        // Untuk Android 13+, ini akan otomatis menggunakan Photo Picker
+        // tanpa memerlukan permission
       },
       response => {
         if (response.didCancel) {
